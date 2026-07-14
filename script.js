@@ -7,7 +7,9 @@ const root = document.documentElement;
 const themeToggle = document.querySelector('.theme-toggle');
 const themeColor = document.getElementById('theme-color');
 const heroVideos = [...document.querySelectorAll('.hero-video')];
+const ticker = document.querySelector('.copyright');
 const themeStorageKey = 'barberherman-theme';
+const visualQASection = new URLSearchParams(window.location.search).get('qa-section');
 
 let hasSavedTheme = false;
 
@@ -42,11 +44,15 @@ function applyTheme(theme, { persist = false } = {}) {
 function fitCanvas() {
   const mobile = mobileQuery.matches;
   const baseWidth = mobile ? 320 : 1060;
-  const baseHeight = mobile ? 3908 : 1777;
+  const baseHeight = mobile ? 3674 : 1777;
   const scale = window.innerWidth / baseWidth;
+  const sectionOffsets = mobile
+    ? { media: 1980, partners: 2700, footer: 3470 }
+    : { media: 1110, partners: 1430, footer: 1560 };
+  const sectionOffset = sectionOffsets[visualQASection] || 0;
 
-  canvas.style.transform = `scale(${scale})`;
-  stage.style.height = `${baseHeight * scale}px`;
+  canvas.style.transform = `translateY(${-sectionOffset * scale}px) scale(${scale})`;
+  stage.style.height = `${(baseHeight - sectionOffset) * scale}px`;
   syncHeroVideos();
 }
 
@@ -65,8 +71,23 @@ function syncHeroVideos() {
   });
 }
 
+function lockTickerPhaseForVisualQA() {
+  const requestedPhase = new URLSearchParams(window.location.search).get('ticker-phase');
+  const phases = { start: 0, middle: .62, seam: .999 };
+
+  if (!ticker || !(requestedPhase in phases)) return;
+
+  const duration = Number.parseFloat(getComputedStyle(ticker).animationDuration);
+
+  if (!Number.isFinite(duration) || duration <= 0) return;
+
+  ticker.style.animationDelay = `${-duration * phases[requestedPhase]}s`;
+  ticker.style.animationPlayState = 'paused';
+}
+
 fitCanvas();
 applyTheme(root.dataset.theme);
+lockTickerPhaseForVisualQA();
 
 requestAnimationFrame(() => root.classList.add('theme-ready'));
 
