@@ -1,104 +1,186 @@
-@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600&display=swap');
-
-:root {
-  color-scheme: light;
-  --bg: #f4f2ed;
-  --surface: #ffffff;
-  --text: #111111;
-  --muted: #77736d;
-  --line: #b9b5ad;
-  --inverse-bg: #111111;
-  --inverse-text: #f7f5f0;
-  --accent: #d9ff43;
-  --display: "Oswald", "Arial Narrow", sans-serif;
-  --body: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --shell: min(1180px, calc(100vw - 48px));
+@font-face {
+  font-family: "Herman";
+  src: url("https://use.typekit.net/af/419abb/00000000000000007735c8b6/31/l?subset_id=1&fvd=n4&v=3") format("woff2");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Herman";
+  src: url("https://use.typekit.net/af/5c1c2e/00000000000000007735c8b9/31/l?subset_id=1&fvd=n6&v=3") format("woff2");
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
 }
 
+:root { color-scheme: light; }
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
-body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--body); line-height: 1.45; }
-a { color: inherit; text-underline-offset: .22em; }
-img { display: block; max-width: 100%; }
-.shell { width: var(--shell); margin-inline: auto; }
-.skip-link { position: fixed; left: 1rem; top: -5rem; z-index: 10; background: var(--accent); color: #000; padding: .8rem 1rem; }
-.skip-link:focus { top: 1rem; }
+html, body { margin: 0; width: 100%; min-height: 100%; background: #fff; }
+body { overflow-x: hidden; color: #000; font-family: "Herman", "Arial Narrow", sans-serif; font-variant-ligatures: none; }
+a { color: inherit; }
+.skip-link { position: fixed; left: 12px; top: -60px; z-index: 100; padding: 10px 14px; background: #fff; color: #000; font: 18px "Herman", sans-serif; }
+.skip-link:focus { top: 12px; }
+.stage { position: relative; width: 100%; overflow: hidden; }
+.canvas { position: absolute; left: 0; top: 0; width: 1060px; height: 1777px; transform-origin: left top; overflow: hidden; background: #fff; }
+.canvas > * { position: absolute; margin: 0; }
 
-.hero { min-height: 720px; height: 100svh; position: relative; display: grid; color: #fff; background: #111; overflow: hidden; }
-.hero__media, .hero__shade { position: absolute; inset: 0; width: 100%; height: 100%; }
-.hero__media { object-fit: cover; object-position: center; }
-.hero__shade { background: linear-gradient(180deg, rgba(0,0,0,.34), rgba(0,0,0,.62)); }
-.hero__content { z-index: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding-block: 3rem 2rem; }
-.wordmark { margin: 0; font: 600 clamp(3.4rem, 9vw, 8.5rem)/.9 var(--display); letter-spacing: -.045em; }
-.wordmark span { font-size: .55em; vertical-align: .16em; }
-.hero__role { font: 500 clamp(1rem, 2vw, 1.5rem)/1.2 var(--display); text-transform: uppercase; letter-spacing: .05em; margin: 2rem 0 4rem; }
-.button { display: inline-flex; min-width: 220px; justify-content: center; padding: .95rem 1.6rem; border: 1px solid rgba(255,255,255,.65); text-decoration: none; text-transform: uppercase; font: 500 1rem var(--display); letter-spacing: .08em; transition: background .2s, color .2s, transform .2s; }
-.button:hover { background: #fff; color: #111; transform: translateY(-2px); }
-.hero__links { width: min(700px, 100%); margin-top: 3rem; display: flex; justify-content: space-between; gap: 1rem; font: 500 1rem var(--display); text-transform: uppercase; }
-.legal { max-width: 760px; margin: 2rem 0 0; font: 400 .62rem/1.35 var(--display); text-transform: uppercase; }
+.main-background { left: 0; top: 465px; width: 1060px; height: 1312px; background: #fff; z-index: 2; }
+.hero-video { z-index: 0; object-fit: cover; pointer-events: none; }
+.hero-video--desktop { display: block; left: -22px; top: -72px; width: 1099px; height: 611px; }
+.hero-video--mobile { display: none; }
+.hero-overlay { z-index: 1; left: 0; top: 0; width: 1060px; height: 465px; background: rgba(0,0,0,.35); }
+.brand-logo { z-index: 3; left: 355px; top: 10px; width: 353px; height: auto; }
+.hero-role { z-index: 3; left: 294px; top: 127px; width: 472px; color: #fff; text-align: center; text-transform: uppercase; font-size: 18px; font-weight: 600; line-height: 18px; }
+.booking { z-index: 4; left: 418px; top: 216px; width: 224px; height: 40px; border: 1px solid rgba(255,255,255,.75); background: rgba(255,255,255,.16); color: #fff; text-align: center; text-decoration: none; text-transform: uppercase; font-size: 18px; font-weight: 600; line-height: 40px; }
+.hero-link { z-index: 4; color: #fff; text-align: center; text-transform: uppercase; text-decoration-thickness: 1px; text-underline-offset: 4px; font-size: 18px; font-weight: 400; line-height: 20px; white-space: nowrap; }
+.hero-link--address { left: 294px; top: 293px; width: 226px; }
+.hero-link--telegram { left: 540px; top: 295px; width: 104px; }
+.hero-link--instagram { left: 662px; top: 295px; width: 104px; }
+.legal { z-index: 3; left: 294px; top: 353px; width: 486px; color: #fff; text-align: center; text-transform: uppercase; font-size: 11px; font-weight: 400; line-height: 19px; }
 
-h1, h2 { font-family: var(--display); text-transform: uppercase; letter-spacing: -.025em; line-height: 1; }
-h1 { font-size: clamp(3rem, 6vw, 6.5rem); margin: 0; }
-h2 { font-size: clamp(2rem, 4vw, 4.3rem); margin: 0 0 2rem; }
-.section-grid { display: grid; grid-template-columns: minmax(0, .92fr) minmax(0, 1.08fr); border-inline: 1px solid var(--line); }
-.intro > div { padding: clamp(2rem, 5vw, 5rem); }
-.identity { border-right: 1px solid var(--line); }
-.lead { max-width: 34rem; margin: 1.6rem 0 1rem; font: 500 clamp(1.1rem, 2vw, 1.5rem)/1.25 var(--display); text-transform: uppercase; }
-.muted, .eyebrow { color: var(--muted); font: 500 .8rem var(--display); text-transform: uppercase; letter-spacing: .1em; }
-.portrait { width: 100%; aspect-ratio: 1.5; object-fit: cover; margin-top: 3rem; border-radius: 999px; filter: grayscale(1); }
-.profile p { max-width: 48rem; font-size: clamp(1rem, 1.3vw, 1.15rem); }
-.profile p + p { margin-top: 1.5rem; }
+.identity-panel { z-index: 3; left: 24px; top: 423px; width: 370px; height: 1232px; border: 1px solid rgba(255,255,255,.7); background: linear-gradient(180deg, rgba(255,255,255,.67) 0, #fff 130px, #fff 100%); }
+.center-divider { z-index: 4; left: 517px; top: 464px; width: 1px; height: 1302px; background: #777; }
+.bottom-divider { z-index: 4; left: 0; top: 1753px; width: 1060px; height: 1px; background: #777; }
+.identity-title { z-index: 5; left: 47px; top: 458px; width: 347px; font-size: 47px; font-weight: 600; line-height: 47px; letter-spacing: .4px; text-transform: uppercase; white-space: nowrap; }
+.identity-role { z-index: 5; left: 48px; top: 526px; width: 246px; font-size: 18px; font-weight: 400; line-height: 20px; letter-spacing: 1.2px; font-feature-settings: "pnum"; text-transform: uppercase; }
+.identity-location { z-index: 5; left: 49px; top: 597px; width: 221px; color: rgba(119,119,119,.5); font-size: 11px; font-weight: 700; line-height: 14px; letter-spacing: .4px; text-transform: uppercase; }
+.portrait { z-index: 5; left: 24px; top: 635px; width: 370px; height: 216px; overflow: hidden; border: 1px solid #000; border-radius: 110px; }
+.portrait img { display: block; width: 100%; height: 100%; object-fit: cover; }
+h2 { margin: 0; font-size: 29px; font-weight: 600; line-height: 29px; text-transform: uppercase; }
+.body-copy { margin: 0; font-size: 18px; font-weight: 400; line-height: 23px; text-transform: uppercase; }
+.body-copy a { text-underline-offset: 2px; }
+.profile-block { z-index: 5; left: 541px; top: 504px; width: 471px; }
+.profile-copy { margin-top: 20px; }
+.profile-copy p { margin: 0 0 24px; }
+.profile-copy strong { font-weight: 700; }
+.expertise-block { z-index: 5; left: 49px; top: 906px; width: 345px; }
+.expertise-block .body-copy { margin-top: 21px; }
+.media-block { z-index: 5; left: 49px; top: 1184px; width: 345px; }
+.mentoring-block { z-index: 5; left: 541px; top: 915px; width: 471px; }
+.mentoring-block .body-copy { margin-top: 20px; }
+.partners-block { z-index: 5; left: 49px; top: 1477px; width: 345px; }
+.fashion-block { z-index: 5; left: 541px; top: 1188px; width: 471px; }
+.fashion-block .body-copy { margin-top: 20px; }
+.business-block { z-index: 5; left: 541px; top: 1369px; width: 471px; }
+.business-block .body-copy { margin-top: 20px; }
 
-.dark-section { background: var(--inverse-bg); color: var(--inverse-text); }
-.expertise-grid { display: grid; grid-template-columns: .7fr 1.3fr; gap: clamp(3rem, 8vw, 8rem); padding-block: clamp(5rem, 10vw, 10rem); }
-.dark-section .eyebrow { color: #999; }
-.feature-list, .credential ul { list-style: none; padding: 0; margin: 0; }
-.feature-list li { padding: 1.2rem 0; border-top: 1px solid #484848; font: 500 clamp(1.25rem, 2.5vw, 2rem)/1.15 var(--display); text-transform: uppercase; }
-.feature-list li:last-child { border-bottom: 1px solid #484848; }
+.logo { z-index: 6; display: block; overflow: hidden; }
+.logo img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.logo-allure img { clip-path: inset(30% 0 35% 0); }
+.logo-timeout { left: 40px; top: 1234px; width: 94px; height: 31px; }
+.logo-village { left: 146px; top: 1238px; width: 96px; height: 31px; }
+.logo-maxim { left: 259px; top: 1234px; width: 128px; height: 31px; }
+.logo-esquire { left: 46px; top: 1285px; width: 130px; height: 44px; }
+.logo-allure { left: 194px; top: 1250px; width: 97px; height: 99px; }
+.logo-uomo { left: 310px; top: 1285px; width: 77px; height: 33px; }
+.logo-elleman { left: 46px; top: 1347px; width: 125px; height: 23px; }
+.logo-playboy { left: 186px; top: 1331px; width: 44px; height: 55px; }
+.logo-m24 { left: 253px; top: 1332px; width: 54px; height: 55px; }
+.logo-interview { left: 49px; top: 1391px; width: 122px; height: 45px; }
+.logo-cosmotheca { left: 48px; top: 1525px; width: 202px; height: 22px; }
+.logo-keune { left: 47px; top: 1557px; width: 91px; height: 37px; }
+.logo-amazingred { left: 151px; top: 1569px; width: 242px; height: 23px; }
+.logo-autoradio { left: 46px; top: 1607px; width: 63px; height: 45px; }
+.logo-rutv { left: 122px; top: 1610px; width: 88px; height: 44px; }
+.copyright {
+  z-index: 5;
+  left: 993px;
+  top: 1590px;
+  width: 2634px;
+  height: 123px;
+  color: rgba(119,119,119,.5);
+  font-size: 123px;
+  font-weight: 600;
+  line-height: 123px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  background:
+    url("assets/profile.jpg") 1142px 13px / 168px 96px no-repeat,
+    url("assets/profile.jpg") 2466px 13px / 168px 96px no-repeat;
+  animation: copyright-desktop 45s linear infinite;
+}
+.copyright::after { content: "© Герман Винокуров, 2026"; position: absolute; left: 1333px; top: 0; }
 
-.credentials { display: grid; grid-template-columns: repeat(3, 1fr); border-inline: 1px solid var(--line); }
-.credential { padding: clamp(2rem, 4vw, 4rem); min-height: 550px; }
-.credential + .credential { border-left: 1px solid var(--line); }
-.credential h2 { font-size: clamp(2rem, 3vw, 3rem); }
-.credential li { padding: .9rem 0; border-top: 1px solid var(--line); }
-.credential li:last-child { border-bottom: 1px solid var(--line); }
+@keyframes copyright-desktop {
+  to { transform: translateX(-3189px); }
+}
 
-.press { padding-block: clamp(5rem, 10vw, 9rem); }
-.link-grid { display: grid; grid-template-columns: repeat(2, 1fr); }
-.link-grid a { display: flex; justify-content: space-between; gap: 2rem; padding: 1.5rem 0; border-top: 1px solid #555; text-decoration: none; font: 500 clamp(1.25rem, 2.6vw, 2.2rem) var(--display); text-transform: uppercase; }
-.link-grid a:nth-child(odd) { padding-right: 2rem; }
-.link-grid a:nth-child(even) { padding-left: 2rem; border-left: 1px solid #555; }
-.link-grid a:hover span:first-child { text-decoration: underline; text-decoration-thickness: 1px; }
-.partners-title { margin-top: 7rem; }
+@media (max-width: 600px) {
+  .canvas { width: 320px; height: 3813px; }
+  .main-background { left: 0; top: 556px; width: 320px; height: 3257px; }
+  .hero-video--desktop { display: none; }
+  .hero-video--mobile { display: block; left: 0; top: -5px; width: 321px; height: 561px; object-fit: cover; }
+  .hero-overlay { left: 0; top: 0; width: 320px; height: 556px; background: rgba(0,0,0,.37); }
+  .brand-logo { left: 14px; top: 1px; width: 292px; height: 106px; object-fit: contain; }
+  .hero-role { left: 19px; top: 104px; width: 280px; height: 60px; font-size: 18px; font-weight: 400; line-height: 23px; }
+  .booking { left: 37px; top: 265px; width: 246px; height: 42px; line-height: 42px; }
+  .hero-link { font-size: 18px; line-height: 22px; }
+  .hero-link--address { left: 19px; top: 347px; width: 280px; }
+  .hero-link--telegram { left: 19px; top: 407px; width: 121px; font-size: 11px; line-height: 11px; }
+  .hero-link--instagram { left: 178px; top: 407px; width: 121px; font-size: 11px; line-height: 11px; }
+  .legal { left: 20px; top: 459px; width: 280px; height: 60px; font-size: 11px; line-height: 15px; }
+  .identity-panel, .center-divider, .bottom-divider { display: none; }
+  .identity-title { left: 20px; top: 596px; width: 281px; height: 152px; color: #bbb; font-size: 76px; line-height: 76px; white-space: normal; }
+  .identity-role { left: 20px; top: 768px; width: 278px; height: 69px; font-size: 18px; font-weight: 600; line-height: 23px; letter-spacing: normal; font-feature-settings: normal; }
+  .identity-role br { display: none; }
+  .identity-location { left: 20px; top: 857px; width: 280px; font-size: 18px; font-weight: 700; line-height: 18px; }
+  .portrait { left: 20px; top: 895px; width: 280px; height: 280px; border-radius: 50%; }
+  .profile-block { left: 20px; top: 1215px; width: 280px; }
+  .profile-copy { margin-top: 20px; }
+  .profile-copy p { margin-bottom: 22px; }
+  .expertise-block { left: 20px; top: 1816px; width: 280px; }
+  .expertise-block .body-copy { margin-top: 20px; }
+  .media-block { left: 21px; top: 2112px; width: 280px; }
+  .mentoring-block { left: 20px; top: 2489px; width: 280px; }
+  .mentoring-block .body-copy { margin-top: 20px; }
+  .partners-block { left: 20px; top: 2883px; width: 280px; }
+  .fashion-block { left: 20px; top: 3191px; width: 280px; }
+  .fashion-block .body-copy { margin-top: 20px; }
+  .business-block { left: 20px; top: 3418px; width: 280px; }
+  .business-block .body-copy { margin-top: 20px; }
+  h2 { font-size: 29px; line-height: 29px; }
+  .body-copy { font-size: 18px; line-height: 23px; }
 
-footer { padding-block: 4rem 2rem; background: var(--accent); color: #111; }
-.footer-grid { display: grid; grid-template-columns: 1fr auto; gap: 3rem; align-items: start; }
-.footer-mark { margin: 0; font: 600 clamp(3.5rem, 9vw, 9rem)/.85 var(--display); letter-spacing: -.05em; }
-.button--dark { border-color: #111; }
-.button--dark:hover { background: #111; color: #fff; }
-.footer-links { display: flex; gap: 2rem; font: 500 1.1rem var(--display); text-transform: uppercase; }
-.copyright { margin: 0; text-align: right; font: 500 .85rem var(--display); text-transform: uppercase; }
+  .logo-timeout { left: 21px; top: 2161px; width: 81px; height: 31px; }
+  .logo-maxim { left: 132px; top: 2166px; width: 108px; height: 20px; }
+  .logo-village { left: 19px; top: 2204px; width: 106px; height: 40px; }
+  .logo-esquire { left: 148px; top: 2202px; width: 126px; height: 42px; }
+  .logo-playboy { left: 20px; top: 2251px; width: 64px; height: 77px; }
+  .logo-uomo { left: 108px; top: 2265px; width: 114px; height: 47px; }
+  .logo-allure { left: 170px; top: 2302px; width: 113px; height: 113px; }
+  .logo-interview { left: 22px; top: 2347px; width: 129px; height: 48px; }
+  .logo-m24 { left: 176px; top: 2395px; width: 54px; height: 54px; }
+  .logo-elleman { left: 13px; top: 2411px; width: 151px; height: 26px; }
+  .logo-cosmotheca { left: 18px; top: 2961px; width: 284px; height: 31px; }
+  .logo-keune { left: 20px; top: 3002px; width: 106px; height: 44px; }
+  .logo-autoradio { left: 19px; top: 3056px; width: 72px; height: 53px; }
+  .logo-rutv { left: 102px; top: 3057px; width: 110px; height: 54px; }
+  .logo-amazingred { left: 19px; top: 3127px; width: 260px; height: 24px; }
+  .copyright { left: 85px; top: 3697px; font-size: 76px; line-height: 76px; }
 
-@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  .copyright {
+    left: 320px;
+    top: 3697px;
+    width: 1703px;
+    height: 76px;
+    background:
+      url("assets/profile.jpg") 703px 10px / 144px 56px no-repeat,
+      url("assets/profile.jpg") 1559px 10px / 144px 56px no-repeat;
+    animation: copyright-mobile 60s linear infinite;
+  }
+  .copyright::after { left: 860px; }
+}
 
-@media (max-width: 780px) {
-  :root { --shell: min(100% - 28px, 680px); }
-  .hero { min-height: 680px; }
-  .hero__content { justify-content: flex-end; padding-bottom: 1.5rem; }
-  .wordmark { margin-top: auto; }
-  .hero__role { margin: 1.5rem 0 2.5rem; }
-  .hero__links { flex-direction: column; align-items: center; margin-top: 2.5rem; }
-  .legal { margin-top: 1.5rem; }
-  .section-grid, .expertise-grid, .credentials { grid-template-columns: 1fr; }
-  .intro { width: 100%; border: 0; }
-  .identity { border-right: 0; border-bottom: 1px solid var(--line); }
-  .intro > div { padding: 2.2rem 1rem; }
-  .expertise-grid { gap: 2rem; }
-  .credentials { width: 100%; border: 0; }
-  .credential { min-height: 0; padding: 3.5rem 1rem; }
-  .credential + .credential { border-left: 0; border-top: 1px solid var(--line); }
-  .link-grid { grid-template-columns: 1fr; }
-  .link-grid a:nth-child(odd), .link-grid a:nth-child(even) { padding-inline: 0; border-left: 0; }
-  .footer-grid { grid-template-columns: 1fr; gap: 2rem; }
-  .copyright { text-align: left; }
+@keyframes copyright-mobile {
+  to { transform: translateX(-2022px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-video { display: none; }
+  .copyright { left: 665px; animation: none; background: none; }
+  .canvas::before { content: ""; position: absolute; z-index: 0; left: 0; top: 0; width: 1060px; height: 465px; background: url("assets/hero.jpg") center/cover no-repeat; }
+}
+@media (max-width: 600px) and (prefers-reduced-motion: reduce) {
+  .canvas::before { width: 320px; height: 556px; background-image: url("assets/hero-mobile.jpg"); }
+  .copyright { left: 85px; }
 }

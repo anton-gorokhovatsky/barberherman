@@ -1,130 +1,104 @@
 <!doctype html>
-<html lang="ru" data-theme="light">
+<html lang="ru">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="description" content="Герман Винокуров — мужской стилист, барбер и эксперт по мужскому уходу с более чем 15-летним профессиональным опытом.">
-  <meta name="theme-color" content="#111111">
-  <title>Herman & Co — Герман Винокуров</title>
+  <meta name="theme-color" content="#777777">
+  <title>HERMAN &amp; CO</title>
   <link rel="icon" href="assets/favicon.png" type="image/png">
-  <link rel="preload" href="assets/hero.jpg" as="image" fetchpriority="high">
+  <link rel="preload" href="assets/hero-mobile.jpg" as="image" media="(max-width: 600px)">
   <link rel="stylesheet" href="styles.css">
+  <script src="script.js" defer></script>
 </head>
 <body>
-  <a class="skip-link" href="#profile">К основному содержанию</a>
-  <header class="hero">
-    <img class="hero__media" src="assets/hero.jpg" alt="Герман Винокуров в студии" width="1280" height="720" fetchpriority="high">
-    <div class="hero__shade"></div>
-    <div class="hero__content shell">
-      <p class="wordmark" aria-label="Herman and Company">HERMAN <span aria-hidden="true">✂</span> &amp;CO</p>
-      <p class="hero__role">Мужской стилист · Барбер · Эксперт по мужскому уходу</p>
-      <a class="button" href="https://b11133.yclients.com/company/30187/personal/menu?o=" target="_blank" rel="noopener">Записаться</a>
-      <nav class="hero__links" aria-label="Контакты">
-        <a href="https://yandex.ru/maps/-/CPAwvS3O" target="_blank" rel="noopener">Москва, Проспект Мира, 7, стр. 3</a>
-        <a href="https://t.me/hermanlifetime" target="_blank" rel="noopener">Telegram</a>
-        <a href="https://www.instagram.com/hermanvinakurau/" target="_blank" rel="noopener">Instagram*</a>
-      </nav>
-      <p class="legal">*Решением суда запрещена деятельность компании Meta Platforms Inc. по реализации продуктов — социальных сетей Facebook и Instagram на территории Российской Федерации по основаниям осуществления экстремистской деятельности.</p>
-    </div>
-  </header>
+  <a class="skip-link" href="#profile-title">К основному содержанию</a>
+  <div class="stage" id="stage">
+    <main class="canvas" id="canvas">
+      <div class="main-background" aria-hidden="true"></div>
+      <video class="hero-video hero-video--desktop" autoplay muted loop playsinline preload="metadata" poster="assets/hero.jpg" aria-hidden="true">
+        <source src="assets/hero-desktop.mp4" type="video/mp4">
+      </video>
+      <video class="hero-video hero-video--mobile" autoplay muted loop playsinline preload="metadata" poster="assets/hero-mobile.jpg" aria-hidden="true">
+        <source src="assets/hero-mobile.mp4" type="video/mp4">
+      </video>
+      <div class="hero-overlay" aria-hidden="true"></div>
 
-  <main id="profile">
-    <section class="intro shell section-grid">
-      <div class="identity reveal">
-        <h1>Герман Винокуров</h1>
-        <p class="lead">Мужской стилист · Барбер · Эксперт по мужскому уходу · Основатель Barberherman &amp; Co</p>
-        <p class="muted">Москва | Международные проекты</p>
-        <img class="portrait" src="assets/portrait.jpg" alt="Портрет Германа Винокурова" width="1400" height="817" loading="lazy">
-      </div>
-      <div class="profile reveal">
-        <h2>Профессиональный профиль</h2>
-        <p><strong>Герман Винокуров — мужской стилист, барбер и эксперт по мужскому уходу с более чем 15-летним профессиональным опытом в индустрии мужского стиля и grooming.</strong></p>
-        <p>Свою карьеру начал в 2009 году после получения профильного профессионального образования в сфере парикмахерского искусства.</p>
-        <p>За годы работы Герман сформировал сильный международный профиль, объединяющий grooming, fashion, образование и развитие брендов.</p>
-        <p>Является основателем и креативным директором Barberherman &amp; Co — бренда мужского ухода, работающего по full-cycle модели и сочетающего услуги, обучение и розничное направление. Проект ориентирован на современную мужскую эстетику, высокие стандарты сервиса и осознанный подход к стилю.</p>
-      </div>
-    </section>
+      <img class="brand-logo" src="assets/brand-logo.png" width="1168" height="424" alt="Herman & Co">
+      <p class="hero-role">Мужской стилист · Барбер · Эксперт по мужскому уходу</p>
+      <a class="booking" href="https://b11133.yclients.com/company/30187/personal/menu?o=" target="_blank" rel="noopener">Записаться</a>
+      <a class="hero-link hero-link--address" href="https://yandex.ru/maps/-/CPAwvS3O" target="_blank" rel="noopener">Москва, Проспект Мира, 7, стр. 3</a>
+      <a class="hero-link hero-link--telegram" href="https://t.me/hermanlifetime" target="_blank" rel="noopener">Telegram</a>
+      <a class="hero-link hero-link--instagram" href="https://www.instagram.com/hermanvinakurau/" target="_blank" rel="noopener">Instagram*</a>
+      <p class="legal">*Решением суда запрещена «деятельность компании Meta Platforms Inc. по реализации продуктов — социальных сетей Facebook и Instagram на территории Российской Федерации по основаниям осуществления экстремистской деятельности»</p>
 
-    <section class="dark-section">
-      <div class="shell expertise-grid">
-        <div class="reveal">
-          <p class="eyebrow">01 / Экспертиза</p>
-          <h2>Ключевая экспертиза</h2>
+      <div class="identity-panel" aria-hidden="true"></div>
+      <div class="center-divider" aria-hidden="true"></div>
+      <div class="bottom-divider" aria-hidden="true"></div>
+
+      <h1 class="identity-title">Герман Винокуров</h1>
+      <p class="identity-role">Мужской стилист · Барбер ·<br> Эксперт по&nbsp;мужскому уходу ·<br> Основатель Barberherman &amp; Co</p>
+      <p class="identity-location">Москва | Международные проекты</p>
+      <picture class="portrait">
+        <source media="(max-width: 600px)" srcset="assets/portrait-mobile.jpg">
+        <img src="assets/portrait.jpg" width="1000" height="584" alt="Герман Винокуров" loading="lazy">
+      </picture>
+
+      <section class="profile-block" aria-labelledby="profile-title">
+        <h2 id="profile-title">Профессиональный профиль</h2>
+        <div class="body-copy profile-copy">
+          <p><strong>Герман Винокуров — мужской стилист, барбер и эксперт по мужскому уходу с более чем 15-летним профессиональным опытом в индустрии мужского стиля и grooming.</strong></p>
+          <p>Свою карьеру начал в 2009 году после получения профильного профессионального образования в сфере парикмахерского искусства. За годы работы Герман сформировал сильный международный профиль, объединяющий grooming, fashion, образование и развитие брендов.</p>
+          <p>Является основателем и креативным директором Barberherman &amp; Co — бренда мужского ухода, работающего по full-cycle модели и сочетающего услуги, обучение и розничное направление. Проект ориентирован на современную мужскую эстетику, высокие стандарты сервиса и осознанный подход к стилю.</p>
         </div>
-        <ul class="feature-list reveal">
-          <li>Мужские стрижки и создание индивидуального образа</li>
-          <li>Барберинг и моделирование бороды</li>
-          <li>Grooming и уход за собой для мужчин</li>
-          <li>Обучение и наставничество</li>
-          <li>Международные образовательные программы</li>
-          <li>Консалтинг салонного бизнеса</li>
-          <li>Fashion и медиа-проекты</li>
-        </ul>
-      </div>
-    </section>
+      </section>
 
-    <section class="shell credentials">
-      <article class="credential reveal">
-        <p class="eyebrow">02 / Образование</p>
-        <h2>Наставничество и экспертиза</h2>
-        <ul>
-          <li>Один из первых преподавателей школы барберов BarberWanted, Москва</li>
-          <li>Международный тренер и наставник</li>
-          <li>Обучил более 1 000 начинающих и профессиональных мастеров</li>
-          <li>Тренер и официальный партнёр <a href="https://www.keune.com/" target="_blank" rel="noopener">Keune Haircosmetics</a>, Нидерланды</li>
-          <li>Профессиональные тренинги в Италии и Испании</li>
-        </ul>
-      </article>
-      <article class="credential reveal">
-        <p class="eyebrow">03 / Индустрия</p>
-        <h2>Fashion и события</h2>
-        <ul>
-          <li>Участник <a href="https://nyfw.com/" target="_blank" rel="noopener">Mercedes-Benz Fashion Week</a>, Нью-Йорк</li>
-          <li>Grooming и мужской стиль для проектов с выпускниками New York Academy of Design</li>
-          <li>Работа на закрытых и частных fashion-показах в Нью-Йорке</li>
-        </ul>
-      </article>
-      <article class="credential reveal">
-        <p class="eyebrow">04 / Бизнес</p>
-        <h2>Консалтинг и развитие салонов</h2>
-        <ul>
-          <li>Открытие и операционное сопровождение салонов красоты и барбершопов в России и СНГ</li>
-          <li>Формирование команд и стандартов сервиса</li>
-          <li>Позиционирование бренда, обучение и развитие персонала</li>
-        </ul>
-      </article>
-    </section>
+      <section class="expertise-block" aria-labelledby="expertise-title">
+        <h2 id="expertise-title">Ключевая экспертиза</h2>
+        <p class="body-copy">· Мужские стрижки<br>и создание индивидуального образа<br>· Барберинг и моделирование бороды<br>· Grooming и уход за собой для мужчин<br>· Обучение и наставничество<br>· Международные образовательные программы<br>· Консалтинг салонного бизнеса<br>· Fashion и медиа-проекты</p>
+      </section>
 
-    <section class="press dark-section">
-      <div class="shell">
-        <p class="eyebrow">05 / Публикации</p>
-        <h2>Медиа и пресса</h2>
-        <div class="link-grid">
-          <a href="https://www.timeout.ru/msk/feature/456194" target="_blank" rel="noopener"><span>Time Out</span><span>↗</span></a>
-          <a href="https://www.maximonline.ru/guide/promo/_article/kommunalniy-barbershop-barberherman/" target="_blank" rel="noopener"><span>Maxim</span><span>↗</span></a>
-          <a href="https://www.the-village.ru/service-shopping/service/224131-barberherman" target="_blank" rel="noopener"><span>The Village</span><span>↗</span></a>
-          <a href="https://ru.tv/press/anonsy/barbery-prigotovyat-lyulya-kebab-v-poedinke-so-vkusom" target="_blank" rel="noopener"><span>RU.TV</span><span>↗</span></a>
-        </div>
-        <h2 class="partners-title">Партнёрства и коллаборации</h2>
-        <div class="link-grid">
-          <a href="https://cosmotheca.com/" target="_blank" rel="noopener"><span>Cosmotheca</span><span>↗</span></a>
-          <a href="https://www.keune.com/" target="_blank" rel="noopener"><span>Keune</span><span>↗</span></a>
-          <a href="https://amazingred.ru/" target="_blank" rel="noopener"><span>Amazing Red</span><span>↗</span></a>
-        </div>
-      </div>
-    </section>
-  </main>
+      <section class="media-block" aria-labelledby="media-title">
+        <h2 id="media-title">Медиа и пресса</h2>
+      </section>
 
-  <footer>
-    <div class="shell footer-grid">
-      <p class="footer-mark">HERMAN &amp;CO</p>
-      <a class="button button--dark" href="https://b11133.yclients.com/company/30187/personal/menu?o=" target="_blank" rel="noopener">Записаться</a>
-      <div class="footer-links">
-        <a href="https://t.me/hermanlifetime" target="_blank" rel="noopener">Telegram</a>
-        <a href="https://www.instagram.com/hermanvinakurau/" target="_blank" rel="noopener">Instagram*</a>
-      </div>
-      <p class="copyright">© Герман Винокуров, 2026</p>
-    </div>
-  </footer>
+      <a class="logo logo-timeout" href="https://www.timeout.ru/msk/feature/456194" target="_blank" rel="noopener"><img src="assets/logos/timeout.png" alt="Time Out"></a>
+      <a class="logo logo-maxim" href="https://www.maximonline.ru/guide/promo/_article/kommunalniy-barbershop-barberherman/" target="_blank" rel="noopener"><img src="assets/logos/maxim.png" alt="Maxim"></a>
+      <a class="logo logo-village" href="https://www.the-village.ru/service-shopping/service/224131-barberherman" target="_blank" rel="noopener"><img src="assets/logos/village.png" alt="The Village"></a>
+      <span class="logo logo-esquire"><img src="assets/logos/esquire.png" alt="Esquire"></span>
+      <span class="logo logo-playboy"><img src="assets/logos/playboy.png" alt="Playboy"></span>
+      <span class="logo logo-uomo"><img src="assets/logos/uomo.png" alt="Uomo Collezioni"></span>
+      <span class="logo logo-allure"><img src="assets/logos/allure.png" alt="Allure"></span>
+      <span class="logo logo-interview"><img src="assets/logos/interview.png" alt="Interview"></span>
+      <span class="logo logo-elleman"><img src="assets/logos/elleman.png" alt="Elle Man"></span>
+      <a class="logo logo-m24" href="https://www.instagram.com/reel/C313G8jIwlz/?igsh=anVnNXcyajNzNHA%3D" target="_blank" rel="noopener"><img src="assets/logos/m24.png" alt="Москва 24"></a>
+
+      <section class="mentoring-block" aria-labelledby="mentoring-title">
+        <h2 id="mentoring-title">Наставничество и&nbsp;экспертиза</h2>
+        <p class="body-copy">· Один из первых преподавателей школы барберов BarberWanted (Москва)<br>· Международный тренер и наставник<br>· Обучил более 1 000 начинающих и профессиональных мастеров<br>· Тренер и официальный партнёр бренда <a href="https://www.keune.com/" target="_blank" rel="noopener">Keune Haircosmetics</a> (Нидерланды)<br>· Проведение профессиональных тренингов и мастер-классов: Италия (Сицилия), Испания (Барселона)<br>· Участник европейского профессионального проекта «Каникулы парикмахеров»</p>
+      </section>
+
+      <section class="partners-block" aria-labelledby="partners-title">
+        <h2 id="partners-title">Партнёрства и&nbsp;коллаборации</h2>
+      </section>
+      <a class="logo logo-cosmotheca" href="https://cosmotheca.com/" target="_blank" rel="noopener"><img src="assets/logos/cosmotheca.png" alt="Cosmotheca"></a>
+      <a class="logo logo-keune" href="https://www.keune.com/" target="_blank" rel="noopener"><img src="assets/logos/keune.png" alt="Keune"></a>
+      <span class="logo logo-autoradio"><img src="assets/logos/autoradio.png" alt="Авторадио"></span>
+      <a class="logo logo-rutv" href="https://ru.tv/press/anonsy/barbery-prigotovyat-lyulya-kebab-v-poedinke-so-vkusom" target="_blank" rel="noopener"><img src="assets/logos/rutv.png" alt="RU.TV"></a>
+      <a class="logo logo-amazingred" href="https://amazingred.ru/" target="_blank" rel="noopener"><img src="assets/logos/amazingred.png" alt="Amazing Red"></a>
+
+      <section class="fashion-block" aria-labelledby="fashion-title">
+        <h2 id="fashion-title">Fashion и события</h2>
+        <p class="body-copy">· Участник <a href="https://nyfw.com/" target="_blank" rel="noopener">Mercedes-Benz Fashion Week</a> (Нью-Йорк)<br>· Grooming и мужской стиль для проектов с выпускниками New York Academy of Design<br>· Работа на закрытых и частных fashion-показах в Нью-Йорке</p>
+      </section>
+
+      <section class="business-block" aria-labelledby="business-title">
+        <h2 id="business-title">Бизнес-консалтинг и&nbsp;развитие салонов</h2>
+        <p class="body-copy">· Открытие и операционное сопровождение салонов красоты и барбершопов: в регионах России и в странах СНГ<br>· Консалтинг в области формирования команд, стандартов сервиса, позиционирования бренда, обучения и развития персонала</p>
+      </section>
+
+      <p class="copyright" aria-label="© Герман Винокуров, 2026">© Герман Винокуров, 2026</p>
+    </main>
+  </div>
 </body>
 </html>
