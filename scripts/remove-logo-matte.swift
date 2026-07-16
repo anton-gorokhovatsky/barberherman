@@ -24,7 +24,8 @@ let needsDarkVariant: Set<String> = ["amazingred.png", "uomo.png"]
 for sourceURL in sourceFiles {
   let outputURL = outputDirectory.appendingPathComponent(sourceURL.lastPathComponent)
 
-  if sourceURL.lastPathComponent == "m24.png" {
+  // These sources already have production-ready transparency and must be copied verbatim.
+  if ["m24.png", "autoradio.png"].contains(sourceURL.lastPathComponent) {
     if fileManager.fileExists(atPath: outputURL.path) {
       try fileManager.removeItem(at: outputURL)
     }
@@ -139,6 +140,34 @@ for sourceURL in sourceFiles {
     }
 
     pixels[offset + 3] = UInt8(round(outputAlpha))
+  }
+
+  // RU.TV keeps its white "TV" lettering, so only the counter in the left-hand R is cleared.
+  for pixelIndex in 0..<pixelCount {
+    let x = pixelIndex % width
+    let offset = pixelIndex * 4
+    let alpha = pixels[offset + 3]
+
+    guard alpha > 0 else { continue }
+
+    let red = pixels[offset]
+    let green = pixels[offset + 1]
+    let blue = pixels[offset + 2]
+    let maximum = max(red, green, blue)
+    let minimum = min(red, green, blue)
+    let isNeutralPaper = maximum - minimum < 20 && minimum > 176
+    let isRutvCounter = sourceURL.lastPathComponent == "rutv.png" && x < width * 2 / 5
+
+    guard isNeutralPaper && isRutvCounter else { continue }
+
+    let paperAmount = max(0, min(1, (Double(minimum) - 176) / 79))
+    let remainingAlpha = Double(alpha) * (1 - paperAmount)
+    let scale = alpha > 0 ? remainingAlpha / Double(alpha) : 0
+
+    pixels[offset] = UInt8(round(Double(red) * scale))
+    pixels[offset + 1] = UInt8(round(Double(green) * scale))
+    pixels[offset + 2] = UInt8(round(Double(blue) * scale))
+    pixels[offset + 3] = UInt8(round(remainingAlpha))
   }
 
   guard let outputImage = context.makeImage() else {
