@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ru" data-theme="light">
+<html lang="ru" data-theme="light" data-logo-view="grid">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -12,14 +12,14 @@
   <meta property="og:site_name" content="Herman &amp; Co">
   <meta property="og:url" content="https://barberherman.ru/">
   <meta property="og:title" content="Герман Винокуров — мужской стилист и барбер">
-  <meta property="og:description" content="Мужской стиль, grooming, обучение и развитие салонного бизнеса.">
+  <meta property="og:description" content="Мужской стиль, груминг, обучение и развитие салонного бизнеса.">
   <meta property="og:image" content="https://barberherman.ru/assets/hero.jpg">
   <meta property="og:image:width" content="1280">
   <meta property="og:image:height" content="544">
   <meta property="og:image:alt" content="Герман Винокуров проводит обучение мужскому стилю и барберингу">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Герман Винокуров — мужской стилист и барбер">
-  <meta name="twitter:description" content="Мужской стиль, grooming, обучение и развитие салонного бизнеса.">
+  <meta name="twitter:description" content="Мужской стиль, груминг, обучение и развитие салонного бизнеса.">
   <meta name="twitter:image" content="https://barberherman.ru/assets/hero.jpg">
   <title>Герман Винокуров — мужской стилист и барбер | HERMAN &amp; CO</title>
   <link rel="canonical" href="https://barberherman.ru/">
@@ -58,172 +58,231 @@
       ]
     }
   </script>
-  <link rel="stylesheet" href="styles.css?v=20260716-31">
-  <script src="script.js?v=20260716-26" defer></script>
+  <link rel="stylesheet" href="styles.css?v=20260717-18">
+  <script src="glass.js?v=20260717-3" defer></script>
+  <script src="script.js?v=20260717-7" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#content">К основному содержанию</a>
 
+  <svg class="glass-defs" aria-hidden="true" focusable="false">
+    <defs>
+      <linearGradient id="glass-lens-x" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#ff8080"></stop>
+        <stop offset=".1" stop-color="#a08080"></stop>
+        <stop offset=".2" stop-color="#808080"></stop>
+        <stop offset=".8" stop-color="#808080"></stop>
+        <stop offset=".9" stop-color="#608080"></stop>
+        <stop offset="1" stop-color="#008080"></stop>
+      </linearGradient>
+      <linearGradient id="glass-lens-y" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#8080ff"></stop>
+        <stop offset=".1" stop-color="#8080a0"></stop>
+        <stop offset=".2" stop-color="#808080"></stop>
+        <stop offset=".8" stop-color="#808080"></stop>
+        <stop offset=".9" stop-color="#808060"></stop>
+        <stop offset="1" stop-color="#808000"></stop>
+      </linearGradient>
+      <rect id="glass-lens-x-source" width="100" height="100" fill="url(#glass-lens-x)"></rect>
+      <rect id="glass-lens-y-source" width="100" height="100" fill="url(#glass-lens-y)"></rect>
+      <filter id="liquid-glass-lens" x="-.04" y="-.04" width="1.08" height="1.08" filterUnits="objectBoundingBox" primitiveUnits="objectBoundingBox" color-interpolation-filters="sRGB">
+        <feImage href="#glass-lens-x-source" x="0" y="0" width="1" height="1" preserveAspectRatio="none" result="x-map"></feImage>
+        <feImage href="#glass-lens-y-source" x="0" y="0" width="1" height="1" preserveAspectRatio="none" result="y-map"></feImage>
+        <feComposite in="x-map" in2="y-map" operator="arithmetic" k2="1" k3="1" k4="-.5" result="lens-map"></feComposite>
+        <feDisplacementMap in="SourceGraphic" in2="lens-map" scale=".045" xChannelSelector="R" yChannelSelector="B"></feDisplacementMap>
+      </filter>
+    </defs>
+  </svg>
+
   <main class="site">
-    <header class="hero" aria-label="Herman &amp; Co">
-      <video class="hero-video hero-video--desktop" autoplay muted loop playsinline preload="metadata" poster="assets/hero.jpg?v=20260716-3" aria-hidden="true">
-        <source src="assets/hero-desktop.mp4?v=20260716-3" type="video/mp4">
+    <div class="stage" aria-hidden="true">
+      <video class="stage-video stage-video--desktop" autoplay muted loop playsinline preload="auto" poster="assets/hero.jpg?v=20260716-3">
+        <source src="assets/hero-desktop-v2.mp4?v=20260717-1" type="video/mp4">
       </video>
-      <video class="hero-video hero-video--mobile" autoplay muted loop playsinline preload="metadata" poster="assets/hero-mobile.jpg?v=20260716-2" aria-hidden="true">
+      <video class="stage-video stage-video--mobile" autoplay muted loop playsinline preload="metadata" poster="assets/hero-mobile.jpg?v=20260716-2">
         <source src="assets/hero-mobile.mp4?v=20260716-2" type="video/mp4">
       </video>
-      <div class="hero-overlay" aria-hidden="true"></div>
+      <div class="stage-overlay"></div>
+    </div>
 
-      <div class="hero-content">
-        <img class="brand-logo" src="assets/brand-logo.png" width="1168" height="424" alt="Herman & Co">
-      </div>
-    </header>
-
-    <nav class="cta-dock" aria-label="Запись, адрес и связи">
-      <a class="cta-dock__link cta-dock__link--primary" href="https://b11133.yclients.com/company/30187/personal/menu?o=" target="_blank" rel="noopener"><span class="control-label">Записаться</span></a>
-
-      <div class="cta-dock__contacts" aria-label="Контакты">
-        <a class="cta-dock__link cta-dock__address" href="https://yandex.ru/maps/-/CPAwvS3O" target="_blank" rel="noopener" aria-label="Москва, Проспект Мира, 7, строение 3 — открыть в Яндекс Картах"><span class="control-label">Проспект Мира, 7&nbsp;↗</span></a>
-        <a class="cta-dock__link cta-dock__link--secondary" href="https://t.me/hermanlifetime" target="_blank" rel="noopener" aria-label="Telegram">
-          <svg class="cta-dock__social-icon cta-dock__social-icon--telegram" viewBox="0 0 24 24" aria-hidden="true"><path d="M21.3 3.3 18.2 20c-.2 1.1-.9 1.4-1.8.8l-4.8-3.5-2.3 2.2c-.3.3-.5.5-1 .5l.3-4.9 9-8.1c.4-.4-.1-.6-.6-.3L5.8 13.8 1 12.3c-1-.3-1-1 .2-1.5L20 3.5c.9-.3 1.7.2 1.3-.2Z"></path></svg>
-        </a>
-        <a class="cta-dock__link cta-dock__link--secondary cta-dock__link--instagram" href="https://www.instagram.com/hermanvinakurau/" target="_blank" rel="noopener" aria-label="Instagram, сервис компании Meta, деятельность которой запрещена в России" aria-describedby="instagram-legal">
-          <svg class="cta-dock__social-icon cta-dock__social-icon--instagram" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"></rect><circle cx="12" cy="12" r="4.25"></circle><circle cx="17.4" cy="6.7" r="1"></circle></svg>
-        </a>
-      </div>
-
-      <div class="cta-dock__portrait-floor">
-        <span class="cta-dock__portrait capsule-media" aria-hidden="true"></span>
-        <span class="sr-only">Фотография Германа Винокурова в детстве</span>
-      </div>
-
-      <div class="cta-dock__signature" aria-label="© Герман Винокуров, 2026">
-        <span class="cta-dock__copyright">© Герман Винокуров, 2026</span>
-      </div>
-
-      <div class="cta-dock__service" aria-label="Настройки доступности">
-        <button class="motion-toggle" type="button" aria-label="Уменьшить движение" aria-pressed="false" title="Уменьшить движение">
-          <svg class="motion-toggle__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8h11M3 12h17M3 16h8"></path><path class="motion-toggle__slash" d="M5 4 19 20"></path></svg>
-          <span>Движение</span>
-        </button>
-        <button class="theme-toggle" type="button" aria-label="Включить тёмную тему" aria-pressed="false" title="Включить тёмную тему">
-          <svg class="theme-toggle__icon theme-toggle__icon--sun" viewBox="0 0 24 24" aria-hidden="true">
-            <circle cx="12" cy="12" r="3.5"></circle>
-            <path d="M12 2.4v2.1M12 19.5v2.1M2.4 12h2.1M19.5 12h2.1M5.2 5.2l1.5 1.5M17.3 17.3l1.5 1.5M18.8 5.2l-1.5 1.5M6.7 17.3l-1.5 1.5"></path>
-          </svg>
-          <svg class="theme-toggle__icon theme-toggle__icon--moon" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M19.2 15.1A7.8 7.8 0 0 1 8.9 4.8 7.8 7.8 0 1 0 19.2 15.1Z"></path>
-          </svg>
-        </button>
-      </div>
-    </nav>
-
-    <section class="editorial" id="content" aria-label="Профессиональный профиль Германа Винокурова">
-      <div class="editorial-grid">
-        <aside class="rail-column glass-surface" aria-label="Краткая информация, экспертиза и партнёрства">
-          <section class="identity-intro" aria-labelledby="identity-title">
-            <h1 class="identity-title" id="identity-title">Герман Винокуров</h1>
-            <p class="identity-role">Мужской стилист · Барбер ·<br> Эксперт по&nbsp;мужскому уходу ·<br> Основатель <span lang="en">Barberherman &amp;&nbsp;Co</span></p>
-            <p class="identity-location">Москва · Международные проекты</p>
-            <picture class="portrait capsule-media">
-              <source media="(max-width: 700px)" srcset="assets/portrait-mobile.jpg">
-              <img src="assets/portrait.jpg" width="1000" height="584" alt="Герман Винокуров" loading="eager" fetchpriority="high" decoding="async">
-            </picture>
-          </section>
-
-          <section class="expertise-block" aria-labelledby="expertise-title">
-            <h2 id="expertise-title">Ключевая экспертиза</h2>
-            <ul class="body-copy type-list">
-              <li>Мужские стрижки и&nbsp;создание индивидуального образа</li>
-              <li>Барберинг и&nbsp;моделирование бороды</li>
-              <li><span lang="en">Grooming</span> и&nbsp;уход за&nbsp;собой для мужчин</li>
-              <li>Обучение и&nbsp;наставничество</li>
-              <li>Международные образовательные программы</li>
-              <li>Консалтинг салонного бизнеса</li>
-              <li><span lang="en">Fashion</span> и&nbsp;медиа-проекты</li>
-            </ul>
-          </section>
-
-          <section class="media-block glass-card" aria-labelledby="media-title">
-            <h2 id="media-title">Медиа и&nbsp;пресса</h2>
-            <div class="logo-grid logo-grid--media">
-              <a class="logo logo-timeout" href="https://www.timeout.ru/msk/feature/456194" target="_blank" rel="noopener"><img src="assets/logos-transparent/timeout.png" alt="Time Out" loading="lazy" decoding="async"></a>
-              <a class="logo logo-village" href="https://www.the-village.ru/service-shopping/service/224131-barberherman" target="_blank" rel="noopener"><img src="assets/logos-transparent/village.png" alt="The Village" loading="lazy" decoding="async"></a>
-              <a class="logo logo-maxim" href="https://www.maximonline.ru/guide/promo/_article/kommunalniy-barbershop-barberherman/" target="_blank" rel="noopener"><img src="assets/logos-transparent/maxim.png" alt="Maxim" loading="lazy" decoding="async"></a>
-              <span class="logo logo-esquire"><img src="assets/logos-transparent/esquire.png" alt="Esquire" loading="lazy" decoding="async"></span>
-              <span class="logo logo-allure"><img src="assets/logos-transparent/allure-mark.png?v=20260716-1" alt="Allure" loading="lazy" decoding="async"></span>
-              <span class="logo logo-interview"><img src="assets/logos-transparent/interview.png" alt="Interview" loading="lazy" decoding="async"></span>
-              <span class="logo logo-elleman"><img src="assets/logos-transparent/elleman.png" alt="Elle Man" loading="lazy" decoding="async"></span>
-              <span class="logo logo-playboy"><img src="assets/logos-transparent/playboy.png" alt="Playboy" loading="lazy" decoding="async"></span>
-              <span class="logo logo-uomo"><img src="assets/logos-transparent/uomo.png" alt="Uomo Collezioni" loading="lazy" decoding="async"></span>
-              <a class="logo logo-m24" href="https://www.instagram.com/reel/C313G8jIwlz/?igsh=anVnNXcyajNzNHA%3D" target="_blank" rel="noopener"><img src="assets/logos-transparent/m24.png" alt="Москва 24" loading="lazy" decoding="async"></a>
-            </div>
-          </section>
-
-          <section class="partners-block glass-card" aria-labelledby="partners-title">
-            <h2 id="partners-title">Партнёрства и&nbsp;коллаборации</h2>
-            <div class="logo-grid logo-grid--partners">
-              <a class="logo logo-cosmotheca" href="https://cosmotheca.com/" target="_blank" rel="noopener"><img src="assets/logos-transparent/cosmotheca.png" alt="Cosmotheca" loading="lazy" decoding="async"></a>
-              <a class="logo logo-rutv" href="https://ru.tv/press/anonsy/barbery-prigotovyat-lyulya-kebab-v-poedinke-so-vkusom" target="_blank" rel="noopener"><img src="assets/logos-transparent/rutv-official.svg?v=20260716-1" alt="RU.TV" loading="lazy" decoding="async"></a>
-              <a class="logo logo-keune" href="https://www.keune.com/" target="_blank" rel="noopener"><img src="assets/logos-transparent/keune.png" alt="Keune" loading="lazy" decoding="async"></a>
-              <a class="logo logo-amazingred" href="https://amazingred.ru/" target="_blank" rel="noopener"><img src="assets/logos-transparent/amazingred.png" alt="Amazing Red" loading="lazy" decoding="async"></a>
-              <span class="logo logo-autoradio"><img src="assets/logos-transparent/autoradio.png?v=20260716-3" alt="Авторадио" loading="lazy" decoding="async"></span>
-            </div>
-          </section>
-        </aside>
-
-        <div class="main-column">
-          <section class="profile-block" aria-labelledby="profile-title">
-            <h2 id="profile-title">Профессиональный профиль</h2>
-            <div class="body-copy profile-copy">
-              <p><strong>Герман Винокуров&nbsp;— мужской стилист, барбер и&nbsp;эксперт по&nbsp;мужскому уходу с&nbsp;более чем 15&#8209;летним профессиональным опытом в&nbsp;индустрии мужского стиля и&nbsp;<span lang="en">grooming</span>.</strong></p>
-              <p>Свою карьеру начал в&nbsp;2009 году после получения профильного профессионального образования в&nbsp;сфере парикмахерского искусства. За&nbsp;годы работы Герман сформировал сильный международный профиль, объединяющий <span lang="en">grooming</span>, <span lang="en">fashion</span>, образование и&nbsp;развитие брендов.</p>
-              <p>Является основателем и&nbsp;креативным директором <span lang="en">Barberherman &amp;&nbsp;Co</span>&nbsp;— бренда мужского ухода полного цикла, сочетающего услуги, обучение и&nbsp;розничное направление. Проект ориентирован на&nbsp;современную мужскую эстетику, высокие стандарты сервиса и&nbsp;осознанный подход к&nbsp;стилю.</p>
-            </div>
-          </section>
-
-          <section class="mentoring-block" aria-labelledby="mentoring-title">
-            <h2 id="mentoring-title">Наставничество и&nbsp;экспертиза</h2>
-            <ul class="body-copy type-list">
-              <li>Один из&nbsp;первых преподавателей школы барберов <span lang="en">BarberWanted</span> (Москва)</li>
-              <li>Международный тренер и&nbsp;наставник</li>
-              <li>Обучил более 1&#8239;000 начинающих и&nbsp;профессиональных мастеров</li>
-              <li>Тренер и&nbsp;официальный партнёр бренда <a href="https://www.keune.com/" target="_blank" rel="noopener"><span lang="en">Keune Haircosmetics</span></a> (Нидерланды)</li>
-              <li>Проведение профессиональных тренингов и&nbsp;мастер-классов: Италия (Сицилия), Испания (Барселона)</li>
-              <li>Участник европейского профессионального проекта «Каникулы парикмахеров»</li>
-            </ul>
-          </section>
-
-          <section class="fashion-block" aria-labelledby="fashion-title">
-            <h2 id="fashion-title"><span lang="en">Fashion</span> и&nbsp;события</h2>
-            <ul class="body-copy type-list">
-              <li>Участник <a href="https://nyfw.com/" target="_blank" rel="noopener"><span lang="en">Mercedes&#8209;Benz Fashion Week</span></a> (Нью&#8209;Йорк)</li>
-              <li><span lang="en">Grooming</span> и&nbsp;мужской стиль для проектов с&nbsp;выпускниками <span lang="en">New York Academy of&nbsp;Design</span></li>
-              <li>Работа на&nbsp;закрытых и&nbsp;частных <span lang="en">fashion</span>-показах в&nbsp;Нью&#8209;Йорке</li>
-            </ul>
-          </section>
-
-          <section class="business-block" aria-labelledby="business-title">
-            <h2 id="business-title">Бизнес-консалтинг и&nbsp;развитие салонов</h2>
-            <ul class="body-copy type-list">
-              <li>Открытие и&nbsp;операционное сопровождение салонов красоты и&nbsp;барбершопов: в&nbsp;регионах России и&nbsp;странах СНГ</li>
-              <li>Консалтинг в&nbsp;области формирования команд, стандартов сервиса, позиционирования бренда, обучения и&nbsp;развития персонала</li>
-            </ul>
-            <p class="site-legal" id="instagram-legal"><span class="footnote-mark" aria-hidden="true">*</span><span class="sr-only">Примечание. </span>Решением суда запрещена «деятельность компании <span lang="en">Meta Platforms Inc.</span> по&nbsp;реализации продуктов&nbsp;— социальных сетей <span lang="en">Facebook</span> и&nbsp;<span lang="en">Instagram</span> на&nbsp;территории Российской Федерации по&nbsp;основаниям осуществления экстремистской деятельности»</p>
-          </section>
+    <section class="showcase" id="content" tabindex="-1" aria-label="Герман Винокуров — профиль, экспертиза и контакты">
+      <article class="text-block text-block--profile glass-surface glass-surface--expanded" id="profile-panel" aria-labelledby="profile-title" hidden>
+        <canvas class="glass-refractor" aria-hidden="true"></canvas>
+        <div class="text-block__scroll">
+          <button class="text-block__index text-block__drag-handle" type="button" aria-label="Переместить панель «Профиль». Используйте стрелки, чтобы перемещать её, и клавишу Home, чтобы вернуть на место.">01 / Профиль</button>
+          <h1 id="profile-title">Герман<br>Винокуров</h1>
+          <p class="text-block__lead">Герман Винокуров&nbsp;— мужской стилист, барбер и&nbsp;эксперт по&nbsp;мужскому уходу с&nbsp;более чем 15&#8209;летним профессиональным опытом в&nbsp;индустрии мужского стиля и&nbsp;<span lang="en">grooming</span>.</p>
+          <p>Свою карьеру начал в&nbsp;2009 году после получения профильного профессионального образования в&nbsp;сфере парикмахерского искусства. За&nbsp;годы работы Герман сформировал сильный международный профиль, объединяющий <span lang="en">grooming</span>, <span lang="en">fashion</span>, образование и&nbsp;развитие брендов.</p>
+          <p>Является основателем и&nbsp;креативным директором <span lang="en">Barberherman &amp;&nbsp;Co</span>&nbsp;— бренда мужского ухода полного цикла, сочетающего услуги, обучение и&nbsp;розничное направление. Проект ориентирован на&nbsp;современную мужскую эстетику, высокие стандарты сервиса и&nbsp;осознанный подход к&nbsp;стилю.</p>
+          <dl class="facts" aria-label="Ключевые факты">
+            <div><dt>С&nbsp;2009</dt><dd>в профессии</dd></div>
+            <div><dt>1&#8239;000+</dt><dd>обученных мастеров</dd></div>
+            <div><dt>Москва</dt><dd>международные проекты</dd></div>
+          </dl>
         </div>
+      </article>
+
+      <div class="stage-brand" aria-hidden="true">
+          <img src="assets/brand-logo.png" width="1168" height="424" alt="Herman & Co">
       </div>
 
-      <footer class="ticker-band" id="ticker" aria-label="Мужской стилист · Барбер · Эксперт по мужскому уходу">
-        <p class="copyright" aria-hidden="true">
-          <span class="ticker-unit">
-            <span class="ticker-text">Мужской стилист · Барбер · Эксперт по&nbsp;мужскому уходу</span>
-          </span>
-          <span class="ticker-unit">
-            <span class="ticker-text">Мужской стилист · Барбер · Эксперт по&nbsp;мужскому уходу</span>
-          </span>
-        </p>
-      </footer>
+      <nav class="multitool glass-surface" aria-label="Главное меню, запись, контакты и упоминания">
+        <canvas class="multitool__refractor glass-refractor" aria-hidden="true"></canvas>
+        <div class="multitool__primary">
+          <a class="multitool__booking" href="https://b11133.yclients.com/company/30187/personal/menu?o=" target="_blank" rel="noopener">Записаться</a>
+          <button class="multitool__menu-toggle" type="button" aria-label="Открыть меню" aria-controls="multitool-drawer" aria-expanded="false">
+            <span class="multitool__menu-label sr-only">Меню</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="1.25"></circle><circle cx="12" cy="12" r="1.25"></circle><circle cx="12" cy="19" r="1.25"></circle></svg>
+          </button>
+        </div>
+
+        <div class="multitool__drawer" id="multitool-drawer" hidden>
+          <div class="multitool__sections" aria-label="Разделы страницы">
+            <button type="button" data-panel="profile" aria-controls="profile-panel" aria-pressed="false"><span class="multitool__section-index">01</span><span class="multitool__section-label">Профиль</span></button>
+            <button type="button" data-panel="practice" aria-controls="practice-panel" aria-pressed="false"><span class="multitool__section-index">02</span><span class="multitool__section-label">Экспер&shy;тиза</span></button>
+            <button type="button" data-panel="media" aria-controls="media-panel" aria-pressed="false"><span class="multitool__section-index">03</span><span class="multitool__section-label">Медиа</span></button>
+            <button type="button" data-panel="partners" aria-controls="partners-panel" aria-pressed="false"><span class="multitool__section-index">04</span><span class="multitool__section-label">Парт&shy;нёрства</span></button>
+            <button type="button" data-panel="gallery" aria-controls="gallery-panel" aria-pressed="false"><span class="multitool__section-index">05</span><span class="multitool__section-label">Галерея</span></button>
+          </div>
+
+          <div class="multitool__contacts" aria-label="Контакты">
+          <a class="multitool__address" href="https://yandex.ru/maps/-/CPAwvS3O" target="_blank" rel="noopener" aria-label="Москва, Проспект Мира, 7, строение 3 — открыть в Яндекс Картах"><span>Проспект Мира, 7</span><span class="multitool__contact-kind">Карта</span></a>
+          <a class="multitool__icon-link" href="https://t.me/hermanlifetime" target="_blank" rel="noopener" aria-label="Telegram">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.3 3.3 18.2 20c-.2 1.1-.9 1.4-1.8.8l-4.8-3.5-2.3 2.2c-.3.3-.5.5-1 .5l.3-4.9 9-8.1c.4-.4-.1-.6-.6-.3L5.8 13.8 1 12.3c-1-.3-1-1 .2-1.5L20 3.5c.9-.3 1.7.2 1.3-.2Z"></path></svg>
+            <span>Telegram</span>
+          </a>
+          <a class="multitool__icon-link multitool__instagram" href="https://www.instagram.com/hermanvinakurau/" target="_blank" rel="noopener" aria-label="Instagram, сервис компании Meta, деятельность которой запрещена в России" aria-describedby="instagram-legal">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"></rect><circle cx="12" cy="12" r="4.25"></circle><circle cx="17.4" cy="6.7" r="1"></circle></svg>
+            <span>Instagram</span>
+          </a>
+          </div>
+
+          <section class="multitool__catalog" id="media-panel" aria-labelledby="media-title" data-catalog="media" hidden>
+          <h2 id="media-title">Медиа и&nbsp;пресса</h2>
+          <div class="logo-grid logo-grid--media">
+            <a class="logo logo-timeout" href="https://www.timeout.ru/msk/feature/456194" target="_blank" rel="noopener"><img src="assets/logos-transparent/timeout.png" alt="Time Out" loading="lazy" decoding="async"></a>
+            <a class="logo logo-village" href="https://www.the-village.ru/service-shopping/service/224131-barberherman" target="_blank" rel="noopener"><img src="assets/logos-transparent/village.png" alt="The Village" loading="lazy" decoding="async"></a>
+            <a class="logo logo-maxim" href="https://www.maximonline.ru/guide/promo/_article/kommunalniy-barbershop-barberherman/" target="_blank" rel="noopener"><img src="assets/logos-transparent/maxim.png" alt="Maxim" loading="lazy" decoding="async"></a>
+            <span class="logo logo-esquire"><img src="assets/logos-transparent/esquire.png" alt="Esquire" loading="lazy" decoding="async"></span>
+            <span class="logo logo-allure"><img src="assets/logos-transparent/allure-mark.png?v=20260716-1" alt="Allure" loading="lazy" decoding="async"></span>
+            <span class="logo logo-interview"><img src="assets/logos-transparent/interview.png" alt="Interview" loading="lazy" decoding="async"></span>
+            <span class="logo logo-elleman"><img src="assets/logos-transparent/elleman.png" alt="Elle Man" loading="lazy" decoding="async"></span>
+            <span class="logo logo-playboy"><img src="assets/logos-transparent/playboy.png" alt="Playboy" loading="lazy" decoding="async"></span>
+            <span class="logo logo-uomo"><img src="assets/logos-transparent/uomo.png" alt="Uomo Collezioni" loading="lazy" decoding="async"></span>
+            <a class="logo logo-m24" href="https://www.instagram.com/reel/C313G8jIwlz/?igsh=anVnNXcyajNzNHA%3D" target="_blank" rel="noopener"><img src="assets/logos-transparent/m24.png" alt="Москва 24" loading="lazy" decoding="async"></a>
+          </div>
+          </section>
+
+          <section class="multitool__catalog" id="partners-panel" aria-labelledby="partners-title" data-catalog="partners" hidden>
+          <h2 id="partners-title">Партнёрства и&nbsp;коллаборации</h2>
+          <div class="logo-grid logo-grid--partners">
+            <a class="logo logo-cosmotheca" href="https://cosmotheca.com/" target="_blank" rel="noopener"><img src="assets/logos-transparent/cosmotheca.png" alt="Cosmotheca" loading="lazy" decoding="async"></a>
+            <a class="logo logo-rutv" href="https://ru.tv/press/anonsy/barbery-prigotovyat-lyulya-kebab-v-poedinke-so-vkusom" target="_blank" rel="noopener"><img src="assets/logos-transparent/rutv-official.svg?v=20260716-1" alt="RU.TV" loading="lazy" decoding="async"></a>
+            <a class="logo logo-amazingred" href="https://amazingred.ru/" target="_blank" rel="noopener"><img src="assets/logos-transparent/amazingred.png" alt="Amazing Red" loading="lazy" decoding="async"></a>
+            <a class="logo logo-keune" href="https://www.keune.com/" target="_blank" rel="noopener"><img src="assets/logos-transparent/keune-official.svg?v=20260717-1" alt="Keune" loading="lazy" decoding="async"></a>
+            <a class="logo logo-hiker" href="https://street-beat.ru/cat/hiker/" target="_blank" rel="noopener"><img src="assets/logos-transparent/hiker.svg?v=20260717-1" alt="Hiker" loading="lazy" decoding="async"></a>
+            <span class="logo logo-autoradio"><img src="assets/logos-transparent/autoradio.png?v=20260716-3" alt="Авторадио" loading="lazy" decoding="async"></span>
+          </div>
+          </section>
+
+          <section class="multitool__gallery" id="gallery-panel" aria-labelledby="gallery-title" hidden>
+            <header class="multitool__gallery-header">
+              <h2 id="gallery-title">Личный архив</h2>
+              <span class="multitool__gallery-count" aria-label="Изображение 1 из 1">01 / 01</span>
+            </header>
+            <div class="multitool__gallery-track" aria-live="polite">
+              <figure class="multitool__gallery-slide" data-gallery-slide>
+                <img class="multitool__portrait" src="assets/herman-childhood-squircle.png?v=20260717-1" width="1400" height="800" alt="Герман Винокуров в детстве">
+                <figcaption class="sr-only">Фотография из личного архива Германа Винокурова</figcaption>
+              </figure>
+            </div>
+          </section>
+
+          <div class="multitool__footer">
+          <div class="multitool__descriptor" aria-label="Мужской стилист, барбер, эксперт по мужскому уходу">
+            <div class="multitool__descriptor-track" aria-hidden="true">
+              <span>Мужской стилист · Барбер · Эксперт по мужскому уходу · © Герман Винокуров · 2026 ·</span>
+              <span>Мужской стилист · Барбер · Эксперт по мужскому уходу · © Герман Винокуров · 2026 ·</span>
+            </div>
+          </div>
+          <p class="site-legal multitool__legal" id="instagram-legal"><span class="multitool__legal-mark" aria-hidden="true">*</span><span class="sr-only">Примечание. </span>Решением суда запрещена «деятельность компании <span lang="en">Meta Platforms Inc.</span> по&nbsp;реализации продуктов&nbsp;— социальных сетей <span lang="en">Facebook</span> и&nbsp;<span lang="en">Instagram</span> на&nbsp;территории Российской Федерации по&nbsp;основаниям осуществления экстремистской деятельности».</p>
+          <div class="multitool__meta">
+            <a class="multitool__credit" href="https://anton-gorokhovatsky.github.io/design/" target="_blank" rel="author noopener">Дизайн и&nbsp;разработка</a>
+          </div>
+          <div class="multitool__service">
+            <div class="logo-view-toggle" role="group" aria-label="Вид логотипов" hidden>
+              <button type="button" data-logo-view="list" aria-label="Логотипы списком" aria-pressed="false" title="Логотипы списком">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14"></path></svg>
+              </button>
+              <button type="button" data-logo-view="grid" aria-label="Логотипы сеткой" aria-pressed="true" title="Логотипы сеткой">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="5" width="5" height="5"></rect><rect x="14" y="5" width="5" height="5"></rect><rect x="5" y="14" width="5" height="5"></rect><rect x="14" y="14" width="5" height="5"></rect></svg>
+              </button>
+              <button type="button" data-logo-view="poster" aria-label="Логотипы крупными карточками" aria-pressed="false" title="Логотипы крупными карточками">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="14" height="16"></rect><path d="M5 13h14"></path></svg>
+              </button>
+            </div>
+            <button class="motion-toggle" type="button" aria-label="Уменьшить движение" aria-pressed="false" title="Уменьшить движение">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 13H3c-.55 0-1-.45-1-1s.45-1 1-1h4c.55 0 1 .45 1 1s-.45 1-1 1M6 8c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1s.45 1 1 1h1c.55 0 1-.45 1-1m16 4c0 2.76-2.24 5-5 5H4c-.55 0-1-.45-1-1s.45-1 1-1h9c-.42-.58-.75-1.26-.9-2H10c-.55 0-1-.45-1-1s.45-1 1-1h2.1c.15-.74.48-1.42.9-2H8c-.55 0-1-.45-1-1s.45-1 1-1h9c2.76 0 5 2.24 5 5m-2 0c0-1.65-1.35-3-3-3s-3 1.35-3 3s1.35 3 3 3s3-1.35 3-3"/></svg>
+            </button>
+            <button class="theme-toggle" type="button" aria-label="Включить тёмную тему" aria-pressed="false" title="Включить тёмную тему">
+              <svg class="theme-toggle__icon theme-toggle__icon--glasses" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 3a1 1 0 1 1 0 2H6.743l-2.4 8H10a1 1 0 0 1 1 1v1h2v-1a1 1 0 0 1 1-1h5.656l-2.4-8H16a1 1 0 0 1-.993-.883L15 4a1 1 0 0 1 1-1h2a1 1 0 0 1 .958.713l3.01 10.036l.022.112l.008.08L22 16.5a4.5 4.5 0 0 1-8.972.5h-2.056A4.5 4.5 0 0 1 2 16.5v-2.518l.004-.071l.014-.103l.018-.076l3.006-10.02A1 1 0 0 1 6 3z"></path></svg>
+              <svg class="theme-toggle__icon theme-toggle__icon--stars" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M6.5 8.75L9 10l-2.5 1.25L5 15l-1.5-3.75L1 10l2.5-1.25L5 5zM10 12a1 1 0 1 1 0 2a1 1 0 0 1 0-2m3-3a1 1 0 1 1 0 2a1 1 0 0 1 0-2m.269-5.692L15 4l-1.731.691L12.5 7l-.77-2.309L10 4l1.73-.692L12.5 1zM3 2a1 1 0 1 1 0 2a1 1 0 0 1 0-2"></path></svg>
+            </button>
+          </div>
+          </div>
+        </div>
+      </nav>
+
+      <article class="text-block text-block--practice glass-surface glass-surface--expanded" id="practice-panel" aria-labelledby="practice-title" hidden>
+        <canvas class="glass-refractor" aria-hidden="true"></canvas>
+        <div class="text-block__scroll">
+          <button class="text-block__index text-block__drag-handle" type="button" aria-label="Переместить панель «Экспертиза». Используйте стрелки, чтобы перемещать её, и клавишу Home, чтобы вернуть на место.">02 / Практика</button>
+          <h2 id="practice-title">Экспертиза</h2>
+
+        <section class="practice-group">
+          <h3>Ключевая экспертиза</h3>
+          <ul>
+            <li>Мужские стрижки и&nbsp;создание индивидуального образа</li>
+            <li>Барберинг и&nbsp;моделирование бороды</li>
+            <li><span lang="en">Grooming</span> и&nbsp;уход за&nbsp;собой для мужчин</li>
+            <li>Обучение и&nbsp;наставничество</li>
+            <li>Международные образовательные программы</li>
+            <li>Консалтинг салонного бизнеса</li>
+            <li><span lang="en">Fashion</span> и&nbsp;медиа-проекты</li>
+          </ul>
+        </section>
+
+        <section class="practice-group">
+          <h3>Наставничество и&nbsp;экспертиза</h3>
+          <ul>
+            <li>Один из&nbsp;первых преподавателей школы барберов <span lang="en">BarberWanted</span> (Москва)</li>
+            <li>Международный тренер и&nbsp;наставник</li>
+            <li>Обучил более 1&#8239;000 начинающих и&nbsp;профессиональных мастеров</li>
+            <li>Тренер и&nbsp;официальный партнёр бренда <a href="https://www.keune.com/" target="_blank" rel="noopener"><span lang="en">Keune Haircosmetics</span></a> (Нидерланды)</li>
+            <li>Проведение профессиональных тренингов и&nbsp;мастер-классов: Италия (Сицилия), Испания (Барселона)</li>
+            <li>Участник европейского профессионального проекта «Каникулы парикмахеров»</li>
+          </ul>
+        </section>
+
+        <section class="practice-group">
+          <h3><span lang="en">Fashion</span> и&nbsp;события</h3>
+          <ul>
+            <li>Участник <a href="https://nyfw.com/" target="_blank" rel="noopener"><span lang="en">Mercedes&#8209;Benz Fashion Week</span></a> (Нью&#8209;Йорк)</li>
+            <li><span lang="en">Grooming</span> и&nbsp;мужской стиль для проектов с&nbsp;выпускниками <span lang="en">New York Academy of&nbsp;Design</span></li>
+            <li>Работа на&nbsp;закрытых и&nbsp;частных <span lang="en">fashion</span>-показах в&nbsp;Нью&#8209;Йорке</li>
+          </ul>
+        </section>
+
+        <section class="practice-group">
+          <h3>Бизнес-консалтинг и&nbsp;развитие салонов</h3>
+          <ul>
+            <li>Открытие и&nbsp;операционное сопровождение салонов красоты и&nbsp;барбершопов: в&nbsp;регионах России и&nbsp;странах СНГ</li>
+            <li>Консалтинг в&nbsp;области формирования команд, стандартов сервиса, позиционирования бренда, обучения и&nbsp;развития персонала</li>
+          </ul>
+        </section>
+
+        </div>
+      </article>
     </section>
   </main>
 </body>
