@@ -1,9 +1,7 @@
 const root = document.documentElement;
 const themeToggle = document.querySelector('.theme-toggle');
 const motionToggle = document.querySelector('.motion-toggle');
-const transparencyToggle = document.querySelector('.transparency-toggle');
 const logoViewButtons = [...document.querySelectorAll('button[data-logo-view]')];
-const logoViewToggle = document.querySelector('.logo-view-toggle');
 const themeColor = document.getElementById('theme-color');
 const multitool = document.querySelector('.multitool');
 const multitoolDragHandle = document.querySelector('.multitool__drag-handle');
@@ -15,6 +13,13 @@ const panelCloseButtons = [...document.querySelectorAll('[data-close-panel]')];
 const showcase = document.querySelector('.showcase');
 const glassSurfaces = [...document.querySelectorAll('.glass-surface')];
 const draggablePanels = [...document.querySelectorAll('.text-block')];
+const textScrollSurfaces = [...document.querySelectorAll('.text-block__scroll')];
+const logoImages = [...document.querySelectorAll('.logo img')];
+const onlineCountLabel = document.querySelector('[data-online-count]');
+const onlineUnitLabel = document.querySelector('[data-online-unit]');
+const weatherTemperatureLabel = document.querySelector('[data-weather-temperature]');
+const weatherStatusLabel = document.querySelector('[data-weather-status]');
+const weatherLink = document.querySelector('.multitool__weather');
 const contentPanels = {
   profile: document.getElementById('profile-panel'),
   practice: document.getElementById('practice-panel'),
@@ -31,7 +36,6 @@ const finePointerQuery = window.matchMedia('(hover: hover) and (pointer: fine)')
 const dataConnection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
 const themeStorageKey = 'barberherman-theme';
 const motionStorageKey = 'barberherman-reduce-motion';
-const transparencyStorageKey = 'barberherman-reduce-transparency';
 const logoViewStorageKey = 'barberherman-logo-view';
 const queryParams = new URLSearchParams(window.location.search);
 const visualQASection = queryParams.get('qa-section');
@@ -40,22 +44,25 @@ const visualQATextScale = queryParams.get('qa-text');
 const visualQAContrast = queryParams.get('qa-contrast');
 const visualQAPanels = queryParams.get('qa-panels');
 const visualQATheme = queryParams.get('qa-theme');
-const visualQATransparency = queryParams.get('qa-transparency');
+const visualQASystemTransparency = queryParams.get('qa-system-transparency');
 const visualQAMotion = queryParams.get('qa-motion');
 const visualQALogoView = queryParams.get('qa-logo-view');
 const visualQATickerPhase = queryParams.get('ticker-phase');
 const visualQAFocus = queryParams.get('qa-focus');
 const visualQASafeArea = queryParams.get('qa-safe-area');
+const visualQAOnline = Number.parseInt(queryParams.get('qa-online') || '', 10);
+const visualQAWeatherTemperature = Number.parseFloat(queryParams.get('qa-weather-temperature') || '');
+const visualQAWeatherCode = Number.parseInt(queryParams.get('qa-weather-code') || '', 10);
 const metrikaCounterId = 110837561;
+const presenceEndpoint = (root.dataset.presenceEndpoint || '').replace(/\/+$/, '');
+const weatherCacheKey = 'barberherman-moscow-weather';
+
+root.dataset.presenceAvailable = String(
+  Number.isFinite(visualQAOnline) || Boolean(presenceEndpoint)
+);
 
 let hasSavedTheme = false;
 let hasSavedReducedMotion = false;
-let reduceTransparencyPreference = true;
-let visualQATransparencyOverride = visualQATransparency === 'reduce'
-  ? true
-  : visualQATransparency === 'full'
-    ? false
-    : null;
 let visualQAMotionOverride = visualQAMotion === 'reduce'
   ? true
   : visualQAMotion === 'full'
@@ -67,6 +74,8 @@ let latestGlassSurface = null;
 let panelLayer = 6;
 let mostRecentPanelName = null;
 let multitoolStatusTimer = 0;
+let presenceTimer = 0;
+let presenceSessionId = '';
 
 function reachMetrikaGoal(goal, params = {}) {
   if (!goal || typeof window.ym !== 'function') return;
@@ -83,17 +92,12 @@ if (['start', 'middle', 'seam'].includes(visualQATickerPhase)) {
 try {
   hasSavedTheme = ['light', 'dark'].includes(localStorage.getItem(themeStorageKey));
   hasSavedReducedMotion = localStorage.getItem(motionStorageKey) === 'true';
-  const savedTransparency = localStorage.getItem(transparencyStorageKey);
-  reduceTransparencyPreference = savedTransparency === 'true' || savedTransparency === 'false'
-    ? savedTransparency === 'true'
-    : true;
 } catch {
   hasSavedTheme = false;
   hasSavedReducedMotion = false;
-  reduceTransparencyPreference = true;
 }
 
-function showMultitoolStatus(message, { duration = 2200 } = {}) {
+function showMultitoolStatus(message, { duration = 1300 } = {}) {
   if (!multitoolStatus || !message) return;
 
   window.clearTimeout(multitoolStatusTimer);
@@ -117,7 +121,7 @@ function applyTheme(theme, { persist = false } = {}) {
   root.dataset.theme = isDark ? 'dark' : 'light';
   root.style.colorScheme = isDark ? 'dark' : 'light';
   themeToggle?.setAttribute('aria-pressed', String(isDark));
-  themeToggle?.setAttribute('aria-label', 'Тёмная тема');
+  themeToggle?.setAttribute('aria-label', title);
 
   if (themeToggle) themeToggle.title = title;
   themeColor?.setAttribute('content', isDark ? '#09090b' : '#e8e8e5');
@@ -150,17 +154,37 @@ function applyLogoView(view, { persist = false } = {}) {
   }
 }
 
+function syncLogoImage(image) {
+  const logo = image.closest('.logo');
+  if (!logo) return;
+
+  logo.dataset.logoLabel = image.alt || 'Логотип';
+  logo.dataset.logoError = String(image.complete && image.naturalWidth === 0);
+}
+
+function prepareLogoImages(panel = document) {
+  panel.querySelectorAll('.logo img').forEach((image) => {
+    image.loading = 'eager';
+    syncLogoImage(image);
+  });
+}
+
+function syncTextScrollFade(scrollSurface) {
+  const panel = scrollSurface.closest('.text-block');
+  if (!panel) return;
+
+  const hasScroll = scrollSurface.scrollHeight > scrollSurface.clientHeight + 2;
+  const isAtEnd = !hasScroll
+    || scrollSurface.scrollTop + scrollSurface.clientHeight >= scrollSurface.scrollHeight - 3;
+
+  panel.dataset.hasScroll = String(hasScroll);
+  panel.classList.toggle('is-scroll-end', isAtEnd);
+}
+
 function syncContentPresence() {
   const hasVisibleText = ['profile', 'practice'].some((key) => contentPanels[key] && !contentPanels[key].hidden);
   showcase?.classList.toggle('has-content', hasVisibleText);
   root.dataset.contentOpen = String(hasVisibleText);
-}
-
-function syncContextControls() {
-  if (!logoViewToggle) return;
-
-  const hasVisibleCatalog = ['media', 'partners'].some((key) => contentPanels[key] && !contentPanels[key].hidden);
-  logoViewToggle.hidden = !hasVisibleCatalog;
 }
 
 function setPanelState(name, visible, { returnFocus = false } = {}) {
@@ -177,12 +201,15 @@ function setPanelState(name, visible, { returnFocus = false } = {}) {
     mostRecentPanelName = name;
     if (!wasVisible) {
       const scrollSurface = panel.querySelector('.text-block__scroll');
-      if (scrollSurface) scrollSurface.scrollTop = 0;
+      if (scrollSurface) {
+        scrollSurface.scrollTop = 0;
+        requestAnimationFrame(() => syncTextScrollFade(scrollSurface));
+      }
     }
+    prepareLogoImages(panel);
     if (panel.classList.contains('text-block')) bringPanelForward(panel);
   }
   syncContentPresence();
-  syncContextControls();
   requestAnimationFrame(() => {
     clampCurrentMultitoolPosition();
     if (visible) {
@@ -225,7 +252,7 @@ function revealPanel(name) {
     || title?.textContent?.trim()
     || name;
   if (moduleStatus) moduleStatus.textContent = `Открыт раздел «${label}»`;
-  showMultitoolStatus(`Открыт раздел «${label}»`);
+  showMultitoolStatus(`Открыт раздел «${label}»`, { duration: 1100 });
 
   requestAnimationFrame(() => {
     const isInlinePanel = Boolean(panel.closest('.multitool__drawer'));
@@ -235,11 +262,10 @@ function revealPanel(name) {
 
     const behavior = prefersReducedMotion() ? 'auto' : 'smooth';
 
-    if (isInlinePanel && multitoolDrawer) {
-      multitoolDrawer.scrollTo({ top: panel.offsetTop, behavior });
-      if (mobileQuery.matches) document.querySelector('.multitool')?.scrollIntoView({ block: 'start', behavior });
-    } else if (mobileQuery.matches) {
+    if (mobileQuery.matches) {
       panel.scrollIntoView({ block: 'start', behavior });
+    } else if (isInlinePanel && multitoolDrawer) {
+      multitoolDrawer.scrollTo({ top: panel.offsetTop, behavior });
     }
   });
 }
@@ -260,33 +286,174 @@ function prefersReducedMotion() {
 }
 
 function prefersReducedTransparency() {
-  if (visualQATransparencyOverride !== null) return visualQATransparencyOverride;
-  return reduceTransparencyQuery.matches || reduceTransparencyPreference;
+  return reduceTransparencyQuery.matches || visualQASystemTransparency === 'reduce';
 }
 
-function applyTransparencyPreference({ persist = false } = {}) {
+function applyTransparencyPreference() {
   const isReduced = prefersReducedTransparency();
-  const isSystemReduced = reduceTransparencyQuery.matches && visualQATransparencyOverride === null;
-  const title = isSystemReduced
-    ? 'Прозрачность уменьшена в настройках системы'
-    : isReduced
-      ? 'Включить стекло'
-      : 'Уменьшить прозрачность';
+  root.dataset.systemReducedTransparency = String(isReduced);
+}
 
-  root.dataset.reduceTransparency = String(isReduced);
-  root.dataset.systemReducedTransparency = String(isSystemReduced);
-  transparencyToggle?.setAttribute('aria-pressed', String(isReduced));
-  transparencyToggle?.setAttribute('aria-label', 'Уменьшенная прозрачность');
-  transparencyToggle?.setAttribute('aria-disabled', String(isSystemReduced));
+function visitorUnit(count) {
+  const mod100 = count % 100;
+  const mod10 = count % 10;
+  if (mod100 >= 11 && mod100 <= 14) return ' посетителей';
+  if (mod10 === 1) return ' посетитель';
+  if (mod10 >= 2 && mod10 <= 4) return ' посетителя';
+  return ' посетителей';
+}
 
-  if (transparencyToggle) transparencyToggle.title = title;
+function renderOnlineCount(count) {
+  if (!onlineCountLabel || !onlineUnitLabel || !Number.isFinite(count)) return;
+  const safeCount = Math.max(0, Math.round(count));
+  onlineCountLabel.textContent = String(safeCount);
+  onlineUnitLabel.textContent = visitorUnit(safeCount);
+  onlineCountLabel.closest('.multitool__presence')?.setAttribute(
+    'aria-label',
+    `Сейчас на сайте ${safeCount}${visitorUnit(safeCount)}`
+  );
+}
 
-  if (!persist) return;
+function getPresenceSessionId() {
+  if (presenceSessionId) return presenceSessionId;
+  try {
+    presenceSessionId = sessionStorage.getItem('barberherman-presence-id') || '';
+    if (!presenceSessionId) {
+      presenceSessionId = typeof crypto.randomUUID === 'function'
+        ? crypto.randomUUID().replaceAll('-', '')
+        : `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`;
+      sessionStorage.setItem('barberherman-presence-id', presenceSessionId);
+    }
+  } catch {
+    presenceSessionId = typeof crypto.randomUUID === 'function'
+      ? crypto.randomUUID().replaceAll('-', '')
+      : `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`;
+  }
+  return presenceSessionId;
+}
+
+async function syncPresence() {
+  if (Number.isFinite(visualQAOnline)) {
+    renderOnlineCount(visualQAOnline);
+    return;
+  }
+  if (!presenceEndpoint) return;
+
+  const sessionId = getPresenceSessionId();
+  const now = Date.now();
 
   try {
-    localStorage.setItem(transparencyStorageKey, String(reduceTransparencyPreference));
+    const sessionResponse = await fetch(`${presenceEndpoint}/${sessionId}.json`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ seenAt: now }),
+      cache: 'no-store',
+    });
+    if (!sessionResponse.ok) throw new Error(`Presence write failed: ${sessionResponse.status}`);
+
+    const listResponse = await fetch(`${presenceEndpoint}.json`, { cache: 'no-store' });
+    if (!listResponse.ok) throw new Error(`Presence read failed: ${listResponse.status}`);
+    const sessions = await listResponse.json();
+    const activeSince = Date.now() - 75_000;
+    const activeCount = Object.values(sessions || {})
+      .filter((session) => Number(session?.seenAt) >= activeSince)
+      .length;
+    renderOnlineCount(Math.max(1, activeCount));
   } catch {
-    // The selected preference still applies when storage is unavailable.
+    // Keep the last confirmed value; a realtime number must never be fabricated.
+  }
+}
+
+function disconnectPresence() {
+  if (!presenceEndpoint || !presenceSessionId) return;
+  fetch(`${presenceEndpoint}/${presenceSessionId}.json`, {
+    method: 'DELETE',
+    cache: 'no-store',
+    keepalive: true,
+  }).catch(() => {});
+}
+
+function startPresence() {
+  if (Number.isFinite(visualQAOnline)) {
+    renderOnlineCount(visualQAOnline);
+    return;
+  }
+  if (!presenceEndpoint) return;
+  syncPresence();
+  window.clearInterval(presenceTimer);
+  presenceTimer = window.setInterval(syncPresence, 25_000);
+}
+
+function weatherLabel(code) {
+  if (code === 0) return 'ясно';
+  if ([1, 2].includes(code)) return 'малооблачно';
+  if (code === 3) return 'облачно';
+  if ([45, 48].includes(code)) return 'туман';
+  if (code >= 51 && code <= 57) return 'морось';
+  if (code >= 61 && code <= 67) return 'дождь';
+  if (code >= 71 && code <= 77) return 'снег';
+  if (code >= 80 && code <= 82) return 'ливни';
+  if ([85, 86].includes(code)) return 'снегопад';
+  if (code >= 95) return 'гроза';
+  return 'погода';
+}
+
+function renderWeather(temperature, code) {
+  if (!weatherTemperatureLabel || !weatherStatusLabel) return;
+  const roundedTemperature = Math.round(temperature);
+  const label = weatherLabel(code);
+  weatherTemperatureLabel.textContent = `${roundedTemperature}\u202f°C`;
+  weatherStatusLabel.textContent = label;
+  weatherLink?.setAttribute(
+    'aria-label',
+    `Москва: ${roundedTemperature} градусов Цельсия, ${label}. Источник — Open-Meteo`
+  );
+}
+
+function readCachedWeather() {
+  try {
+    const cached = JSON.parse(sessionStorage.getItem(weatherCacheKey) || 'null');
+    if (!cached || Date.now() - Number(cached.fetchedAt) > 15 * 60 * 1000) return null;
+    if (!Number.isFinite(cached.temperature) || !Number.isFinite(cached.code)) return null;
+    return cached;
+  } catch {
+    return null;
+  }
+}
+
+async function loadWeather() {
+  if (Number.isFinite(visualQAWeatherTemperature) && Number.isFinite(visualQAWeatherCode)) {
+    renderWeather(visualQAWeatherTemperature, visualQAWeatherCode);
+    return;
+  }
+
+  const cached = readCachedWeather();
+  if (cached) renderWeather(cached.temperature, cached.code);
+
+  const url = new URL('https://api.open-meteo.com/v1/forecast');
+  url.search = new URLSearchParams({
+    latitude: '55.7558',
+    longitude: '37.6173',
+    current: 'temperature_2m,weather_code',
+    temperature_unit: 'celsius',
+    timezone: 'Europe/Moscow',
+  });
+
+  try {
+    const response = await fetch(url, { mode: 'cors', cache: 'no-store' });
+    if (!response.ok) throw new Error(`Weather request failed: ${response.status}`);
+    const data = await response.json();
+    const temperature = Number(data.current?.temperature_2m);
+    const code = Number(data.current?.weather_code);
+    if (!Number.isFinite(temperature) || !Number.isFinite(code)) throw new Error('Weather data is invalid');
+    renderWeather(temperature, code);
+    try {
+      sessionStorage.setItem(weatherCacheKey, JSON.stringify({ temperature, code, fetchedAt: Date.now() }));
+    } catch {
+      // Weather still renders when storage is unavailable.
+    }
+  } catch {
+    if (!cached && weatherStatusLabel) weatherStatusLabel.textContent = 'недоступно';
   }
 }
 
@@ -364,7 +531,7 @@ function applyMotionPreference({ persist = false } = {}) {
 
   root.dataset.reduceMotion = String(isReduced);
   motionToggle?.setAttribute('aria-pressed', String(isReduced));
-  motionToggle?.setAttribute('aria-label', 'Уменьшенное движение');
+  motionToggle?.setAttribute('aria-label', title);
   motionToggle?.setAttribute('aria-disabled', String(isSystemReduced));
 
   if (motionToggle) motionToggle.title = title;
@@ -405,9 +572,13 @@ async function focusVisualQASection() {
   }
 
   requestAnimationFrame(() => {
+    if (mobileQuery.matches) {
+      target.scrollIntoView({ block: 'start' });
+      return;
+    }
+
     if (target.closest('.multitool__drawer') && multitoolDrawer) {
       multitoolDrawer.scrollTop = target.offsetTop;
-      if (mobileQuery.matches) document.querySelector('.multitool')?.scrollIntoView({ block: 'start' });
       return;
     }
 
@@ -447,25 +618,21 @@ function setPanelOffset(panel, x, y) {
   if (!mobileQuery.matches && !panel.hidden) {
     const current = panelOffset(panel);
     const rect = panel.getBoundingClientRect();
-    const showcaseStyle = showcase ? getComputedStyle(showcase) : null;
-    const gutterLeft = Number.parseFloat(showcaseStyle?.paddingLeft || '0') || 0;
-    const gutterRight = Number.parseFloat(showcaseStyle?.paddingRight || '0') || 0;
-    const gutterTop = Number.parseFloat(showcaseStyle?.paddingTop || '0') || 0;
-    const gutterBottom = Number.parseFloat(showcaseStyle?.paddingBottom || '0') || 0;
+    const dragMargin = 8;
     const baseLeft = rect.left - current.x;
     const baseTop = rect.top - current.y;
-    const minX = gutterLeft - baseLeft;
-    const maxX = window.innerWidth - gutterRight - (baseLeft + rect.width);
+    const minX = dragMargin - baseLeft;
+    const maxX = window.innerWidth - dragMargin - (baseLeft + rect.width);
     const minimumPanelHeight = Math.min(360, Math.max(260, window.innerHeight * .45));
-    const minY = gutterTop - baseTop;
-    const maxY = window.innerHeight - gutterBottom - minimumPanelHeight - baseTop;
+    const minY = dragMargin - baseTop;
+    const maxY = window.innerHeight - dragMargin - minimumPanelHeight - baseTop;
 
     nextX = minX <= maxX ? Math.min(maxX, Math.max(minX, x)) : 0;
     nextY = minY <= maxY ? Math.min(maxY, Math.max(minY, y)) : minY;
 
     const availableHeight = Math.max(
       minimumPanelHeight,
-      window.innerHeight - gutterBottom - (baseTop + nextY),
+      window.innerHeight - dragMargin - (baseTop + nextY),
     );
     panel.style.setProperty('--panel-available-height', `${Math.floor(availableHeight)}px`);
   }
@@ -761,9 +928,10 @@ applyTheme(['light', 'dark'].includes(visualQATheme) ? visualQATheme : root.data
 applyLogoView(visualQALogoView || initialLogoView);
 applyMotionPreference();
 applyTransparencyPreference();
+loadWeather();
+startPresence();
 lockVideoPhaseForVisualQA();
 applyVisualQAContentState();
-syncContextControls();
 focusVisualQASection();
 syncStageVideos();
 syncMultitoolDragAvailability();
@@ -792,34 +960,18 @@ motionToggle?.addEventListener('click', () => {
   showMultitoolStatus(hasSavedReducedMotion ? 'Движение уменьшено' : 'Движение включено');
 });
 
-transparencyToggle?.addEventListener('click', () => {
-  if (visualQATransparencyOverride !== null) {
-    visualQATransparencyOverride = !visualQATransparencyOverride;
-    reduceTransparencyPreference = visualQATransparencyOverride;
-    applyTransparencyPreference({ persist: true });
-    showMultitoolStatus(visualQATransparencyOverride ? 'Спокойный материал включён' : 'Стекло включено');
-    return;
-  }
-
-  if (reduceTransparencyQuery.matches) {
-    showMultitoolStatus('Прозрачность уменьшена в настройках системы');
-    return;
-  }
-
-  reduceTransparencyPreference = !reduceTransparencyPreference;
-  applyTransparencyPreference({ persist: true });
-  showMultitoolStatus(reduceTransparencyPreference ? 'Спокойный материал включён' : 'Стекло включено');
-});
-
 logoViewButtons.forEach((button) => {
   button.addEventListener('click', () => {
     applyLogoView(button.dataset.logoView, { persist: true });
-    const labels = {
-      list: 'Логотипы показаны списком',
-      grid: 'Логотипы показаны сеткой',
-      poster: 'Логотипы показаны крупными карточками',
-    };
-    showMultitoolStatus(labels[button.dataset.logoView]);
+    const panel = button.closest('[data-catalog]');
+    prepareLogoImages(panel || document);
+    if (moduleStatus) {
+      const labels = { list: 'списком', grid: 'сеткой', poster: 'крупными карточками' };
+      moduleStatus.textContent = `Логотипы показаны ${labels[button.dataset.logoView]}`;
+    }
+    if (mobileQuery.matches && panel) {
+      requestAnimationFrame(() => panel.scrollIntoView({ block: 'start', behavior: prefersReducedMotion() ? 'auto' : 'smooth' }));
+    }
   });
 });
 
@@ -854,6 +1006,15 @@ panelCloseButtons.forEach((button) => {
 });
 
 draggablePanels.forEach(enablePanelDragging);
+logoImages.forEach((image) => {
+  image.addEventListener('load', () => syncLogoImage(image));
+  image.addEventListener('error', () => syncLogoImage(image));
+  syncLogoImage(image);
+});
+textScrollSurfaces.forEach((scrollSurface) => {
+  scrollSurface.addEventListener('scroll', () => syncTextScrollFade(scrollSurface), { passive: true });
+  requestAnimationFrame(() => syncTextScrollFade(scrollSurface));
+});
 
 document.addEventListener('keydown', (event) => {
   if (event.key !== 'Escape') return;
@@ -883,11 +1044,16 @@ reduceTransparencyQuery.addEventListener('change', applyTransparencyPreference);
 colorSchemeQuery.addEventListener('change', (event) => {
   if (!hasSavedTheme) applyTheme(event.matches ? 'dark' : 'light');
 });
-document.addEventListener('visibilitychange', syncStageVideos);
+document.addEventListener('visibilitychange', () => {
+  syncStageVideos();
+  if (!document.hidden) syncPresence();
+});
+window.addEventListener('pagehide', disconnectPresence);
 dataConnection?.addEventListener?.('change', syncStageVideos);
 finePointerQuery.addEventListener('change', syncMultitoolDragAvailability);
 window.addEventListener('resize', () => requestAnimationFrame(() => {
   clampCurrentMultitoolPosition();
+  textScrollSurfaces.forEach(syncTextScrollFade);
   draggablePanels.forEach((panel) => {
     if (panel.hidden) return;
     const offset = panelOffset(panel);

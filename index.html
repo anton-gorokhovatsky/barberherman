@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ru" data-theme="light" data-logo-view="grid">
+<html lang="ru" data-theme="light" data-logo-view="grid" data-presence-available="false">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -27,32 +27,28 @@
   <title>Герман Винокуров — мужской стилист и барбер | HERMAN &amp; CO</title>
   <link rel="canonical" href="https://barberherman.ru/">
   <link rel="icon" href="assets/favicon.png" type="image/png">
+  <link rel="preload" href="assets/type/golos-text/GolosText-Cyrillic.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/type/golos-text/GolosText-Latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="assets/hero-mobile.jpg?v=20260716-2" as="image" media="(max-width: 700px)">
   <link rel="preload" href="assets/hero.jpg?v=20260716-3" as="image" media="(min-width: 701px)">
   <script>
     (() => {
       const storageKey = 'barberherman-theme';
-      const transparencyStorageKey = 'barberherman-reduce-transparency';
       let theme = 'light';
-      let reduceTransparency = true;
 
       try {
         const savedTheme = localStorage.getItem(storageKey);
         theme = savedTheme === 'light' || savedTheme === 'dark'
           ? savedTheme
           : matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-        const savedTransparency = localStorage.getItem(transparencyStorageKey);
-        reduceTransparency = savedTransparency === 'true' || savedTransparency === 'false'
-          ? savedTransparency === 'true'
-          : true;
-        if (matchMedia('(prefers-reduced-transparency: reduce)').matches) reduceTransparency = true;
       } catch {
         theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-        reduceTransparency = true;
       }
 
       document.documentElement.dataset.theme = theme;
-      document.documentElement.dataset.reduceTransparency = String(reduceTransparency);
+      document.documentElement.dataset.systemReducedTransparency = String(
+        matchMedia('(prefers-reduced-transparency: reduce)').matches
+      );
       document.documentElement.style.colorScheme = theme;
     })();
   </script>
@@ -70,9 +66,8 @@
       ]
     }
   </script>
-  <link rel="stylesheet" href="styles.css?v=20260718-32">
-  <script src="glass.js?v=20260718-3" defer></script>
-  <script src="script.js?v=20260718-8" defer></script>
+  <link rel="stylesheet" href="styles.css?v=20260718-37">
+  <script src="script.js?v=20260718-10" defer></script>
   <!-- Yandex.Metrika counter -->
   <script>
     (function(m,e,t,r,i,k,a){
@@ -90,35 +85,6 @@
   <noscript><div><img src="https://mc.yandex.ru/watch/110837561" style="position:absolute;left:-9999px" alt=""></div></noscript>
   <a class="skip-link" href="#content">К основному содержанию</a>
 
-  <svg class="glass-defs" aria-hidden="true" focusable="false">
-    <defs>
-      <linearGradient id="glass-lens-x" x1="0" y1="0" x2="1" y2="0">
-        <stop offset="0" stop-color="#ff8080"></stop>
-        <stop offset=".1" stop-color="#a08080"></stop>
-        <stop offset=".2" stop-color="#808080"></stop>
-        <stop offset=".8" stop-color="#808080"></stop>
-        <stop offset=".9" stop-color="#608080"></stop>
-        <stop offset="1" stop-color="#008080"></stop>
-      </linearGradient>
-      <linearGradient id="glass-lens-y" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="#8080ff"></stop>
-        <stop offset=".1" stop-color="#8080a0"></stop>
-        <stop offset=".2" stop-color="#808080"></stop>
-        <stop offset=".8" stop-color="#808080"></stop>
-        <stop offset=".9" stop-color="#808060"></stop>
-        <stop offset="1" stop-color="#808000"></stop>
-      </linearGradient>
-      <rect id="glass-lens-x-source" width="100" height="100" fill="url(#glass-lens-x)"></rect>
-      <rect id="glass-lens-y-source" width="100" height="100" fill="url(#glass-lens-y)"></rect>
-      <filter id="liquid-glass-lens" x="-.04" y="-.04" width="1.08" height="1.08" filterUnits="objectBoundingBox" primitiveUnits="objectBoundingBox" color-interpolation-filters="sRGB">
-        <feImage href="#glass-lens-x-source" x="0" y="0" width="1" height="1" preserveAspectRatio="none" result="x-map"></feImage>
-        <feImage href="#glass-lens-y-source" x="0" y="0" width="1" height="1" preserveAspectRatio="none" result="y-map"></feImage>
-        <feComposite in="x-map" in2="y-map" operator="arithmetic" k2="1" k3="1" k4="-.5" result="lens-map"></feComposite>
-        <feDisplacementMap in="SourceGraphic" in2="lens-map" scale=".045" xChannelSelector="R" yChannelSelector="B"></feDisplacementMap>
-      </filter>
-    </defs>
-  </svg>
-
   <main class="site">
     <div class="stage" aria-hidden="true">
       <video class="stage-video stage-video--desktop" data-src="assets/hero-desktop-v2.mp4?v=20260717-1" autoplay muted loop playsinline preload="none" poster="assets/hero.jpg?v=20260716-3" aria-hidden="true" tabindex="-1"></video>
@@ -130,7 +96,6 @@
       <h1 class="sr-only">Герман Винокуров — мужской стилист и барбер</h1>
       <p class="sr-only" id="module-status" aria-live="polite" aria-atomic="true"></p>
       <article class="text-block text-block--profile glass-surface glass-surface--expanded" id="profile-panel" aria-labelledby="profile-title" tabindex="-1" hidden>
-        <canvas class="glass-refractor" aria-hidden="true"></canvas>
         <header class="text-block__bar">
           <button class="text-block__index text-block__drag-handle" type="button" aria-label="Переместить панель «Профиль». Используйте стрелки, чтобы перемещать её, и клавишу Home, чтобы вернуть на место.">01 / Профиль</button>
           <button class="text-block__close" type="button" data-close-panel="profile" aria-label="Закрыть панель «Профиль»" title="Закрыть панель «Профиль»">
@@ -148,17 +113,17 @@
             <div><dt>Россия · Европа · США</dt><dd>география обучения и&nbsp;проектов</dd></div>
           </dl>
         </div>
+        <div class="text-block__fade" aria-hidden="true"></div>
       </article>
 
       <nav class="multitool glass-surface is-open" aria-label="Главное меню, запись, контакты и упоминания">
-        <canvas class="multitool__refractor glass-refractor" aria-hidden="true"></canvas>
         <div class="multitool__primary">
           <button class="multitool__brand multitool__drag-handle" type="button" aria-label="Переместить меню. Используйте перетаскивание или клавиши со стрелками; Home возвращает меню в центр." title="Перетащите меню · двойной клик — вернуть в центр">
             <span class="brand-lockup" aria-hidden="true">
               <span class="brand-lockup__word">Herman&nbsp;&amp;Co</span>
             </span>
           </button>
-          <a class="multitool__booking" href="https://b11133.yclients.com/company/30187/personal/menu?o=" target="_blank" rel="noopener" data-metrika-goal="booking_click" data-metrika-label="Записаться">Записаться</a>
+          <a class="multitool__booking" href="https://b11133.yclients.com/company/30187/personal/menu?o=" target="_blank" rel="noopener" data-metrika-goal="booking_click" data-metrika-label="Записаться"><span>Записаться</span></a>
         </div>
 
         <div class="multitool__drawer" id="multitool-drawer">
@@ -167,13 +132,16 @@
             <button type="button" data-panel="practice" aria-controls="practice-panel" aria-pressed="false" aria-expanded="false"><span class="multitool__section-index">02</span><span class="multitool__section-label">Экспертиза</span></button>
             <button type="button" data-panel="media" aria-controls="media-panel" aria-pressed="false" aria-expanded="false"><span class="multitool__section-index">03</span><span class="multitool__section-label">Медиа</span></button>
             <button type="button" data-panel="partners" aria-controls="partners-panel" aria-pressed="false" aria-expanded="false"><span class="multitool__section-index">04</span><span class="multitool__section-label">Партнёрства</span></button>
-            <button type="button" data-panel="gallery" aria-controls="gallery-panel" aria-pressed="false" aria-expanded="false"><span class="multitool__section-index">05</span><span class="multitool__section-label">Галерея</span></button>
+            <button type="button" data-panel="gallery" aria-controls="gallery-panel" aria-pressed="false" aria-expanded="false"><span class="multitool__section-label">Галерея</span></button>
           </div>
 
           <section class="multitool__gallery" id="gallery-panel" aria-labelledby="gallery-title" tabindex="-1" hidden>
             <header class="multitool__gallery-header">
               <h2 id="gallery-title">Личный архив</h2>
               <span class="multitool__gallery-count" aria-label="Изображение 1 из 1">01 / 01</span>
+              <button class="multitool__module-close" type="button" data-close-panel="gallery" aria-label="Закрыть раздел «Галерея»" title="Закрыть раздел «Галерея»">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg>
+              </button>
             </header>
             <div class="multitool__gallery-track" aria-live="polite">
               <figure class="multitool__gallery-slide" data-gallery-slide>
@@ -184,30 +152,66 @@
           </section>
 
           <section class="multitool__catalog" id="media-panel" aria-labelledby="media-title" data-catalog="media" tabindex="-1" hidden>
-          <h2 id="media-title">Медиа и&nbsp;пресса</h2>
+          <header class="multitool__module-bar">
+            <h2 id="media-title">Медиа и&nbsp;пресса</h2>
+            <div class="multitool__module-actions">
+              <div class="logo-view-toggle" role="group" aria-label="Вид логотипов в разделе «Медиа»">
+                <button type="button" data-logo-view="list" aria-label="Логотипы списком" aria-pressed="false" title="Список">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14"></path></svg>
+                </button>
+                <button type="button" data-logo-view="grid" aria-label="Логотипы сеткой" aria-pressed="true" title="Сетка">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="5" width="5" height="5"></rect><rect x="14" y="5" width="5" height="5"></rect><rect x="5" y="14" width="5" height="5"></rect><rect x="14" y="14" width="5" height="5"></rect></svg>
+                </button>
+                <button type="button" data-logo-view="poster" aria-label="Логотипы крупными карточками" aria-pressed="false" title="Карточки">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="14" height="16"></rect><path d="M5 13h14"></path></svg>
+                </button>
+              </div>
+              <button class="multitool__module-close" type="button" data-close-panel="media" aria-label="Закрыть раздел «Медиа»" title="Закрыть раздел «Медиа»">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg>
+              </button>
+            </div>
+          </header>
           <div class="logo-grid logo-grid--media">
-            <a class="logo logo-timeout" href="https://www.timeout.ru/msk/feature/456194" target="_blank" rel="noopener"><img src="assets/logos-transparent/timeout.png" alt="Time Out" loading="lazy" decoding="async"></a>
-            <a class="logo logo-village" href="https://www.the-village.ru/service-shopping/service/224131-barberherman" target="_blank" rel="noopener"><img src="assets/logos-transparent/village.png" alt="The Village" loading="lazy" decoding="async"></a>
-            <a class="logo logo-maxim" href="https://www.maximonline.ru/guide/promo/_article/kommunalniy-barbershop-barberherman/" target="_blank" rel="noopener"><img src="assets/logos-transparent/maxim.png" alt="Maxim" loading="lazy" decoding="async"></a>
-            <span class="logo logo-esquire"><img src="assets/logos-transparent/esquire.png" alt="Esquire" loading="lazy" decoding="async"></span>
-            <span class="logo logo-allure"><img src="assets/logos-transparent/allure-mark.png?v=20260716-1" alt="Allure" loading="lazy" decoding="async"></span>
-            <span class="logo logo-interview"><img src="assets/logos-transparent/interview.png" alt="Interview" loading="lazy" decoding="async"></span>
-            <span class="logo logo-elleman"><img src="assets/logos-transparent/elleman.png" alt="Elle Man" loading="lazy" decoding="async"></span>
-            <span class="logo logo-playboy"><img src="assets/logos-transparent/playboy.png" alt="Playboy" loading="lazy" decoding="async"></span>
-            <span class="logo logo-uomo"><img src="assets/logos-transparent/uomo.png" alt="Uomo Collezioni" loading="lazy" decoding="async"></span>
-            <a class="logo logo-m24" href="https://www.instagram.com/reel/C313G8jIwlz/?igsh=anVnNXcyajNzNHA%3D" target="_blank" rel="noopener"><img src="assets/logos-transparent/m24.png" alt="Москва 24" loading="lazy" decoding="async"></a>
+            <a class="logo logo-timeout" href="https://www.timeout.ru/msk/feature/456194" target="_blank" rel="noopener"><img src="assets/logos-transparent/timeout.png" alt="Time Out" loading="eager" decoding="async"></a>
+            <a class="logo logo-village" href="https://www.the-village.ru/service-shopping/service/224131-barberherman" target="_blank" rel="noopener"><img src="assets/logos-transparent/village.png" alt="The Village" loading="eager" decoding="async"></a>
+            <a class="logo logo-maxim" href="https://www.maximonline.ru/guide/promo/_article/kommunalniy-barbershop-barberherman/" target="_blank" rel="noopener"><img src="assets/logos-transparent/maxim.png" alt="Maxim" loading="eager" decoding="async"></a>
+            <span class="logo logo-esquire"><img src="assets/logos-transparent/esquire.png" alt="Esquire" loading="eager" decoding="async"></span>
+            <span class="logo logo-allure"><img src="assets/logos-transparent/allure-mark.png?v=20260716-1" alt="Allure" loading="eager" decoding="async"></span>
+            <span class="logo logo-interview"><img src="assets/logos-transparent/interview.png" alt="Interview" loading="eager" decoding="async"></span>
+            <span class="logo logo-elleman"><img src="assets/logos-transparent/elleman.png" alt="Elle Man" loading="eager" decoding="async"></span>
+            <span class="logo logo-playboy"><img src="assets/logos-transparent/playboy.png" alt="Playboy" loading="eager" decoding="async"></span>
+            <span class="logo logo-uomo"><img src="assets/logos-transparent/uomo.png" alt="Uomo Collezioni" loading="eager" decoding="async"></span>
+            <a class="logo logo-m24" href="https://www.instagram.com/reel/C313G8jIwlz/?igsh=anVnNXcyajNzNHA%3D" target="_blank" rel="noopener"><img src="assets/logos-transparent/m24.png" alt="Москва 24" loading="eager" decoding="async"></a>
           </div>
           </section>
 
           <section class="multitool__catalog" id="partners-panel" aria-labelledby="partners-title" data-catalog="partners" tabindex="-1" hidden>
-          <h2 id="partners-title">Партнёрства и&nbsp;коллаборации</h2>
+          <header class="multitool__module-bar">
+            <h2 id="partners-title">Партнёрства и&nbsp;коллаборации</h2>
+            <div class="multitool__module-actions">
+              <div class="logo-view-toggle" role="group" aria-label="Вид логотипов в разделе «Партнёрства»">
+                <button type="button" data-logo-view="list" aria-label="Логотипы списком" aria-pressed="false" title="Список">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14"></path></svg>
+                </button>
+                <button type="button" data-logo-view="grid" aria-label="Логотипы сеткой" aria-pressed="true" title="Сетка">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="5" width="5" height="5"></rect><rect x="14" y="5" width="5" height="5"></rect><rect x="5" y="14" width="5" height="5"></rect><rect x="14" y="14" width="5" height="5"></rect></svg>
+                </button>
+                <button type="button" data-logo-view="poster" aria-label="Логотипы крупными карточками" aria-pressed="false" title="Карточки">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="14" height="16"></rect><path d="M5 13h14"></path></svg>
+                </button>
+              </div>
+              <button class="multitool__module-close" type="button" data-close-panel="partners" aria-label="Закрыть раздел «Партнёрства»" title="Закрыть раздел «Партнёрства»">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg>
+              </button>
+            </div>
+          </header>
           <div class="logo-grid logo-grid--partners">
-            <a class="logo logo-cosmotheca" href="https://cosmotheca.com/" target="_blank" rel="noopener"><img src="assets/logos-transparent/cosmotheca.png" alt="Cosmotheca" loading="lazy" decoding="async"></a>
-            <a class="logo logo-rutv" href="https://ru.tv/press/anonsy/barbery-prigotovyat-lyulya-kebab-v-poedinke-so-vkusom" target="_blank" rel="noopener"><img src="assets/logos-transparent/rutv-official.svg?v=20260716-1" alt="RU.TV" loading="lazy" decoding="async"></a>
-            <a class="logo logo-amazingred" href="https://amazingred.ru/" target="_blank" rel="noopener"><img src="assets/logos-transparent/amazingred.png" alt="Amazing Red" loading="lazy" decoding="async"></a>
-            <a class="logo logo-keune" href="https://www.keune.com/" target="_blank" rel="noopener"><img src="assets/logos-transparent/keune-official.svg?v=20260717-1" alt="Keune" loading="lazy" decoding="async"></a>
-            <a class="logo logo-hiker" href="https://street-beat.ru/cat/hiker/" target="_blank" rel="noopener"><img src="assets/logos-transparent/hiker.svg?v=20260717-1" alt="Hiker" loading="lazy" decoding="async"></a>
-            <span class="logo logo-autoradio"><img src="assets/logos-transparent/autoradio.png?v=20260716-3" alt="Авторадио" loading="lazy" decoding="async"></span>
+            <a class="logo logo-cosmotheca" href="https://cosmotheca.com/" target="_blank" rel="noopener"><img src="assets/logos-transparent/cosmotheca.png" alt="Cosmotheca" loading="eager" decoding="async"></a>
+            <a class="logo logo-rutv" href="https://ru.tv/press/anonsy/barbery-prigotovyat-lyulya-kebab-v-poedinke-so-vkusom" target="_blank" rel="noopener"><img src="assets/logos-transparent/rutv-official.svg?v=20260716-1" alt="RU.TV" loading="eager" decoding="async"></a>
+            <a class="logo logo-amazingred" href="https://amazingred.ru/" target="_blank" rel="noopener"><img src="assets/logos-transparent/amazingred.png" alt="Amazing Red" loading="eager" decoding="async"></a>
+            <a class="logo logo-keune" href="https://www.keune.com/" target="_blank" rel="noopener"><img src="assets/logos-transparent/keune-official.svg?v=20260717-1" alt="Keune" loading="eager" decoding="async"></a>
+            <a class="logo logo-hiker" href="https://street-beat.ru/cat/hiker/" target="_blank" rel="noopener"><img src="assets/logos-transparent/hiker.svg?v=20260717-1" alt="Hiker" loading="eager" decoding="async"></a>
+            <span class="logo logo-autoradio"><img src="assets/logos-transparent/autoradio.png?v=20260716-3" alt="Авторадио" loading="eager" decoding="async"></span>
           </div>
           </section>
 
@@ -224,36 +228,26 @@
           </div>
 
           <div class="multitool__footer">
+          <p class="site-legal multitool__legal" id="instagram-legal"><span class="multitool__legal-mark" aria-hidden="true">*</span><span class="sr-only">Примечание. </span>Решением суда запрещена «деятельность компании <span lang="en">Meta Platforms Inc.</span> по&nbsp;реализации продуктов&nbsp;— социальных сетей <span lang="en">Facebook</span> и&nbsp;<span lang="en">Instagram</span> на&nbsp;территории Российской Федерации по&nbsp;основаниям осуществления экстремистской деятельности».</p>
           <div class="multitool__descriptor" aria-label="Мужской стилист, барбер, эксперт по мужскому уходу">
             <div class="multitool__descriptor-track" aria-hidden="true">
               <span>Мужской стилист · Барбер · Эксперт по мужскому уходу · © Герман Винокуров · 2026 ·&nbsp;</span>
               <span>Мужской стилист · Барбер · Эксперт по мужскому уходу · © Герман Винокуров · 2026 ·&nbsp;</span>
             </div>
           </div>
-          <p class="site-legal multitool__legal" id="instagram-legal"><span class="multitool__legal-mark" aria-hidden="true">*</span><span class="sr-only">Примечание. </span>Решением суда запрещена «деятельность компании <span lang="en">Meta Platforms Inc.</span> по&nbsp;реализации продуктов&nbsp;— социальных сетей <span lang="en">Facebook</span> и&nbsp;<span lang="en">Instagram</span> на&nbsp;территории Российской Федерации по&nbsp;основаниям осуществления экстремистской деятельности».</p>
           <div class="multitool__meta">
-            <a class="multitool__credit" href="https://anton-gorokhovatsky.github.io/design/" target="_blank" rel="author noopener">Дизайн и&nbsp;разработка</a>
+            <a class="multitool__credit" href="https://anton-gorokhovatsky.github.io/design/" target="_blank" rel="author noopener">
+              <span>Дизайн и&nbsp;разработка</span>
+              <span class="multitool__credit-arrow" aria-hidden="true">
+                <svg viewBox="0 0 24 24" focusable="false">
+                  <path d="M5.5 18.5 18.5 5.5M9 5.5h9.5V15" />
+                </svg>
+              </span>
+            </a>
           </div>
           <div class="multitool__service">
-            <div class="logo-view-toggle" role="group" aria-label="Вид логотипов" hidden>
-              <button type="button" data-logo-view="list" aria-label="Логотипы списком" aria-pressed="false" title="Логотипы списком">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14"></path></svg>
-              </button>
-              <button type="button" data-logo-view="grid" aria-label="Логотипы сеткой" aria-pressed="true" title="Логотипы сеткой">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="5" width="5" height="5"></rect><rect x="14" y="5" width="5" height="5"></rect><rect x="5" y="14" width="5" height="5"></rect><rect x="14" y="14" width="5" height="5"></rect></svg>
-              </button>
-              <button type="button" data-logo-view="poster" aria-label="Логотипы крупными карточками" aria-pressed="false" title="Логотипы крупными карточками">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="14" height="16"></rect><path d="M5 13h14"></path></svg>
-              </button>
-            </div>
             <button class="motion-toggle" type="button" aria-label="Уменьшить движение" aria-pressed="false" title="Уменьшить движение">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 8h5.75M2.5 12h5M4.5 16h4.75"></path><circle cx="16.5" cy="12" r="4.5"></circle><path d="M16.5 9.75V12l1.65 1.2"></path></svg>
-            </button>
-            <button class="transparency-toggle" type="button" aria-label="Уменьшить прозрачность" aria-pressed="false" title="Уменьшить прозрачность">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <rect x="3.5" y="5.5" width="12" height="12" rx="2.5"></rect>
-                <rect x="8.5" y="8.5" width="12" height="12" rx="2.5"></rect>
-              </svg>
             </button>
             <button class="theme-toggle" type="button" aria-label="Включить тёмную тему" aria-pressed="false" title="Включить тёмную тему">
               <svg class="theme-toggle__icon theme-toggle__icon--light" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2.75v2M12 19.25v2M2.75 12h2M19.25 12h2M5.46 5.46l1.42 1.42M17.12 17.12l1.42 1.42M18.54 5.46l-1.42 1.42M6.88 17.12l-1.42 1.42"></path></svg>
@@ -261,12 +255,21 @@
             </button>
           </div>
           </div>
+          <div class="multitool__live" aria-label="Сейчас">
+            <div class="multitool__presence" aria-live="polite" aria-atomic="true">
+              <span class="multitool__live-label">Сейчас на сайте</span>
+              <strong><span data-online-count>—</span><span data-online-unit> посетителей</span></strong>
+            </div>
+            <a class="multitool__weather" href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer" aria-label="Текущая погода в Москве. Источник — Open-Meteo">
+              <span class="multitool__live-label">Москва</span>
+              <strong><span data-weather-temperature>—&#8239;°C</span><span class="multitool__weather-copy" data-weather-status>Погода загружается</span></strong>
+            </a>
+          </div>
         </div>
         <p class="multitool__status" role="status" aria-live="polite" aria-atomic="true" hidden></p>
       </nav>
 
       <article class="text-block text-block--practice glass-surface glass-surface--expanded" id="practice-panel" aria-labelledby="practice-title" tabindex="-1" hidden>
-        <canvas class="glass-refractor" aria-hidden="true"></canvas>
         <header class="text-block__bar">
           <button class="text-block__index text-block__drag-handle" type="button" aria-label="Переместить панель «Экспертиза». Используйте стрелки, чтобы перемещать её, и клавишу Home, чтобы вернуть на место.">02 / Практика</button>
           <button class="text-block__close" type="button" data-close-panel="practice" aria-label="Закрыть панель «Экспертиза»" title="Закрыть панель «Экспертиза»">
@@ -319,6 +322,7 @@
         </section>
 
         </div>
+        <div class="text-block__fade" aria-hidden="true"></div>
       </article>
     </section>
   </main>
