@@ -54,12 +54,15 @@ const visualQAOnline = Number.parseInt(queryParams.get('qa-online') || '', 10);
 const visualQAWeatherTemperature = Number.parseFloat(queryParams.get('qa-weather-temperature') || '');
 const visualQAWeatherCode = Number.parseInt(queryParams.get('qa-weather-code') || '', 10);
 const metrikaCounterId = 110837561;
-const presenceEndpoint = (root.dataset.presenceEndpoint || '').replace(/\/+$/, '');
+const presenceEndpoint = (root.dataset.presenceEndpoint || '').replace(/\/+$/, '').replace(/\.json$/, '');
+const presenceApiKey = root.dataset.presenceApiKey || '';
+const presenceAuthStorageKey = 'barberherman-presence-auth';
+const presenceActiveWindow = 75_000;
+const presenceStaleWindow = 180_000;
+const presenceCleanupInterval = 300_000;
 const weatherCacheKey = 'barberherman-moscow-weather';
 
-root.dataset.presenceAvailable = String(
-  Number.isFinite(visualQAOnline) || Boolean(presenceEndpoint)
-);
+root.dataset.presenceAvailable = String(Number.isFinite(visualQAOnline));
 
 let hasSavedTheme = false;
 let hasSavedReducedMotion = false;
@@ -75,7 +78,9 @@ let panelLayer = 6;
 let mostRecentPanelName = null;
 let multitoolStatusTimer = 0;
 let presenceTimer = 0;
-let presenceSessionId = '';
+let presenceAuth = null;
+let presenceSyncing = false;
+let presenceCleanupAt = 0;
 
 function reachMetrikaGoal(goal, params = {}) {
   if (!goal || typeof window.ym !== 'function') return;
@@ -314,6 +319,7 @@ function visitorUnit(count) {
 function renderOnlineCount(count) {
   if (!onlineCountLabel || !onlineUnitLabel || !Number.isFinite(count)) return;
   const safeCount = Math.max(0, Math.round(count));
+  root.dataset.presenceAvailable = 'true';
   onlineCountLabel.textContent = String(safeCount);
   onlineUnitLabel.textContent = visitorUnit(safeCount);
   onlineCountLabel.closest('.multitool__presence')?.setAttribute(
@@ -322,22 +328,159 @@ function renderOnlineCount(count) {
   );
 }
 
-function getPresenceSessionId() {
-  if (presenceSessionId) return presenceSessionId;
+function normalizePresenceAuth(payload) {
+  const uid = payload?.uid || payload?.localId || payload?.user_id;
+  const idToken = payload?.idToken || payload?.id_token;
+  const refreshToken = payload?.refreshToken || payload?.refresh_token;
+  const expiresIn = Number(payload?.expiresIn || payload?.expires_in);
+
+  if (!uid || !idToken || !refreshToken || !Number.isFinite(expiresIn)) return null;
+
+  return {
+    uid,
+    idToken,
+    refreshToken,
+    expiresAt: Date.now() + (expiresIn * 1000),
+  };
+}
+
+function loadPresenceAuth() {
+  if (presenceAuth) return presenceAuth;
   try {
-    presenceSessionId = sessionStorage.getItem('barberherman-presence-id') || '';
-    if (!presenceSessionId) {
-      presenceSessionId = typeof crypto.randomUUID === 'function'
-        ? crypto.randomUUID().replaceAll('-', '')
-        : `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`;
-      sessionStorage.setItem('barberherman-presence-id', presenceSessionId);
-    }
+    const stored = JSON.parse(sessionStorage.getItem(presenceAuthStorageKey) || 'null');
+    if (
+      typeof stored?.uid === 'string'
+      && typeof stored?.idToken === 'string'
+      && typeof stored?.refreshToken === 'string'
+      && Number.isFinite(Number(stored?.expiresAt))
+    ) presenceAuth = { ...stored, expiresAt: Number(stored.expiresAt) };
   } catch {
-    presenceSessionId = typeof crypto.randomUUID === 'function'
-      ? crypto.randomUUID().replaceAll('-', '')
-      : `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`;
+    // Presence can continue in memory when session storage is unavailable.
   }
-  return presenceSessionId;
+  return presenceAuth;
+}
+
+function storePresenceAuth(auth) {
+  presenceAuth = auth;
+  try {
+    sessionStorage.setItem(presenceAuthStorageKey, JSON.stringify(auth));
+  } catch {
+    // Presence can continue in memory when session storage is unavailable.
+  }
+}
+
+function clearPresenceAuth() {
+  presenceAuth = null;
+  try {
+    sessionStorage.removeItem(presenceAuthStorageKey);
+  } catch {
+    // Nothing else is required when session storage is unavailable.
+  }
+}
+
+async function createPresenceAuth() {
+  const response = await fetch(
+    `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${encodeURIComponent(presenceApiKey)}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ returnSecureToken: true }),
+      cache: 'no-store',
+      credentials: 'omit',
+    }
+  );
+  if (!response.ok) throw new Error(`Presence sign-in failed: ${response.status}`);
+
+  const auth = normalizePresenceAuth(await response.json());
+  if (!auth) throw new Error('Presence sign-in returned an incomplete session');
+  storePresenceAuth(auth);
+  return auth;
+}
+
+async function refreshPresenceAuth(auth) {
+  const body = new URLSearchParams({
+    grant_type: 'refresh_token',
+    refresh_token: auth.refreshToken,
+  });
+  const response = await fetch(
+    `https://securetoken.googleapis.com/v1/token?key=${encodeURIComponent(presenceApiKey)}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body,
+      cache: 'no-store',
+      credentials: 'omit',
+    }
+  );
+  if (!response.ok) throw new Error(`Presence token refresh failed: ${response.status}`);
+
+  const nextAuth = normalizePresenceAuth(await response.json());
+  if (!nextAuth) throw new Error('Presence token refresh returned an incomplete session');
+  storePresenceAuth(nextAuth);
+  return nextAuth;
+}
+
+async function ensurePresenceAuth() {
+  const auth = loadPresenceAuth();
+  if (auth?.expiresAt > Date.now() + 120_000) return auth;
+
+  if (auth?.refreshToken) {
+    try {
+      return await refreshPresenceAuth(auth);
+    } catch {
+      clearPresenceAuth();
+    }
+  }
+  return createPresenceAuth();
+}
+
+function presenceUrl(path, auth, query = {}) {
+  const url = new URL(`${presenceEndpoint}${path}.json`);
+  url.searchParams.set('auth', auth.idToken);
+  Object.entries(query).forEach(([name, value]) => url.searchParams.set(name, String(value)));
+  return url;
+}
+
+async function confirmedPresenceTime(auth) {
+  const response = await fetch(presenceUrl(`/${encodeURIComponent(auth.uid)}`, auth), {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ seenAt: { '.sv': 'timestamp' } }),
+    cache: 'no-store',
+    credentials: 'omit',
+  });
+  if (!response.ok) throw new Error(`Presence write failed: ${response.status}`);
+
+  const written = await response.json();
+  let serverNow = Number(written?.seenAt);
+  if (Number.isFinite(serverNow)) return serverNow;
+
+  const timeResponse = await fetch(
+    presenceUrl(`/${encodeURIComponent(auth.uid)}/seenAt`, auth),
+    { cache: 'no-store', credentials: 'omit' }
+  );
+  if (!timeResponse.ok) throw new Error(`Presence timestamp read failed: ${timeResponse.status}`);
+  serverNow = Number(await timeResponse.json());
+  if (!Number.isFinite(serverNow)) throw new Error('Presence timestamp was not confirmed');
+  return serverNow;
+}
+
+async function cleanupStalePresence(auth, serverNow) {
+  if (Date.now() < presenceCleanupAt) return;
+  presenceCleanupAt = Date.now() + presenceCleanupInterval;
+
+  const response = await fetch(presenceUrl('', auth, {
+    orderBy: JSON.stringify('seenAt'),
+    endAt: serverNow - presenceStaleWindow,
+    limitToFirst: 25,
+  }), { cache: 'no-store', credentials: 'omit' });
+  if (!response.ok) return;
+
+  const staleSessions = await response.json();
+  await Promise.allSettled(Object.keys(staleSessions || {}).map((uid) => fetch(
+    presenceUrl(`/${encodeURIComponent(uid)}`, auth),
+    { method: 'DELETE', cache: 'no-store', credentials: 'omit' }
+  )));
 }
 
 async function syncPresence() {
@@ -345,39 +488,36 @@ async function syncPresence() {
     renderOnlineCount(visualQAOnline);
     return;
   }
-  if (!presenceEndpoint) return;
+  if (!presenceEndpoint || !presenceApiKey || presenceSyncing) return;
 
-  const sessionId = getPresenceSessionId();
-  const now = Date.now();
-
+  presenceSyncing = true;
   try {
-    const sessionResponse = await fetch(`${presenceEndpoint}/${sessionId}.json`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ seenAt: now }),
-      cache: 'no-store',
-    });
-    if (!sessionResponse.ok) throw new Error(`Presence write failed: ${sessionResponse.status}`);
-
-    const listResponse = await fetch(`${presenceEndpoint}.json`, { cache: 'no-store' });
+    const auth = await ensurePresenceAuth();
+    const serverNow = await confirmedPresenceTime(auth);
+    const listResponse = await fetch(presenceUrl('', auth, {
+      orderBy: JSON.stringify('seenAt'),
+      startAt: serverNow - presenceActiveWindow,
+    }), { cache: 'no-store', credentials: 'omit' });
     if (!listResponse.ok) throw new Error(`Presence read failed: ${listResponse.status}`);
     const sessions = await listResponse.json();
-    const activeSince = Date.now() - 75_000;
-    const activeCount = Object.values(sessions || {})
-      .filter((session) => Number(session?.seenAt) >= activeSince)
-      .length;
-    renderOnlineCount(Math.max(1, activeCount));
+    renderOnlineCount(Object.keys(sessions || {}).length);
+    cleanupStalePresence(auth, serverNow).catch(() => {});
   } catch {
     // Keep the last confirmed value; a realtime number must never be fabricated.
+  } finally {
+    presenceSyncing = false;
   }
 }
 
 function disconnectPresence() {
-  if (!presenceEndpoint || !presenceSessionId) return;
-  fetch(`${presenceEndpoint}/${presenceSessionId}.json`, {
+  window.clearInterval(presenceTimer);
+  const auth = loadPresenceAuth();
+  if (!presenceEndpoint || !auth?.uid || !auth?.idToken) return;
+  fetch(presenceUrl(`/${encodeURIComponent(auth.uid)}`, auth), {
     method: 'DELETE',
     cache: 'no-store',
     keepalive: true,
+    credentials: 'omit',
   }).catch(() => {});
 }
 
@@ -386,7 +526,7 @@ function startPresence() {
     renderOnlineCount(visualQAOnline);
     return;
   }
-  if (!presenceEndpoint) return;
+  if (!presenceEndpoint || !presenceApiKey) return;
   syncPresence();
   window.clearInterval(presenceTimer);
   presenceTimer = window.setInterval(syncPresence, 25_000);
@@ -1086,6 +1226,9 @@ document.addEventListener('visibilitychange', () => {
   if (!document.hidden) syncPresence();
 });
 window.addEventListener('pagehide', disconnectPresence);
+window.addEventListener('pageshow', (event) => {
+  if (event.persisted) startPresence();
+});
 dataConnection?.addEventListener?.('change', syncStageVideos);
 finePointerQuery.addEventListener('change', syncMultitoolDragAvailability);
 window.addEventListener('resize', () => requestAnimationFrame(() => {

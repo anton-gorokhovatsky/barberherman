@@ -1,0 +1,14 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "presence": {
+      ".indexOn": ["seenAt"],
+      ".read": "auth != null && query.orderByChild === 'seenAt' && ((query.startAt != null && query.startAt >= now - 120000) || (query.endAt != null && query.endAt <= now - 150000 && query.limitToFirst != null && query.limitToFirst <= 25))",
+      "$session": {
+        ".write": "auth != null && ($session === auth.uid || (!newData.exists() && data.child('seenAt').isNumber() && data.child('seenAt').val() < now - 150000))",
+        ".validate": "newData.hasChildren(['seenAt']) && newData.numChildren() === 1 && newData.child('seenAt').isNumber() && newData.child('seenAt').val() >= now - 10000 && newData.child('seenAt').val() <= now + 10000"
+      }
+    }
+  }
+}
