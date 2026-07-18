@@ -975,6 +975,10 @@ html[data-logo-view="list"] .logo img {
   max-height: calc(var(--logo-h, 29px) * 1.48);
 }
 
+html[data-logo-view="list"] .logo-m24 {
+  --logo-shift-y: -4px;
+}
+
 html[data-logo-view="poster"] .logo-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   grid-auto-rows: 126px;
@@ -1636,14 +1640,38 @@ html[data-theme="dark"] .theme-toggle__icon--light {
   }
 
   .multitool__address {
+    position: relative;
+    display: grid;
     min-height: var(--secondary-floor);
-    gap: 4px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto auto;
+    align-content: center;
+    align-items: center;
+    justify-content: stretch;
+    gap: 5px 8px;
     padding: 10px var(--floor-inline);
-    font-size: min(.75rem, 3.4vw);
+    font-size: min(.85rem, 3.8vw);
+    font-weight: 700;
+  }
+
+  .multitool__address > span:first-child {
+    grid-column: 1 / -1;
+    white-space: nowrap;
   }
 
   .multitool__contact-kind {
-    font-size: min(.56rem, 2.8vw);
+    grid-column: 1;
+    grid-row: 2;
+    font-size: min(.6rem, 2.9vw);
+  }
+
+  .multitool__address::after {
+    content: "↗";
+    grid-column: 2;
+    grid-row: 2;
+    align-self: center;
+    color: color-mix(in srgb, currentColor, transparent 28%);
+    font: 500 min(.9rem, 4vw)/1 var(--font);
   }
 
   .multitool__icon-link {
