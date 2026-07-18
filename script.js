@@ -480,18 +480,21 @@ function lockVideoToVisualPhase(video) {
   if (!(visualQAVideoPhase in phases)) return;
 
   const lockPhase = () => {
-    delete video.dataset.visualPhasePending;
     if (!Number.isFinite(video.duration) || video.duration <= 0) return;
 
     video.pause();
     video.currentTime = Math.min(video.duration - .05, video.duration * phases[visualQAVideoPhase]);
+    delete video.dataset.visualPhasePending;
   };
 
-  if (video.readyState >= HTMLMediaElement.HAVE_METADATA) {
+  /* Setting currentTime at loadedmetadata is ignored by some browsers until
+     the first frame is decoded. Keep visual QA deterministic by seeking only
+     once the media has current data. */
+  if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
     lockPhase();
   } else if (video.dataset.visualPhasePending !== visualQAVideoPhase) {
     video.dataset.visualPhasePending = visualQAVideoPhase;
-    video.addEventListener('loadedmetadata', lockPhase, { once: true });
+    video.addEventListener('loadeddata', lockPhase, { once: true });
   }
 }
 

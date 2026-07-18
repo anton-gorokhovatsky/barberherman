@@ -39,24 +39,26 @@
   --copy-shadow: 0 1px 16px rgba(255, 255, 255, .62);
   --tool-ink: #0a0a0b;
   --tool-line: rgba(11, 11, 13, .16);
-  --tool-border: rgba(255, 255, 255, .68);
-  --tool-border-open: rgba(255, 255, 255, .84);
+  --tool-border: rgba(255, 255, 255, .46);
+  --tool-border-open: rgba(255, 255, 255, .58);
   --tool-rule: .75px solid var(--tool-line);
   --tool-frame: .75px solid var(--tool-border);
-  --tool-background: rgba(247, 247, 245, .64);
-  --tool-background-open: rgba(247, 247, 245, .72);
-  --tool-tint: rgba(255, 255, 255, .055);
-  --tool-tint-open: rgba(255, 255, 255, .09);
-  --tool-highlight: rgba(255, 255, 255, .82);
-  --tool-reflection: rgba(255, 255, 255, .16);
+  --tool-background: rgba(247, 247, 245, .38);
+  --tool-background-open: rgba(247, 247, 245, .46);
+  --tool-backdrop: blur(40px) saturate(122%) contrast(88%);
+  --tool-backdrop-open: blur(46px) saturate(118%) contrast(86%);
+  --tool-tint: rgba(255, 255, 255, .025);
+  --tool-tint-open: rgba(255, 255, 255, .04);
+  --tool-highlight: rgba(255, 255, 255, .52);
+  --tool-reflection: rgba(255, 255, 255, .09);
   --tool-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, .72),
-    inset 0 -1px 0 rgba(18, 24, 37, .1),
-    0 14px 42px rgba(22, 28, 39, .13);
+    inset 0 1px 0 rgba(255, 255, 255, .42),
+    inset 0 -1px 0 rgba(18, 24, 37, .08),
+    0 18px 56px rgba(22, 28, 39, .14);
   --tool-shadow-open:
-    inset 0 1px 0 rgba(255, 255, 255, .86),
-    inset 0 -1px 0 rgba(18, 24, 37, .12),
-    0 26px 82px rgba(18, 24, 35, .22);
+    inset 0 1px 0 rgba(255, 255, 255, .5),
+    inset 0 -1px 0 rgba(18, 24, 37, .1),
+    0 24px 72px rgba(18, 24, 35, .19);
   --tool-hover: rgba(255, 255, 255, .16);
   --tool-solid: rgba(246, 248, 252, .96);
   --tool-soft: rgba(247, 247, 245, .84);
@@ -106,22 +108,22 @@ html[data-theme="dark"] {
   --copy-shadow: 0 1px 18px rgba(0, 0, 0, .72);
   --tool-ink: #f8f8fa;
   --tool-line: rgba(255, 255, 255, .16);
-  --tool-border: rgba(255, 255, 255, .34);
-  --tool-border-open: rgba(255, 255, 255, .52);
-  --tool-background: rgba(12, 13, 16, .6);
-  --tool-background-open: rgba(12, 13, 16, .68);
-  --tool-tint: rgba(5, 7, 11, .06);
-  --tool-tint-open: rgba(5, 7, 11, .15);
-  --tool-highlight: rgba(255, 255, 255, .52);
-  --tool-reflection: rgba(255, 255, 255, .09);
+  --tool-border: rgba(255, 255, 255, .24);
+  --tool-border-open: rgba(255, 255, 255, .34);
+  --tool-background: rgba(12, 13, 16, .44);
+  --tool-background-open: rgba(12, 13, 16, .52);
+  --tool-tint: rgba(5, 7, 11, .025);
+  --tool-tint-open: rgba(5, 7, 11, .055);
+  --tool-highlight: rgba(255, 255, 255, .34);
+  --tool-reflection: rgba(255, 255, 255, .06);
   --tool-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, .32),
-    inset 0 -1px 0 rgba(0, 0, 0, .28),
-    0 16px 48px rgba(0, 0, 0, .24);
+    inset 0 1px 0 rgba(255, 255, 255, .2),
+    inset 0 -1px 0 rgba(0, 0, 0, .24),
+    0 18px 58px rgba(0, 0, 0, .26);
   --tool-shadow-open:
-    inset 0 1px 0 rgba(255, 255, 255, .42),
-    inset 0 -1px 0 rgba(0, 0, 0, .36),
-    0 28px 88px rgba(0, 0, 0, .46);
+    inset 0 1px 0 rgba(255, 255, 255, .27),
+    inset 0 -1px 0 rgba(0, 0, 0, .3),
+    0 26px 78px rgba(0, 0, 0, .38);
   --tool-hover: rgba(255, 255, 255, .09);
   --tool-solid: rgba(14, 16, 21, .96);
   --tool-soft: rgba(16, 17, 21, .86);
@@ -536,8 +538,8 @@ html[data-content-open="true"] .stage-overlay {
   box-shadow: var(--tool-shadow);
   color: var(--tool-ink);
   isolation: isolate;
-  backdrop-filter: blur(28px) saturate(118%) contrast(102%);
-  -webkit-backdrop-filter: blur(28px) saturate(118%) contrast(102%);
+  backdrop-filter: var(--tool-backdrop);
+  -webkit-backdrop-filter: var(--tool-backdrop);
   scrollbar-width: none;
 }
 
@@ -545,14 +547,14 @@ html[data-content-open="true"] .stage-overlay {
 .multitool.is-open {
   background: var(--tool-background-open);
   box-shadow: var(--tool-shadow-open);
-  backdrop-filter: blur(34px) saturate(112%) contrast(102%);
-  -webkit-backdrop-filter: blur(34px) saturate(112%) contrast(102%);
+  backdrop-filter: var(--tool-backdrop-open);
+  -webkit-backdrop-filter: var(--tool-backdrop-open);
 }
 
 .text-block.glass-surface {
-  /* Expanded reading panes remain the same material as the menu; the small
-     solid admixture adds reading density without changing its hue. */
-  background: color-mix(in srgb, var(--tool-background-open), var(--tool-solid) 8%);
+  /* Reading panes use the same matte material as the menu. A very small solid
+     admixture raises density without creating a separate opaque card. */
+  background: color-mix(in srgb, var(--tool-background-open), var(--tool-solid) 5%);
 }
 
 .glass-surface::before {
@@ -561,16 +563,16 @@ html[data-content-open="true"] .stage-overlay {
   inset: 0;
   z-index: 1;
   background:
-    radial-gradient(ellipse 68% 8% at var(--glass-x, 26%) 0%, color-mix(in srgb, var(--tool-highlight), transparent 30%), transparent 78%),
-    linear-gradient(135deg, var(--tool-tint), transparent 44%, color-mix(in srgb, var(--tool-reflection), transparent 36%));
+    radial-gradient(ellipse 68% 8% at var(--glass-x, 26%) 0%, color-mix(in srgb, var(--tool-highlight), transparent 58%), transparent 78%),
+    linear-gradient(135deg, var(--tool-tint), transparent 44%, color-mix(in srgb, var(--tool-reflection), transparent 58%));
   pointer-events: none;
 }
 
 .glass-surface--expanded::before,
 .multitool.is-open::before {
   background:
-    radial-gradient(ellipse 70% 8% at var(--glass-x, 26%) 0%, color-mix(in srgb, var(--tool-highlight), transparent 24%), transparent 78%),
-    linear-gradient(135deg, var(--tool-tint-open), transparent 46%, color-mix(in srgb, var(--tool-reflection), transparent 44%));
+    radial-gradient(ellipse 70% 8% at var(--glass-x, 26%) 0%, color-mix(in srgb, var(--tool-highlight), transparent 52%), transparent 78%),
+    linear-gradient(135deg, var(--tool-tint-open), transparent 46%, color-mix(in srgb, var(--tool-reflection), transparent 62%));
 }
 
 .glass-surface::after {
@@ -581,7 +583,7 @@ html[data-content-open="true"] .stage-overlay {
   border: 0;
   border-radius: inherit;
   box-shadow:
-    inset 0 1px 0 color-mix(in srgb, white, transparent 34%),
+    inset 0 1px 0 color-mix(in srgb, white, transparent 68%),
     inset 0 -1px 0 color-mix(in srgb, var(--tool-ink), transparent 88%);
   pointer-events: none;
 }
@@ -589,7 +591,7 @@ html[data-content-open="true"] .stage-overlay {
 .glass-surface--expanded::after,
 .multitool.is-open::after {
   box-shadow:
-    inset 0 1px 0 color-mix(in srgb, white, transparent 22%),
+    inset 0 1px 0 color-mix(in srgb, white, transparent 60%),
     inset 0 -1px 0 color-mix(in srgb, var(--tool-ink), transparent 84%);
 }
 
