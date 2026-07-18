@@ -1560,7 +1560,7 @@ html[data-theme="dark"] .theme-toggle__icon--light {
 
   .multitool {
     order: 1;
-    width: min(100%, 560px);
+    width: min(100%, 680px);
     max-height: none;
     margin: 0 auto;
     scroll-margin-top: max(12px, var(--safe-top));
@@ -1618,7 +1618,7 @@ html[data-theme="dark"] .theme-toggle__icon--light {
   }
 
   .multitool__primary {
-    grid-template-columns: minmax(0, .84fr) minmax(0, 1.16fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .multitool__brand {
@@ -1725,10 +1725,10 @@ html[data-theme="dark"] .theme-toggle__icon--light {
 
   .multitool__booking {
     min-height: var(--primary-floor);
-    padding-inline: 10px;
+    padding-inline: 8px;
     /* The viewport cap keeps the single essential action intact when the
        reader raises the browser's base text size. */
-    font-size: min(1.62rem, 7vw);
+    font-size: min(1.48rem, 6.3vw);
     letter-spacing: -.035em;
   }
 
