@@ -41,10 +41,12 @@ const visualQAContrast = queryParams.get('qa-contrast');
 const visualQAPanels = queryParams.get('qa-panels');
 const visualQATheme = queryParams.get('qa-theme');
 const visualQATransparency = queryParams.get('qa-transparency');
+const visualQAMotion = queryParams.get('qa-motion');
 const visualQALogoView = queryParams.get('qa-logo-view');
 const visualQATickerPhase = queryParams.get('ticker-phase');
 const visualQAFocus = queryParams.get('qa-focus');
 const visualQASafeArea = queryParams.get('qa-safe-area');
+const metrikaCounterId = 110837561;
 
 let hasSavedTheme = false;
 let hasSavedReducedMotion = false;
@@ -54,12 +56,22 @@ let visualQATransparencyOverride = visualQATransparency === 'reduce'
   : visualQATransparency === 'full'
     ? false
     : null;
+let visualQAMotionOverride = visualQAMotion === 'reduce'
+  ? true
+  : visualQAMotion === 'full'
+    ? false
+    : null;
 let pointerFrame = 0;
 let latestPointerEvent = null;
 let latestGlassSurface = null;
 let panelLayer = 6;
 let mostRecentPanelName = null;
 let multitoolStatusTimer = 0;
+
+function reachMetrikaGoal(goal, params = {}) {
+  if (!goal || typeof window.ym !== 'function') return;
+  window.ym(metrikaCounterId, 'reachGoal', goal, params);
+}
 
 if (['125', '150', '200'].includes(visualQATextScale)) root.dataset.qaText = visualQATextScale;
 if (visualQAContrast === 'more') root.dataset.qaContrast = 'more';
@@ -171,7 +183,13 @@ function setPanelState(name, visible, { returnFocus = false } = {}) {
   }
   syncContentPresence();
   syncContextControls();
-  requestAnimationFrame(clampCurrentMultitoolPosition);
+  requestAnimationFrame(() => {
+    clampCurrentMultitoolPosition();
+    if (visible) {
+      const offset = panelOffset(panel);
+      setPanelOffset(panel, offset.x, offset.y);
+    }
+  });
 
   if (!visible && returnFocus) button.focus({ preventScroll: true });
 }
@@ -237,6 +255,7 @@ function applyVisualQAContentState() {
 }
 
 function prefersReducedMotion() {
+  if (visualQAMotionOverride !== null) return visualQAMotionOverride;
   return reduceMotionQuery.matches || hasSavedReducedMotion;
 }
 
@@ -422,10 +441,39 @@ function panelOffset(panel) {
 }
 
 function setPanelOffset(panel, x, y) {
-  panel.dataset.dragX = String(Math.round(x));
-  panel.dataset.dragY = String(Math.round(y));
-  panel.style.setProperty('--drag-x', `${Math.round(x)}px`);
-  panel.style.setProperty('--drag-y', `${Math.round(y)}px`);
+  let nextX = x;
+  let nextY = y;
+
+  if (!mobileQuery.matches && !panel.hidden) {
+    const current = panelOffset(panel);
+    const rect = panel.getBoundingClientRect();
+    const showcaseStyle = showcase ? getComputedStyle(showcase) : null;
+    const gutterLeft = Number.parseFloat(showcaseStyle?.paddingLeft || '0') || 0;
+    const gutterRight = Number.parseFloat(showcaseStyle?.paddingRight || '0') || 0;
+    const gutterTop = Number.parseFloat(showcaseStyle?.paddingTop || '0') || 0;
+    const gutterBottom = Number.parseFloat(showcaseStyle?.paddingBottom || '0') || 0;
+    const baseLeft = rect.left - current.x;
+    const baseTop = rect.top - current.y;
+    const minX = gutterLeft - baseLeft;
+    const maxX = window.innerWidth - gutterRight - (baseLeft + rect.width);
+    const minimumPanelHeight = Math.min(360, Math.max(260, window.innerHeight * .45));
+    const minY = gutterTop - baseTop;
+    const maxY = window.innerHeight - gutterBottom - minimumPanelHeight - baseTop;
+
+    nextX = minX <= maxX ? Math.min(maxX, Math.max(minX, x)) : 0;
+    nextY = minY <= maxY ? Math.min(maxY, Math.max(minY, y)) : minY;
+
+    const availableHeight = Math.max(
+      minimumPanelHeight,
+      window.innerHeight - gutterBottom - (baseTop + nextY),
+    );
+    panel.style.setProperty('--panel-available-height', `${Math.floor(availableHeight)}px`);
+  }
+
+  panel.dataset.dragX = String(Math.round(nextX));
+  panel.dataset.dragY = String(Math.round(nextY));
+  panel.style.setProperty('--drag-x', `${Math.round(nextX)}px`);
+  panel.style.setProperty('--drag-y', `${Math.round(nextY)}px`);
 }
 
 function bringPanelForward(panel) {
@@ -434,6 +482,7 @@ function bringPanelForward(panel) {
 }
 
 function resetPanelPosition(panel) {
+  panel.style.removeProperty('--panel-available-height');
   setPanelOffset(panel, 0, 0);
 }
 
@@ -780,7 +829,21 @@ sectionButtons.forEach((button) => {
     const willShow = button.getAttribute('aria-pressed') !== 'true';
     if (willShow && mobileQuery.matches) closeAllPanels();
     setPanelState(name, willShow);
-    if (willShow) revealPanel(name);
+    if (willShow) {
+      reachMetrikaGoal('module_open', { module: name });
+      revealPanel(name);
+    }
+  });
+});
+
+document.addEventListener('click', (event) => {
+  const control = event.target instanceof Element
+    ? event.target.closest('[data-metrika-goal]')
+    : null;
+  if (!control) return;
+
+  reachMetrikaGoal(control.dataset.metrikaGoal, {
+    label: control.dataset.metrikaLabel || control.getAttribute('aria-label') || control.textContent.trim(),
   });
 });
 
@@ -823,5 +886,12 @@ colorSchemeQuery.addEventListener('change', (event) => {
 document.addEventListener('visibilitychange', syncStageVideos);
 dataConnection?.addEventListener?.('change', syncStageVideos);
 finePointerQuery.addEventListener('change', syncMultitoolDragAvailability);
-window.addEventListener('resize', () => requestAnimationFrame(clampCurrentMultitoolPosition));
+window.addEventListener('resize', () => requestAnimationFrame(() => {
+  clampCurrentMultitoolPosition();
+  draggablePanels.forEach((panel) => {
+    if (panel.hidden) return;
+    const offset = panelOffset(panel);
+    setPanelOffset(panel, offset.x, offset.y);
+  });
+}));
 glassSurfaces.forEach((surface) => surface.addEventListener('pointermove', updateGlassHighlight, { passive: true }));
