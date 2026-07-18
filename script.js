@@ -44,6 +44,11 @@ const visualQAFocus = queryParams.get('qa-focus');
 let hasSavedTheme = false;
 let hasSavedReducedMotion = false;
 let reduceTransparencyPreference = true;
+let visualQATransparencyOverride = visualQATransparency === 'reduce'
+  ? true
+  : visualQATransparency === 'full'
+    ? false
+    : null;
 let pointerFrame = 0;
 let latestPointerEvent = null;
 let latestGlassSurface = null;
@@ -210,14 +215,13 @@ function prefersReducedMotion() {
 }
 
 function prefersReducedTransparency() {
-  if (visualQATransparency === 'reduce') return true;
-  if (visualQATransparency === 'full') return false;
+  if (visualQATransparencyOverride !== null) return visualQATransparencyOverride;
   return reduceTransparencyQuery.matches || reduceTransparencyPreference;
 }
 
 function applyTransparencyPreference({ persist = false } = {}) {
   const isReduced = prefersReducedTransparency();
-  const isSystemReduced = reduceTransparencyQuery.matches && !['reduce', 'full'].includes(visualQATransparency);
+  const isSystemReduced = reduceTransparencyQuery.matches && visualQATransparencyOverride === null;
   const title = isSystemReduced
     ? 'Прозрачность уменьшена в настройках системы'
     : isReduced
@@ -499,6 +503,13 @@ motionToggle?.addEventListener('click', () => {
 });
 
 transparencyToggle?.addEventListener('click', () => {
+  if (visualQATransparencyOverride !== null) {
+    visualQATransparencyOverride = !visualQATransparencyOverride;
+    reduceTransparencyPreference = visualQATransparencyOverride;
+    applyTransparencyPreference({ persist: true });
+    return;
+  }
+
   if (reduceTransparencyQuery.matches) return;
 
   reduceTransparencyPreference = !reduceTransparencyPreference;
