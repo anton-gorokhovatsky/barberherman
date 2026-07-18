@@ -67,17 +67,17 @@
          magnifies the scene while the rim bends it much more strongly. */
       vec2 bodyShift = vec2(centered.x * u_rect.z, -centered.y * u_rect.w)
         * mix(.018, .032, u_open);
-      float edgeStrength = mix(25.0, 42.0, u_open);
+      float edgeStrength = mix(18.0, 30.0, u_open);
       screenPoint -= bodyShift + lensNormal * edgeLens * edgeStrength;
 
       float scale = max(u_viewport.x / u_videoSize.x, u_viewport.y / u_videoSize.y);
       vec2 displaySize = u_videoSize * scale;
       vec2 px = 1.0 / displaySize;
       vec2 uv = videoUV(screenPoint);
-      float blurRadius = mix(.7, 1.25, u_open) + edgeLens * .8;
+      float blurRadius = mix(2.2, 4.2, u_open) + edgeLens * 1.2;
       vec4 color = softenedSample(uv, px, blurRadius);
 
-      vec2 chromaShift = lensNormal * px * edgeLens * mix(1.8, 3.0, u_open);
+      vec2 chromaShift = lensNormal * px * edgeLens * mix(.75, 1.35, u_open);
       color.r = texture2D(u_video, uv + chromaShift).r;
       color.b = texture2D(u_video, uv - chromaShift).b;
 
@@ -90,8 +90,8 @@
       /* System materials preserve legibility by adapting their density to
          both content and appearance instead of laying down a fixed grey veil. */
       float luminance = dot(color.rgb, vec3(.2126, .7152, .0722));
-      float lightDensity = (1.0 - smoothstep(.12, .62, luminance)) * mix(.24, .44, u_open);
-      float darkDensity = smoothstep(.34, .84, luminance) * mix(.25, .46, u_open);
+      float lightDensity = (1.0 - smoothstep(.12, .62, luminance)) * mix(.28, .58, u_open);
+      float darkDensity = smoothstep(.34, .84, luminance) * mix(.28, .54, u_open);
       vec3 lightMaterial = mix(color.rgb, vec3(.965, .97, .985), lightDensity);
       vec3 darkMaterial = mix(color.rgb, vec3(.018, .022, .034), darkDensity);
       color.rgb = mix(lightMaterial, darkMaterial, u_dark);

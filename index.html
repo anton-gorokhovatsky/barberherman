@@ -116,6 +116,7 @@
 
     <section class="showcase" id="content" tabindex="-1" aria-label="Герман Винокуров — профиль, экспертиза и контакты">
       <h1 class="sr-only">Герман Винокуров — мужской стилист и барбер</h1>
+      <p class="sr-only" id="module-status" aria-live="polite" aria-atomic="true"></p>
       <article class="text-block text-block--profile glass-surface glass-surface--expanded" id="profile-panel" aria-labelledby="profile-title" hidden>
         <canvas class="glass-refractor" aria-hidden="true"></canvas>
         <header class="text-block__bar">
@@ -159,13 +160,13 @@
         <div class="multitool__drawer" id="multitool-drawer">
           <div class="multitool__sections" aria-label="Разделы страницы">
             <button type="button" data-panel="profile" aria-controls="profile-panel" aria-pressed="false" aria-expanded="false"><span class="multitool__section-index">01</span><span class="multitool__section-label">Профиль</span></button>
-            <button type="button" data-panel="practice" aria-controls="practice-panel" aria-pressed="false" aria-expanded="false"><span class="multitool__section-index">02</span><span class="multitool__section-label">Экспер&shy;тиза</span></button>
+            <button type="button" data-panel="practice" aria-controls="practice-panel" aria-pressed="false" aria-expanded="false"><span class="multitool__section-index">02</span><span class="multitool__section-label">Экспертиза</span></button>
             <button type="button" data-panel="media" aria-controls="media-panel" aria-pressed="false" aria-expanded="false"><span class="multitool__section-index">03</span><span class="multitool__section-label">Медиа</span></button>
-            <button type="button" data-panel="partners" aria-controls="partners-panel" aria-pressed="false" aria-expanded="false"><span class="multitool__section-index">04</span><span class="multitool__section-label">Парт&shy;нёрства</span></button>
+            <button type="button" data-panel="partners" aria-controls="partners-panel" aria-pressed="false" aria-expanded="false"><span class="multitool__section-index">04</span><span class="multitool__section-label">Партнёрства</span></button>
             <button type="button" data-panel="gallery" aria-controls="gallery-panel" aria-pressed="false" aria-expanded="false"><span class="multitool__section-index">05</span><span class="multitool__section-label">Галерея</span></button>
           </div>
 
-          <section class="multitool__gallery" id="gallery-panel" aria-labelledby="gallery-title" hidden>
+          <section class="multitool__gallery" id="gallery-panel" aria-labelledby="gallery-title" tabindex="-1" hidden>
             <header class="multitool__gallery-header">
               <h2 id="gallery-title">Личный архив</h2>
               <span class="multitool__gallery-count" aria-label="Изображение 1 из 1">01 / 01</span>
@@ -178,7 +179,7 @@
             </div>
           </section>
 
-          <section class="multitool__catalog" id="media-panel" aria-labelledby="media-title" data-catalog="media" hidden>
+          <section class="multitool__catalog" id="media-panel" aria-labelledby="media-title" data-catalog="media" tabindex="-1" hidden>
           <h2 id="media-title">Медиа и&nbsp;пресса</h2>
           <div class="logo-grid logo-grid--media">
             <a class="logo logo-timeout" href="https://www.timeout.ru/msk/feature/456194" target="_blank" rel="noopener"><img src="assets/logos-transparent/timeout.png" alt="Time Out" loading="lazy" decoding="async"></a>
@@ -194,7 +195,7 @@
           </div>
           </section>
 
-          <section class="multitool__catalog" id="partners-panel" aria-labelledby="partners-title" data-catalog="partners" hidden>
+          <section class="multitool__catalog" id="partners-panel" aria-labelledby="partners-title" data-catalog="partners" tabindex="-1" hidden>
           <h2 id="partners-title">Партнёрства и&nbsp;коллаборации</h2>
           <div class="logo-grid logo-grid--partners">
             <a class="logo logo-cosmotheca" href="https://cosmotheca.com/" target="_blank" rel="noopener"><img src="assets/logos-transparent/cosmotheca.png" alt="Cosmotheca" loading="lazy" decoding="async"></a>
@@ -221,8 +222,8 @@
           <div class="multitool__footer">
           <div class="multitool__descriptor" aria-label="Мужской стилист, барбер, эксперт по мужскому уходу">
             <div class="multitool__descriptor-track" aria-hidden="true">
-              <span>Мужской стилист · Барбер · Эксперт по мужскому уходу · © Герман Винокуров · 2026 ·</span>
-              <span>Мужской стилист · Барбер · Эксперт по мужскому уходу · © Герман Винокуров · 2026 ·</span>
+              <span>Мужской стилист · Барбер · Эксперт по мужскому уходу · © Герман Винокуров · 2026 ·&nbsp;</span>
+              <span>Мужской стилист · Барбер · Эксперт по мужскому уходу · © Герман Винокуров · 2026 ·&nbsp;</span>
             </div>
           </div>
           <p class="site-legal multitool__legal" id="instagram-legal"><span class="multitool__legal-mark" aria-hidden="true">*</span><span class="sr-only">Примечание. </span>Решением суда запрещена «деятельность компании <span lang="en">Meta Platforms Inc.</span> по&nbsp;реализации продуктов&nbsp;— социальных сетей <span lang="en">Facebook</span> и&nbsp;<span lang="en">Instagram</span> на&nbsp;территории Российской Федерации по&nbsp;основаниям осуществления экстремистской деятельности».</p>

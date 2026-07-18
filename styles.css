@@ -14,6 +14,8 @@
   --tool-ink: #0a0a0b;
   --tool-line: rgba(11, 11, 13, .18);
   --tool-border: rgba(255, 255, 255, .52);
+  --tool-rule: .75px solid var(--tool-line);
+  --tool-frame: .75px solid var(--tool-border);
   --tool-background: rgba(246, 248, 252, .18);
   --tool-background-open: rgba(246, 248, 252, .46);
   --tool-tint: rgba(246, 248, 252, .06);
@@ -33,6 +35,8 @@
     0 28px 90px rgba(18, 24, 35, .24);
   --tool-hover: rgba(255, 255, 255, .16);
   --tool-solid: rgba(246, 248, 252, .96);
+  --tool-soft: rgba(239, 242, 248, .7);
+  --tool-soft-line: rgba(255, 255, 255, .68);
   --font: Arial, Helvetica, sans-serif;
   /* Continuous type scale: each value responds to both the reader's
      base font size (rem) and the available viewport (vw). */
@@ -83,6 +87,8 @@ html[data-theme="dark"] {
     0 30px 96px rgba(0, 0, 0, .46);
   --tool-hover: rgba(255, 255, 255, .09);
   --tool-solid: rgba(14, 16, 21, .96);
+  --tool-soft: rgba(13, 16, 22, .74);
+  --tool-soft-line: rgba(255, 255, 255, .34);
 }
 
 * {
@@ -257,7 +263,7 @@ html[data-content-open="true"] .stage-overlay {
   display: grid;
   min-height: 54px;
   grid-template-columns: minmax(0, 1fr) 54px;
-  border-bottom: .75px solid var(--tool-line);
+  border-bottom: var(--tool-rule);
 }
 
 .text-block__scroll {
@@ -297,7 +303,7 @@ html[data-content-open="true"] .stage-overlay {
   place-items: center;
   padding: 0;
   border: 0;
-  border-left: .75px solid var(--tool-line);
+  border-left: var(--tool-rule);
   border-radius: 0;
   background: transparent;
   color: inherit;
@@ -407,26 +413,21 @@ html[data-content-open="true"] .stage-overlay {
 }
 
 .practice-group ul {
-  list-style: none;
+  list-style: disc outside;
   margin-bottom: 0;
-  padding-left: 1.05em;
+  padding-left: 1.15em;
 }
 
 .practice-group li {
-  position: relative;
-  padding-left: 0;
+  padding-left: .08em;
 }
 
 .practice-group li + li {
   margin-top: 7px;
 }
 
-.practice-group li::before {
-  content: "·";
-  position: absolute;
-  top: 0;
-  right: calc(100% + .42em);
-  font-size: .8em;
+.practice-group li::marker {
+  font-size: .68em;
 }
 
 .practice-group a {
@@ -446,7 +447,7 @@ html[data-content-open="true"] .stage-overlay {
 .glass-surface {
   position: relative;
   overflow: hidden;
-  border: .75px solid var(--tool-border);
+  border: var(--tool-frame);
   border-radius: 3px;
   background: var(--tool-background);
   box-shadow: var(--tool-shadow);
@@ -536,7 +537,7 @@ html[data-content-open="true"] .stage-overlay {
 }
 
 .multitool {
-  --secondary-floor: 112px;
+  --secondary-floor: 96px;
   grid-area: stack;
   z-index: 5;
   width: min(100%, 760px);
@@ -601,20 +602,11 @@ html[data-menu-open="true"] .stage-brand {
   display: grid;
   min-height: 112px;
   grid-template-columns: minmax(0, 1fr) 74px;
-  border-bottom: .75px solid var(--tool-line);
-  box-shadow: 0 .75px 0 var(--tool-line);
+  border-bottom: var(--tool-rule);
 }
 
 .multitool__primary::after {
-  content: "";
-  position: absolute;
-  z-index: 5;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  height: 1px;
-  background: var(--tool-line);
-  pointer-events: none;
+  content: none;
 }
 
 .multitool.is-open .multitool__primary {
@@ -630,7 +622,7 @@ html[data-menu-open="true"] .stage-brand {
   justify-content: center;
   padding: 0;
   border: 0;
-  border-left: .75px solid var(--tool-line);
+  border-left: var(--tool-rule);
   border-radius: 0;
   background: transparent;
   color: inherit;
@@ -652,7 +644,7 @@ html[data-menu-open="true"] .stage-brand {
 .multitool__contacts,
 .multitool__catalog,
 .multitool__footer {
-  border-top: .75px solid var(--tool-line);
+  border-top: var(--tool-rule);
 }
 
 .multitool__sections {
@@ -675,6 +667,7 @@ html[data-menu-open="true"] .stage-brand {
   color: inherit;
   text-align: left;
   cursor: pointer;
+  container-type: inline-size;
 }
 
 .multitool__sections button > span,
@@ -694,26 +687,38 @@ html[data-menu-open="true"] .stage-brand {
   grid-column: 1;
   grid-row: 2;
   align-self: end;
-  font: 600 min(1.42rem, 6.6vw)/.96 var(--font);
+  padding-right: 1.35rem;
+  font-family: var(--font);
+  font-size: min(1.42rem, calc(.72rem + 5.5cqi));
+  font-weight: 600;
+  line-height: .96;
+  letter-spacing: -.025em;
+  overflow-wrap: normal;
+  white-space: nowrap;
+}
+
+html[data-qa-text] .multitool__section-label {
   overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 .multitool__sections button::after {
   content: "+";
-  grid-column: 2;
+  grid-column: 1 / -1;
   grid-row: 1 / 3;
   align-self: center;
+  justify-self: end;
   color: color-mix(in srgb, currentColor, transparent 25%);
   font-size: 1.35rem;
   font-weight: 400;
 }
 
 .multitool__sections button:nth-child(even) {
-  border-left: .75px solid var(--tool-line);
+  border-left: var(--tool-rule);
 }
 
 .multitool__sections button:nth-child(n + 3) {
-  border-top: .75px solid var(--tool-line);
+  border-top: var(--tool-rule);
 }
 
 .multitool__sections button:nth-child(5) {
@@ -732,8 +737,8 @@ html[data-menu-open="true"] .stage-brand {
 
 .multitool__sections:has(button[aria-pressed="true"]) button:not([aria-pressed="true"]) > span,
 .multitool__sections:has(button[aria-pressed="true"]) button:not([aria-pressed="true"])::after {
-  opacity: .38;
-  filter: blur(1.15px);
+  opacity: .5;
+  filter: blur(.55px);
 }
 
 .multitool__booking {
@@ -782,7 +787,7 @@ html[data-menu-open="true"] .stage-brand {
   justify-content: center;
   gap: 6px;
   padding: 12px 18px;
-  border-right: .75px solid var(--tool-line);
+  border-right: var(--tool-rule);
   font: 600 clamp(.925rem, 1.5vw, 1.12rem)/1 var(--font);
   letter-spacing: -.015em;
 }
@@ -803,7 +808,7 @@ html[data-menu-open="true"] .stage-brand {
 
 .multitool__icon-link + .multitool__icon-link,
 .theme-toggle {
-  border-left: .75px solid var(--tool-line);
+  border-left: var(--tool-rule);
 }
 
 .multitool__icon-link svg,
@@ -835,11 +840,12 @@ html[data-menu-open="true"] .stage-brand {
 }
 
 .multitool__catalog {
-  padding: 22px 24px 26px;
+  padding: 0 0 26px;
 }
 
 .multitool__catalog h2 {
   margin: 0 0 20px;
+  padding: 22px 24px 0;
   font: 700 var(--type-ui)/1 var(--font);
   letter-spacing: .07em;
   text-transform: uppercase;
@@ -887,7 +893,7 @@ html[data-logo-view="list"] .logo-grid {
 html[data-logo-view="list"] .logo {
   justify-items: start;
   padding: 10px 2px;
-  border-top: .75px solid var(--tool-line);
+  border-top: var(--tool-rule);
 }
 
 html[data-logo-view="list"] .logo img {
@@ -948,7 +954,7 @@ html[data-theme="dark"] .logo-uomo img {
 
 .multitool__gallery,
 .multitool__footer {
-  border-top: .75px solid var(--tool-line);
+  border-top: var(--tool-rule);
 }
 
 .multitool__gallery-header {
@@ -958,7 +964,7 @@ html[data-theme="dark"] .logo-uomo img {
   align-items: center;
   gap: 16px;
   padding: 12px 20px;
-  border-bottom: .75px solid var(--tool-line);
+  border-bottom: var(--tool-rule);
 }
 
 .multitool__gallery-header h2 {
@@ -1020,7 +1026,7 @@ html[data-theme="dark"] .logo-uomo img {
   max-width: none;
   margin: 0;
   padding: 12px 18px 14px;
-  border-top: .75px solid var(--tool-line);
+  border-top: var(--tool-rule);
   color: color-mix(in srgb, var(--tool-ink), transparent 38%);
 }
 
@@ -1040,7 +1046,7 @@ html[data-theme="dark"] .logo-uomo img {
 
 .multitool__descriptor-track span {
   display: block;
-  padding: 17px 1.4em 17px 0;
+  padding: 17px 0;
 }
 
 @keyframes descriptor-ticker {
@@ -1076,7 +1082,7 @@ html[data-ticker-phase="seam"] .multitool__descriptor-track {
   display: grid;
   grid-column: 1;
   grid-template-columns: minmax(0, 1fr);
-  border-top: .75px solid var(--tool-line);
+  border-top: var(--tool-rule);
 }
 
 .multitool__credit {
@@ -1100,8 +1106,8 @@ html[data-ticker-phase="seam"] .multitool__descriptor-track {
   min-height: 70px;
   grid-template-columns: repeat(3, 70px);
   justify-self: end;
-  border-top: .75px solid var(--tool-line);
-  border-left: .75px solid var(--tool-line);
+  border-top: var(--tool-rule);
+  border-left: var(--tool-rule);
 }
 
 .multitool__service:has(.logo-view-toggle:not([hidden])) {
@@ -1123,7 +1129,7 @@ html[data-ticker-phase="seam"] .multitool__descriptor-track {
   place-items: center;
   padding: 0;
   border: 0;
-  border-right: .75px solid var(--tool-line);
+  border-right: var(--tool-rule);
   background: transparent;
   color: inherit;
   cursor: pointer;
@@ -1158,11 +1164,11 @@ html[data-ticker-phase="seam"] .multitool__descriptor-track {
 }
 
 .motion-toggle {
-  border-left: .75px solid var(--tool-line);
+  border-left: var(--tool-rule);
 }
 
 .transparency-toggle {
-  border-left: .75px solid var(--tool-line);
+  border-left: var(--tool-rule);
 }
 
 .motion-toggle svg {
@@ -1170,7 +1176,7 @@ html[data-ticker-phase="seam"] .multitool__descriptor-track {
   height: 22px;
   fill: currentColor;
   stroke: none;
-  transform: scale(.9);
+  transform: translateY(.25px) scale(.82);
 }
 
 .transparency-toggle svg {
@@ -1179,7 +1185,7 @@ html[data-ticker-phase="seam"] .multitool__descriptor-track {
   fill: color-mix(in srgb, currentColor, transparent 88%);
   stroke: currentColor;
   stroke-width: 1.55;
-  transform: scale(.92);
+  transform: translateY(.25px) scale(.88);
   vector-effect: non-scaling-stroke;
 }
 
@@ -1196,7 +1202,7 @@ html[data-ticker-phase="seam"] .multitool__descriptor-track {
   height: 22px !important;
   fill: currentColor !important;
   stroke: none !important;
-  transform: translate(-50%, -50%) scale(.88);
+  transform: translate(-50%, -49%) scale(.83);
 }
 
 .theme-toggle__icon--stars {
@@ -1204,19 +1210,25 @@ html[data-ticker-phase="seam"] .multitool__descriptor-track {
   height: 22px !important;
   fill: currentColor !important;
   stroke: none !important;
-  transform: translate(-50%, -50%) scale(.86);
+  transform: translate(-50%, -49%) scale(.8);
 }
 
 .motion-toggle[aria-pressed="true"],
 .transparency-toggle[aria-pressed="true"] {
   background: var(--tool-hover);
-  box-shadow: inset 0 -2px 0 currentColor;
+  box-shadow: inset 0 -1px 0 currentColor;
 }
 
 html[data-reduce-transparency="true"] .glass-surface {
-  background: var(--tool-solid) !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
+  border-color: var(--tool-soft-line);
+  background: var(--tool-soft) !important;
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, white, transparent 22%),
+    inset 1px 0 0 color-mix(in srgb, white, transparent 68%),
+    inset 0 -1px 0 color-mix(in srgb, var(--tool-ink), transparent 84%),
+    0 22px 70px color-mix(in srgb, var(--page), transparent 58%);
+  backdrop-filter: blur(22px) saturate(118%) contrast(104%) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(118%) contrast(104%) !important;
 }
 
 html[data-reduce-transparency="true"] .glass-refractor {
@@ -1224,6 +1236,20 @@ html[data-reduce-transparency="true"] .glass-refractor {
 }
 
 html[data-reduce-transparency="true"] .glass-surface::before {
+  background:
+    radial-gradient(ellipse 72% 12% at var(--glass-x, 28%) 0%, color-mix(in srgb, var(--tool-highlight), transparent 18%), transparent 76%),
+    radial-gradient(ellipse 52% 18% at 92% 100%, color-mix(in srgb, var(--tool-reflection), transparent 20%), transparent 78%),
+    linear-gradient(135deg, color-mix(in srgb, white, transparent 92%), transparent 42%, color-mix(in srgb, var(--tool-ink), transparent 97%));
+}
+
+html[data-system-reduced-transparency="true"] .glass-surface {
+  border-color: var(--tool-border);
+  background: var(--tool-solid) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+html[data-system-reduced-transparency="true"] .glass-surface::before {
   background: linear-gradient(color-mix(in srgb, var(--tool-highlight), transparent 82%), transparent 34%);
 }
 
@@ -1387,7 +1413,7 @@ html[data-theme="dark"] .theme-toggle__icon--glasses {
 
 @media (max-width: 480px) {
   .multitool {
-    --secondary-floor: 92px;
+    --secondary-floor: 80px;
   }
 
   .showcase {
@@ -1440,7 +1466,7 @@ html[data-theme="dark"] .theme-toggle__icon--glasses {
   }
 
   .multitool.is-open .multitool__primary {
-    min-height: 108px;
+    min-height: 96px;
     grid-template-columns: minmax(0, 1fr) 60px;
   }
 
@@ -1463,7 +1489,7 @@ html[data-theme="dark"] .theme-toggle__icon--glasses {
 
   .multitool.is-open .multitool__menu-toggle {
     width: 60px;
-    min-height: 108px;
+    min-height: 96px;
   }
 
   .multitool__contacts {
@@ -1499,7 +1525,11 @@ html[data-theme="dark"] .theme-toggle__icon--glasses {
   }
 
   .multitool__catalog {
-    padding: 18px 14px 20px;
+    padding: 0 0 20px;
+  }
+
+  .multitool__catalog h2 {
+    padding: 18px 14px 0;
   }
 
   .logo-grid--media {
@@ -1543,9 +1573,10 @@ html[data-theme="dark"] .theme-toggle__icon--glasses {
   }
 
   .multitool__service {
-    width: 162px;
+    width: 100%;
     min-height: 54px;
-    grid-template-columns: 54px 54px 54px;
+    grid-template-columns: repeat(3, minmax(54px, 1fr));
+    border-left: 0;
   }
 
   .multitool__service:has(.logo-view-toggle:not([hidden])) {

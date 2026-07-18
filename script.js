@@ -9,6 +9,7 @@ const multitool = document.querySelector('.multitool');
 const multitoolMenuToggle = document.querySelector('.multitool__menu-toggle');
 const multitoolMenuLabel = document.querySelector('.multitool__menu-label');
 const multitoolDrawer = document.getElementById('multitool-drawer');
+const moduleStatus = document.getElementById('module-status');
 const sectionButtons = [...document.querySelectorAll('[data-panel]')];
 const panelCloseButtons = [...document.querySelectorAll('[data-close-panel]')];
 const showcase = document.querySelector('.showcase');
@@ -143,6 +144,26 @@ function closeAllPanels() {
   Object.keys(contentPanels).forEach((name) => setPanelState(name, false));
 }
 
+function revealPanel(name) {
+  const panel = contentPanels[name];
+  if (!panel) return;
+
+  const title = panel.querySelector('h2');
+  const label = title?.textContent?.trim() || name;
+  if (moduleStatus) moduleStatus.textContent = `Открыт раздел «${label}»`;
+
+  requestAnimationFrame(() => {
+    if (panel.matches('[tabindex]')) panel.focus({ preventScroll: true });
+
+    if (mobileQuery.matches || panel.closest('.multitool__drawer')) {
+      panel.scrollIntoView({
+        block: 'start',
+        behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+      });
+    }
+  });
+}
+
 function setMenuOpen(open, { resetPanels = false } = {}) {
   if (!multitool || !multitoolMenuToggle || !multitoolDrawer) return;
 
@@ -195,6 +216,7 @@ function applyTransparencyPreference({ persist = false } = {}) {
       : 'Уменьшить прозрачность';
 
   root.dataset.reduceTransparency = String(isReduced);
+  root.dataset.systemReducedTransparency = String(isSystemReduced);
   transparencyToggle?.setAttribute('aria-pressed', String(isReduced));
   transparencyToggle?.setAttribute('aria-label', 'Уменьшенная прозрачность');
   transparencyToggle?.setAttribute('aria-disabled', String(isSystemReduced));
@@ -477,7 +499,9 @@ sectionButtons.forEach((button) => {
   button.addEventListener('click', () => {
     const name = button.dataset.panel;
     const willShow = button.getAttribute('aria-pressed') !== 'true';
+    if (willShow) closeAllPanels();
     setPanelState(name, willShow);
+    if (willShow) revealPanel(name);
   });
 });
 
