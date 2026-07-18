@@ -304,6 +304,7 @@ html[data-content-open="true"] .stage-overlay {
 
 .text-block__scroll {
   max-height: calc(var(--panel-available-height) - 54px);
+  container-type: inline-size;
   overflow-x: hidden;
   overflow-y: auto;
   padding: clamp(18px, 2.2vw, 30px);
@@ -421,6 +422,7 @@ html[data-content-open="true"] .stage-overlay {
 
 .text-block--profile > .text-block__scroll > h2 {
   font-size: var(--type-h1);
+  font-size: min(var(--type-h1), 18.5cqi);
   line-height: .86;
 }
 
@@ -848,7 +850,7 @@ html[data-qa-text] .multitool__section-label {
   align-items: center;
   justify-content: flex-start;
   padding: 0 var(--floor-inline);
-  font: 720 min(clamp(2.25rem, 4.4vw, 3.25rem), 6.65cqi)/.9 var(--font);
+  font: 680 min(clamp(2.25rem, 4.4vw, 3.25rem), 6.5cqi)/.9 var(--font);
   letter-spacing: -.022em;
   text-decoration: none;
   text-transform: uppercase;
@@ -1709,6 +1711,7 @@ html[data-theme="dark"] .theme-toggle__icon--light {
      the available measure becomes the stricter constraint. */
   .text-block--profile > .text-block__scroll > h2 {
     font-size: min(var(--type-h1), 15vw);
+    font-size: min(var(--type-h1), 18.5cqi, 15vw);
   }
 
   .text-block h2 {
@@ -1733,7 +1736,7 @@ html[data-theme="dark"] .theme-toggle__icon--light {
 
   .multitool__booking {
     min-height: var(--primary-floor);
-    padding-inline: 8px;
+    padding-inline: clamp(8px, 2.6cqi, var(--floor-inline));
     letter-spacing: -.035em;
   }
 
