@@ -614,6 +614,19 @@ function panelOffset(panel) {
   };
 }
 
+function dragViewportInsets() {
+  const styles = getComputedStyle(root);
+  const inset = (name) => Number.parseFloat(styles.getPropertyValue(name)) || 0;
+  const dragMargin = 8;
+
+  return {
+    top: inset('--safe-top') + dragMargin,
+    right: inset('--safe-right') + dragMargin,
+    bottom: inset('--safe-bottom') + dragMargin,
+    left: inset('--safe-left') + dragMargin,
+  };
+}
+
 function setPanelOffset(panel, x, y) {
   let nextX = x;
   let nextY = y;
@@ -621,21 +634,21 @@ function setPanelOffset(panel, x, y) {
   if (!mobileQuery.matches && !panel.hidden) {
     const current = panelOffset(panel);
     const rect = panel.getBoundingClientRect();
-    const dragMargin = 8;
+    const insets = dragViewportInsets();
     const baseLeft = rect.left - current.x;
     const baseTop = rect.top - current.y;
-    const minX = dragMargin - baseLeft;
-    const maxX = window.innerWidth - dragMargin - (baseLeft + rect.width);
+    const minX = insets.left - baseLeft;
+    const maxX = window.innerWidth - insets.right - (baseLeft + rect.width);
     const minimumPanelHeight = Math.min(360, Math.max(260, window.innerHeight * .45));
-    const minY = dragMargin - baseTop;
-    const maxY = window.innerHeight - dragMargin - minimumPanelHeight - baseTop;
+    const minY = insets.top - baseTop;
+    const maxY = window.innerHeight - insets.bottom - minimumPanelHeight - baseTop;
 
     nextX = minX <= maxX ? Math.min(maxX, Math.max(minX, x)) : 0;
     nextY = minY <= maxY ? Math.min(maxY, Math.max(minY, y)) : minY;
 
     const availableHeight = Math.max(
       minimumPanelHeight,
-      window.innerHeight - dragMargin - (baseTop + nextY),
+      window.innerHeight - insets.bottom - (baseTop + nextY),
     );
     panel.style.setProperty('--panel-available-height', `${Math.floor(availableHeight)}px`);
   }
@@ -754,7 +767,7 @@ function multitoolOffset() {
 function clampMultitoolOffset(x, y) {
   if (!multitool || mobileQuery.matches) return { x: 0, y: 0 };
 
-  const margin = 8;
+  const insets = dragViewportInsets();
   const rect = multitool.getBoundingClientRect();
   const transform = getComputedStyle(multitool).transform;
   let renderedX = 0;
@@ -774,11 +787,11 @@ function clampMultitoolOffset(x, y) {
 
   const baseLeft = rect.left - renderedX;
   const baseTop = rect.top - renderedY;
-  const minX = margin - baseLeft;
-  const maxX = window.innerWidth - margin - baseLeft - rect.width;
-  const minY = margin - baseTop;
-  const maxY = window.innerHeight - margin - baseTop - rect.height;
-  const clampAxis = (value, min, max) => (min > max ? 0 : Math.min(max, Math.max(min, value)));
+  const minX = insets.left - baseLeft;
+  const maxX = window.innerWidth - insets.right - baseLeft - rect.width;
+  const minY = insets.top - baseTop;
+  const maxY = window.innerHeight - insets.bottom - baseTop - rect.height;
+  const clampAxis = (value, min, max) => (min > max ? min : Math.min(max, Math.max(min, value)));
 
   return {
     x: clampAxis(x, minX, maxX),
@@ -801,10 +814,7 @@ function setMultitoolOffset(x, y) {
 function resetMultitoolPosition({ announce = false } = {}) {
   if (!multitool) return;
 
-  multitool.dataset.dragX = '0';
-  multitool.dataset.dragY = '0';
-  multitool.style.setProperty('--multitool-drag-x', '0px');
-  multitool.style.setProperty('--multitool-drag-y', '0px');
+  setMultitoolOffset(0, 0);
   if (announce) showMultitoolStatus('Меню возвращено в центр');
 }
 
@@ -822,6 +832,7 @@ function syncMultitoolDragAvailability() {
   multitoolDragHandle.tabIndex = isAvailable ? 0 : -1;
   multitoolDragHandle.setAttribute('aria-hidden', String(!isAvailable));
   if (!isAvailable) resetMultitoolPosition();
+  else requestAnimationFrame(clampCurrentMultitoolPosition);
 }
 
 function enableMultitoolDragging() {

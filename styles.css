@@ -614,7 +614,7 @@ html[data-content-open="true"] .stage-overlay {
   z-index: 5;
   width: min(100%, 760px);
   min-width: 0;
-  max-height: calc(100svh - (2 * var(--layout-gutter)));
+  max-height: calc(100svh - (2 * var(--layout-gutter)) - var(--safe-top) - var(--safe-bottom));
   transform: translate3d(var(--multitool-drag-x, 0), var(--multitool-drag-y, 0), 0);
   transition: transform var(--motion-medium) var(--ease-out);
   will-change: transform;
@@ -627,7 +627,7 @@ html[data-content-open="true"] .stage-overlay {
 }
 
 .multitool__drawer {
-  max-height: calc(100svh - 150px - (2 * var(--layout-gutter)));
+  max-height: calc(100svh - 150px - (2 * var(--layout-gutter)) - var(--safe-top) - var(--safe-bottom));
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
