@@ -50,6 +50,20 @@
   --layout-gutter: clamp(14px, 1.8vw, 28px);
   --object-gap: clamp(12px, 1.4vw, 22px);
   --photo-radius: clamp(68px, 11vw, 180px);
+  --motion-fast: 140ms;
+  --motion-medium: 220ms;
+  --ease-out: cubic-bezier(.2, .8, .2, 1);
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+}
+
+html[data-qa-safe-area="iphone"] {
+  --safe-top: 47px;
+  --safe-right: 0px;
+  --safe-bottom: 34px;
+  --safe-left: 0px;
 }
 
 html[data-theme="dark"] {
@@ -310,6 +324,23 @@ html[data-content-open="true"] .stage-overlay {
   cursor: pointer;
 }
 
+.text-block__index,
+.text-block__close,
+.multitool__brand,
+.multitool__booking,
+.multitool__sections button,
+.multitool__address,
+.multitool__icon-link,
+.logo-view-toggle button,
+.motion-toggle,
+.transparency-toggle,
+.theme-toggle {
+  transition:
+    background-color var(--motion-fast) linear,
+    box-shadow var(--motion-medium) var(--ease-out),
+    opacity var(--motion-fast) linear;
+}
+
 .text-block__close svg {
   width: 20px;
   height: 20px;
@@ -548,6 +579,15 @@ html[data-content-open="true"] .stage-overlay {
   width: min(100%, 760px);
   min-width: 0;
   max-height: calc(100svh - (2 * var(--layout-gutter)));
+  transform: translate3d(var(--multitool-drag-x, 0), var(--multitool-drag-y, 0), 0);
+  transition: transform var(--motion-medium) var(--ease-out);
+  will-change: transform;
+}
+
+.multitool.is-dragging {
+  cursor: grabbing;
+  transition: none;
+  user-select: none;
 }
 
 .multitool__drawer {
@@ -578,7 +618,19 @@ html[data-content-open="true"] .stage-overlay {
   min-height: var(--primary-floor);
   place-items: center start;
   padding: 4px var(--floor-inline);
+  border: 0;
   border-right: var(--tool-rule);
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  cursor: default;
+  opacity: 1;
+  touch-action: auto;
+  user-select: none;
+}
+
+.multitool.is-dragging .multitool__brand {
+  cursor: grabbing;
 }
 
 .multitool__brand img {
@@ -589,6 +641,33 @@ html[data-content-open="true"] .stage-overlay {
 
 html[data-theme="light"] .multitool__brand img {
   filter: invert(1);
+}
+
+.multitool__status {
+  position: absolute !important;
+  right: 12px;
+  bottom: calc(var(--utility-floor) + 12px);
+  z-index: 6 !important;
+  max-width: min(34ch, calc(100% - 24px));
+  margin: 0;
+  padding: 9px 11px;
+  border: 1px solid color-mix(in srgb, var(--tool-border), white 16%);
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--tool-solid), transparent 4%);
+  box-shadow: 0 12px 34px color-mix(in srgb, var(--page), transparent 62%);
+  color: var(--tool-ink);
+  font: 600 var(--type-caption)/1.25 var(--font);
+  letter-spacing: -.01em;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(6px) scale(.985);
+  transform-origin: right bottom;
+  transition: opacity var(--motion-fast) linear, transform var(--motion-medium) var(--ease-out);
+}
+
+.multitool__status.is-visible {
+  opacity: 1;
+  transform: none;
 }
 
 .multitool__sections,
@@ -623,7 +702,7 @@ html[data-theme="light"] .multitool__brand img {
 
 .multitool__sections button > span,
 .multitool__sections button::after {
-  transition: filter 240ms ease, opacity 240ms ease;
+  transition: filter var(--motion-medium) var(--ease-out), opacity var(--motion-medium) linear;
 }
 
 .multitool__section-index {
@@ -831,6 +910,7 @@ html[data-qa-text] .multitool__section-label {
   width: auto;
   height: auto;
   object-fit: contain;
+  transition: transform var(--motion-medium) var(--ease-out);
 }
 
 html[data-logo-view="list"] .logo-grid {
@@ -1214,6 +1294,11 @@ html[data-theme="dark"] .theme-toggle__icon--light {
 }
 
 @media (hover: hover) and (pointer: fine) {
+  .multitool__brand:not(:disabled) {
+    cursor: grab;
+    touch-action: none;
+  }
+
   .multitool a:hover,
   .multitool button:hover {
     background: var(--tool-hover);
@@ -1222,6 +1307,13 @@ html[data-theme="dark"] .theme-toggle__icon--light {
   .logo:hover img {
     transform: translateY(-1px);
   }
+}
+
+.multitool a:active,
+.multitool button:active,
+.text-block button:active {
+  background: color-mix(in srgb, var(--tool-hover), currentColor 5%);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, currentColor, transparent 78%);
 }
 
 :is(a, button):focus-visible {
@@ -1267,7 +1359,11 @@ html[data-theme="dark"] .theme-toggle__icon--light {
     flex-direction: column;
     align-items: center;
     gap: 12px;
-    padding: 12px 12px 40px;
+    padding:
+      max(12px, var(--safe-top))
+      max(12px, var(--safe-right))
+      max(40px, var(--safe-bottom))
+      max(12px, var(--safe-left));
   }
 
   .showcase.has-content {
@@ -1277,9 +1373,16 @@ html[data-theme="dark"] .theme-toggle__icon--light {
   .multitool {
     order: 1;
     width: min(100%, 560px);
-    max-height: calc(100svh - 24px);
+    max-height: calc(100svh - max(12px, var(--safe-top)) - max(12px, var(--safe-bottom)));
     margin: 0 auto;
-    scroll-margin-top: 12px;
+    scroll-margin-top: max(12px, var(--safe-top));
+    transform: none !important;
+    transition: none;
+  }
+
+  .multitool__brand {
+    cursor: default;
+    touch-action: auto;
   }
 
   .text-block {
@@ -1345,7 +1448,13 @@ html[data-theme="dark"] .theme-toggle__icon--light {
   }
 
   .multitool__drawer {
-    max-height: calc(100svh - 168px);
+    max-height: calc(
+      100svh
+      - max(12px, var(--safe-top))
+      - max(12px, var(--safe-bottom))
+      - var(--primary-floor)
+      - var(--primary-floor)
+    );
   }
 }
 
@@ -1356,7 +1465,13 @@ html[data-theme="dark"] .theme-toggle__icon--light {
   }
 
   .showcase {
-    padding-inline: 8px;
+    padding-inline: max(8px, var(--safe-left)) max(8px, var(--safe-right));
+  }
+
+  .multitool__status {
+    right: 8px;
+    bottom: 62px;
+    max-width: calc(100% - 16px);
   }
 
   .multitool__footer {

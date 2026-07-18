@@ -2,9 +2,12 @@ const root = document.documentElement;
 const themeToggle = document.querySelector('.theme-toggle');
 const motionToggle = document.querySelector('.motion-toggle');
 const transparencyToggle = document.querySelector('.transparency-toggle');
-const logoViewButtons = [...document.querySelectorAll('[data-logo-view]')];
+const logoViewButtons = [...document.querySelectorAll('button[data-logo-view]')];
 const logoViewToggle = document.querySelector('.logo-view-toggle');
 const themeColor = document.getElementById('theme-color');
+const multitool = document.querySelector('.multitool');
+const multitoolDragHandle = document.querySelector('.multitool__drag-handle');
+const multitoolStatus = document.querySelector('.multitool__status');
 const multitoolDrawer = document.getElementById('multitool-drawer');
 const moduleStatus = document.getElementById('module-status');
 const sectionButtons = [...document.querySelectorAll('[data-panel]')];
@@ -25,6 +28,7 @@ const colorSchemeQuery = window.matchMedia('(prefers-color-scheme: dark)');
 const reduceMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
 const reduceTransparencyQuery = window.matchMedia('(prefers-reduced-transparency: reduce)');
 const finePointerQuery = window.matchMedia('(hover: hover) and (pointer: fine)');
+const dataConnection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
 const themeStorageKey = 'barberherman-theme';
 const motionStorageKey = 'barberherman-reduce-motion';
 const transparencyStorageKey = 'barberherman-reduce-transparency';
@@ -40,6 +44,7 @@ const visualQATransparency = queryParams.get('qa-transparency');
 const visualQALogoView = queryParams.get('qa-logo-view');
 const visualQATickerPhase = queryParams.get('ticker-phase');
 const visualQAFocus = queryParams.get('qa-focus');
+const visualQASafeArea = queryParams.get('qa-safe-area');
 
 let hasSavedTheme = false;
 let hasSavedReducedMotion = false;
@@ -54,9 +59,11 @@ let latestPointerEvent = null;
 let latestGlassSurface = null;
 let panelLayer = 6;
 let mostRecentPanelName = null;
+let multitoolStatusTimer = 0;
 
 if (['125', '150', '200'].includes(visualQATextScale)) root.dataset.qaText = visualQATextScale;
 if (visualQAContrast === 'more') root.dataset.qaContrast = 'more';
+if (visualQASafeArea === 'iphone') root.dataset.qaSafeArea = 'iphone';
 if (['start', 'middle', 'seam'].includes(visualQATickerPhase)) {
   root.dataset.tickerPhase = visualQATickerPhase;
 }
@@ -72,6 +79,23 @@ try {
   hasSavedTheme = false;
   hasSavedReducedMotion = false;
   reduceTransparencyPreference = true;
+}
+
+function showMultitoolStatus(message, { duration = 2200 } = {}) {
+  if (!multitoolStatus || !message) return;
+
+  window.clearTimeout(multitoolStatusTimer);
+  multitoolStatus.classList.remove('is-visible');
+  multitoolStatus.hidden = false;
+  multitoolStatus.textContent = message;
+
+  requestAnimationFrame(() => multitoolStatus.classList.add('is-visible'));
+  multitoolStatusTimer = window.setTimeout(() => {
+    multitoolStatus.classList.remove('is-visible');
+    window.setTimeout(() => {
+      if (!multitoolStatus.classList.contains('is-visible')) multitoolStatus.hidden = true;
+    }, 230);
+  }, duration);
 }
 
 function applyTheme(theme, { persist = false } = {}) {
@@ -147,6 +171,7 @@ function setPanelState(name, visible, { returnFocus = false } = {}) {
   }
   syncContentPresence();
   syncContextControls();
+  requestAnimationFrame(clampCurrentMultitoolPosition);
 
   if (!visible && returnFocus) button.focus({ preventScroll: true });
 }
@@ -182,6 +207,7 @@ function revealPanel(name) {
     || title?.textContent?.trim()
     || name;
   if (moduleStatus) moduleStatus.textContent = `Открыт раздел «${label}»`;
+  showMultitoolStatus(`Открыт раздел «${label}»`);
 
   requestAnimationFrame(() => {
     const isInlinePanel = Boolean(panel.closest('.multitool__drawer'));
@@ -245,15 +271,61 @@ function applyTransparencyPreference({ persist = false } = {}) {
   }
 }
 
+function attachVideoSource(video) {
+  const source = video.dataset.src;
+  if (!source || video.dataset.sourceAttached === source) return;
+
+  video.src = source;
+  video.dataset.sourceAttached = source;
+  video.load();
+}
+
+function detachVideoSource(video) {
+  if (!video.dataset.sourceAttached && !video.getAttribute('src')) return;
+
+  video.pause();
+  video.removeAttribute('src');
+  delete video.dataset.sourceAttached;
+  video.load();
+}
+
+function lockVideoToVisualPhase(video) {
+  const phases = { start: .02, middle: .5, end: .96 };
+  if (!(visualQAVideoPhase in phases)) return;
+
+  const lockPhase = () => {
+    delete video.dataset.visualPhasePending;
+    if (!Number.isFinite(video.duration) || video.duration <= 0) return;
+
+    video.pause();
+    video.currentTime = Math.min(video.duration - .05, video.duration * phases[visualQAVideoPhase]);
+  };
+
+  if (video.readyState >= HTMLMediaElement.HAVE_METADATA) {
+    lockPhase();
+  } else if (video.dataset.visualPhasePending !== visualQAVideoPhase) {
+    video.dataset.visualPhasePending = visualQAVideoPhase;
+    video.addEventListener('loadedmetadata', lockPhase, { once: true });
+  }
+}
+
 function syncStageVideos() {
   const mobile = mobileQuery.matches;
+  const saveData = dataConnection?.saveData === true;
+  const isReduced = prefersReducedMotion();
+  root.dataset.saveData = String(saveData);
 
   stageVideos.forEach((video) => {
     const isMobileVideo = video.classList.contains('stage-video--mobile');
-    const shouldPlay = !prefersReducedMotion() && !document.hidden && mobile === isMobileVideo;
+    const isBreakpointVideo = mobile === isMobileVideo;
+    const shouldLoad = isBreakpointVideo && (Boolean(visualQAVideoPhase) || (!isReduced && !saveData));
+    const shouldPlay = shouldLoad && !visualQAVideoPhase && !document.hidden;
 
-    if (visualQAVideoPhase) {
-      video.pause();
+    if (shouldLoad) attachVideoSource(video);
+    else detachVideoSource(video);
+
+    if (visualQAVideoPhase && shouldLoad) {
+      lockVideoToVisualPhase(video);
     } else if (shouldPlay) {
       video.play().catch(() => {});
     } else {
@@ -291,21 +363,7 @@ function applyMotionPreference({ persist = false } = {}) {
 }
 
 function lockVideoPhaseForVisualQA() {
-  const phases = { start: .02, middle: .5, end: .96 };
-
-  if (!(visualQAVideoPhase in phases)) return;
-
-  stageVideos.forEach((video) => {
-    const lockPhase = () => {
-      if (!Number.isFinite(video.duration) || video.duration <= 0) return;
-
-      video.pause();
-      video.currentTime = Math.min(video.duration - .05, video.duration * phases[visualQAVideoPhase]);
-    };
-
-    if (video.readyState >= HTMLMediaElement.HAVE_METADATA) lockPhase();
-    else video.addEventListener('loadedmetadata', lockPhase, { once: true });
-  });
+  stageVideos.forEach(lockVideoToVisualPhase);
 }
 
 async function focusVisualQASection() {
@@ -467,6 +525,181 @@ function enablePanelDragging(panel) {
   });
 }
 
+function multitoolOffset() {
+  return {
+    x: Number.parseFloat(multitool?.dataset.dragX || '0') || 0,
+    y: Number.parseFloat(multitool?.dataset.dragY || '0') || 0,
+  };
+}
+
+function clampMultitoolOffset(x, y) {
+  if (!multitool || mobileQuery.matches) return { x: 0, y: 0 };
+
+  const margin = 8;
+  const rect = multitool.getBoundingClientRect();
+  const transform = getComputedStyle(multitool).transform;
+  let renderedX = 0;
+  let renderedY = 0;
+
+  if (transform && transform !== 'none') {
+    try {
+      const matrix = new DOMMatrixReadOnly(transform);
+      renderedX = matrix.m41;
+      renderedY = matrix.m42;
+    } catch {
+      const current = multitoolOffset();
+      renderedX = current.x;
+      renderedY = current.y;
+    }
+  }
+
+  const baseLeft = rect.left - renderedX;
+  const baseTop = rect.top - renderedY;
+  const minX = margin - baseLeft;
+  const maxX = window.innerWidth - margin - baseLeft - rect.width;
+  const minY = margin - baseTop;
+  const maxY = window.innerHeight - margin - baseTop - rect.height;
+  const clampAxis = (value, min, max) => (min > max ? 0 : Math.min(max, Math.max(min, value)));
+
+  return {
+    x: clampAxis(x, minX, maxX),
+    y: clampAxis(y, minY, maxY),
+  };
+}
+
+function setMultitoolOffset(x, y) {
+  if (!multitool) return;
+
+  const next = clampMultitoolOffset(x, y);
+  const roundedX = Math.round(next.x);
+  const roundedY = Math.round(next.y);
+  multitool.dataset.dragX = String(roundedX);
+  multitool.dataset.dragY = String(roundedY);
+  multitool.style.setProperty('--multitool-drag-x', `${roundedX}px`);
+  multitool.style.setProperty('--multitool-drag-y', `${roundedY}px`);
+}
+
+function resetMultitoolPosition({ announce = false } = {}) {
+  if (!multitool) return;
+
+  multitool.dataset.dragX = '0';
+  multitool.dataset.dragY = '0';
+  multitool.style.setProperty('--multitool-drag-x', '0px');
+  multitool.style.setProperty('--multitool-drag-y', '0px');
+  if (announce) showMultitoolStatus('Меню возвращено в центр');
+}
+
+function clampCurrentMultitoolPosition() {
+  if (!multitool || mobileQuery.matches) return;
+  const offset = multitoolOffset();
+  setMultitoolOffset(offset.x, offset.y);
+}
+
+function syncMultitoolDragAvailability() {
+  if (!multitoolDragHandle) return;
+
+  const isAvailable = !mobileQuery.matches && finePointerQuery.matches;
+  multitoolDragHandle.disabled = !isAvailable;
+  multitoolDragHandle.tabIndex = isAvailable ? 0 : -1;
+  multitoolDragHandle.setAttribute('aria-hidden', String(!isAvailable));
+  if (!isAvailable) resetMultitoolPosition();
+}
+
+function enableMultitoolDragging() {
+  if (!multitool || !multitoolDragHandle) return;
+
+  let dragState = null;
+
+  multitool.addEventListener('pointerdown', (event) => {
+    const usesHandle = Boolean(event.target.closest('.multitool__drag-handle'));
+    const usesFrame = event.target === multitool;
+    if (mobileQuery.matches || !finePointerQuery.matches || event.button !== 0 || (!usesHandle && !usesFrame)) return;
+
+    const offset = multitoolOffset();
+    dragState = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      offsetX: offset.x,
+      offsetY: offset.y,
+      active: false,
+    };
+
+    panelLayer += 1;
+    multitool.style.zIndex = String(panelLayer);
+    multitool.setPointerCapture(event.pointerId);
+  });
+
+  multitool.addEventListener('pointermove', (event) => {
+    if (!dragState || event.pointerId !== dragState.pointerId) return;
+
+    const deltaX = event.clientX - dragState.startX;
+    const deltaY = event.clientY - dragState.startY;
+    if (!dragState.active && Math.hypot(deltaX, deltaY) < 5) return;
+
+    if (!dragState.active) {
+      dragState.active = true;
+      multitool.classList.add('is-dragging');
+    }
+
+    setMultitoolOffset(dragState.offsetX + deltaX, dragState.offsetY + deltaY);
+    event.preventDefault();
+  });
+
+  const finishDrag = (event) => {
+    if (!dragState || event.pointerId !== dragState.pointerId) return;
+
+    const moved = dragState.active;
+    dragState = null;
+    multitool.classList.remove('is-dragging');
+    if (moved) {
+      if (document.activeElement === multitoolDragHandle) multitoolDragHandle.blur();
+      showMultitoolStatus('Меню перемещено · двойной клик — вернуть в центр', { duration: 2600 });
+    }
+  };
+
+  multitool.addEventListener('pointerup', finishDrag);
+  multitool.addEventListener('pointercancel', finishDrag);
+  multitool.addEventListener('lostpointercapture', () => {
+    dragState = null;
+    multitool.classList.remove('is-dragging');
+  });
+
+  multitoolDragHandle.addEventListener('dblclick', (event) => {
+    if (mobileQuery.matches) return;
+    resetMultitoolPosition({ announce: true });
+    multitoolDragHandle.blur();
+    event.preventDefault();
+  });
+
+  multitoolDragHandle.addEventListener('keydown', (event) => {
+    if (mobileQuery.matches) return;
+
+    if (event.key === 'Home') {
+      resetMultitoolPosition({ announce: true });
+      event.preventDefault();
+      return;
+    }
+
+    const directions = {
+      ArrowLeft: [-1, 0],
+      ArrowRight: [1, 0],
+      ArrowUp: [0, -1],
+      ArrowDown: [0, 1],
+    };
+    const direction = directions[event.key];
+    if (!direction) return;
+
+    const offset = multitoolOffset();
+    const step = event.shiftKey ? 48 : 16;
+    setMultitoolOffset(offset.x + direction[0] * step, offset.y + direction[1] * step);
+    panelLayer += 1;
+    multitool.style.zIndex = String(panelLayer);
+    showMultitoolStatus('Положение меню изменено · Home — вернуть в центр');
+    event.preventDefault();
+  });
+}
+
 let initialLogoView = 'grid';
 
 try {
@@ -484,6 +717,8 @@ applyVisualQAContentState();
 syncContextControls();
 focusVisualQASection();
 syncStageVideos();
+syncMultitoolDragAvailability();
+enableMultitoolDragging();
 
 if (visualQAFocus === 'skip') {
   requestAnimationFrame(() => document.querySelector('.skip-link')?.focus());
@@ -492,14 +727,20 @@ if (visualQAFocus === 'skip') {
 requestAnimationFrame(() => root.classList.add('theme-ready'));
 
 themeToggle?.addEventListener('click', () => {
-  applyTheme(root.dataset.theme === 'dark' ? 'light' : 'dark', { persist: true });
+  const nextTheme = root.dataset.theme === 'dark' ? 'light' : 'dark';
+  applyTheme(nextTheme, { persist: true });
+  showMultitoolStatus(nextTheme === 'dark' ? 'Тёмная тема включена' : 'Светлая тема включена');
 });
 
 motionToggle?.addEventListener('click', () => {
-  if (reduceMotionQuery.matches) return;
+  if (reduceMotionQuery.matches) {
+    showMultitoolStatus('Движение уменьшено в настройках системы');
+    return;
+  }
 
   hasSavedReducedMotion = !hasSavedReducedMotion;
   applyMotionPreference({ persist: true });
+  showMultitoolStatus(hasSavedReducedMotion ? 'Движение уменьшено' : 'Движение включено');
 });
 
 transparencyToggle?.addEventListener('click', () => {
@@ -507,18 +748,29 @@ transparencyToggle?.addEventListener('click', () => {
     visualQATransparencyOverride = !visualQATransparencyOverride;
     reduceTransparencyPreference = visualQATransparencyOverride;
     applyTransparencyPreference({ persist: true });
+    showMultitoolStatus(visualQATransparencyOverride ? 'Спокойный материал включён' : 'Стекло включено');
     return;
   }
 
-  if (reduceTransparencyQuery.matches) return;
+  if (reduceTransparencyQuery.matches) {
+    showMultitoolStatus('Прозрачность уменьшена в настройках системы');
+    return;
+  }
 
   reduceTransparencyPreference = !reduceTransparencyPreference;
   applyTransparencyPreference({ persist: true });
+  showMultitoolStatus(reduceTransparencyPreference ? 'Спокойный материал включён' : 'Стекло включено');
 });
 
 logoViewButtons.forEach((button) => {
   button.addEventListener('click', () => {
     applyLogoView(button.dataset.logoView, { persist: true });
+    const labels = {
+      list: 'Логотипы показаны списком',
+      grid: 'Логотипы показаны сеткой',
+      poster: 'Логотипы показаны крупными карточками',
+    };
+    showMultitoolStatus(labels[button.dataset.logoView]);
   });
 });
 
@@ -555,9 +807,12 @@ document.addEventListener('keydown', (event) => {
 
 mobileQuery.addEventListener('change', () => {
   syncStageVideos();
+  syncMultitoolDragAvailability();
   if (mobileQuery.matches) {
     draggablePanels.forEach(resetPanelPosition);
     keepSinglePanelOnMobile();
+  } else {
+    requestAnimationFrame(clampCurrentMultitoolPosition);
   }
 });
 reduceMotionQuery.addEventListener('change', applyMotionPreference);
@@ -566,4 +821,7 @@ colorSchemeQuery.addEventListener('change', (event) => {
   if (!hasSavedTheme) applyTheme(event.matches ? 'dark' : 'light');
 });
 document.addEventListener('visibilitychange', syncStageVideos);
+dataConnection?.addEventListener?.('change', syncStageVideos);
+finePointerQuery.addEventListener('change', syncMultitoolDragAvailability);
+window.addEventListener('resize', () => requestAnimationFrame(clampCurrentMultitoolPosition));
 glassSurfaces.forEach((surface) => surface.addEventListener('pointermove', updateGlassHighlight, { passive: true }));
