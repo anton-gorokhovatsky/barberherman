@@ -602,6 +602,7 @@ html[data-content-open="true"] .stage-overlay {
 
 .multitool {
   --primary-floor: 96px;
+  --primary-optical-shift: 4.5px;
   --secondary-floor: 96px;
   --module-floor: 96px;
   --tertiary-floor: 76px;
@@ -681,7 +682,7 @@ html[data-theme="light"] .multitool__brand > img {
   width: min(100%, 270px);
   color: currentColor;
   text-align: left;
-  transform: translateY(1px);
+  transform: translateY(calc(1px + var(--primary-optical-shift)));
 }
 
 .brand-lockup__word {
@@ -853,7 +854,7 @@ html[data-qa-text] .multitool__section-label {
 
 .multitool__booking > span {
   display: block;
-  transform: translateY(-.09em);
+  transform: translateY(calc(-.09em + var(--primary-optical-shift)));
 }
 
 .multitool__contacts {
@@ -1610,6 +1611,11 @@ html[data-theme="dark"] .theme-toggle__icon--light {
     overflow: visible;
     overscroll-behavior: auto;
   }
+
+  .multitool__catalog,
+  .multitool__gallery {
+    scroll-margin-top: max(12px, var(--safe-top));
+  }
 }
 
 @media (max-width: 600px) {
@@ -1726,9 +1732,6 @@ html[data-theme="dark"] .theme-toggle__icon--light {
   .multitool__booking {
     min-height: var(--primary-floor);
     padding-inline: 8px;
-    /* The viewport cap keeps the single essential action intact when the
-       reader raises the browser's base text size. */
-    font-size: min(1.48rem, 6.3vw);
     letter-spacing: -.035em;
   }
 
@@ -1970,6 +1973,19 @@ html[data-theme="dark"] .theme-toggle__icon--light {
 
 html[data-reduce-motion="true"] .stage-video {
   display: none;
+}
+
+html[data-reduce-motion="true"] {
+  scroll-behavior: auto;
+}
+
+html[data-reduce-motion="true"] *,
+html[data-reduce-motion="true"] *::before,
+html[data-reduce-motion="true"] *::after {
+  scroll-behavior: auto !important;
+  transition-duration: .01ms !important;
+  animation-duration: .01ms !important;
+  animation-iteration-count: 1 !important;
 }
 
 html[data-reduce-motion="true"] .multitool__descriptor-track {
