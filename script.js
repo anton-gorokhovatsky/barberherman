@@ -218,7 +218,15 @@ function setPanelState(name, visible, { returnFocus = false } = {}) {
     }
   });
 
-  if (!visible && returnFocus) button.focus({ preventScroll: true });
+  if (!visible && returnFocus) {
+    button.focus({ preventScroll: true });
+    if (mobileQuery.matches) {
+      requestAnimationFrame(() => button.scrollIntoView({
+        block: 'center',
+        behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+      }));
+    }
+  }
 }
 
 function closeAllPanels() {
@@ -835,6 +843,19 @@ function syncMultitoolDragAvailability() {
   else requestAnimationFrame(clampCurrentMultitoolPosition);
 }
 
+function syncPanelDragAvailability() {
+  const isAvailable = !mobileQuery.matches;
+
+  draggablePanels.forEach((panel) => {
+    const handle = panel.querySelector('.text-block__drag-handle');
+    if (!handle) return;
+
+    handle.disabled = !isAvailable;
+    handle.tabIndex = isAvailable ? 0 : -1;
+    handle.setAttribute('aria-hidden', String(!isAvailable));
+  });
+}
+
 function enableMultitoolDragging() {
   if (!multitool || !multitoolDragHandle) return;
 
@@ -949,6 +970,7 @@ applyVisualQAContentState();
 focusVisualQASection();
 syncStageVideos();
 syncMultitoolDragAvailability();
+syncPanelDragAvailability();
 enableMultitoolDragging();
 
 if (visualQAFocus === 'skip') {
@@ -1046,6 +1068,7 @@ document.addEventListener('keydown', (event) => {
 mobileQuery.addEventListener('change', () => {
   syncStageVideos();
   syncMultitoolDragAvailability();
+  syncPanelDragAvailability();
   if (mobileQuery.matches) {
     draggablePanels.forEach(resetPanelPosition);
     keepSinglePanelOnMobile();
