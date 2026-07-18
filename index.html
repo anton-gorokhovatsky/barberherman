@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ru" data-theme="light" data-logo-view="grid">
+<html lang="ru" data-theme="light" data-logo-view="grid" data-menu-open="true">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -29,18 +29,27 @@
   <script>
     (() => {
       const storageKey = 'barberherman-theme';
+      const transparencyStorageKey = 'barberherman-reduce-transparency';
       let theme = 'light';
+      let reduceTransparency = true;
 
       try {
         const savedTheme = localStorage.getItem(storageKey);
         theme = savedTheme === 'light' || savedTheme === 'dark'
           ? savedTheme
           : matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        const savedTransparency = localStorage.getItem(transparencyStorageKey);
+        reduceTransparency = savedTransparency === 'true' || savedTransparency === 'false'
+          ? savedTransparency === 'true'
+          : true;
+        if (matchMedia('(prefers-reduced-transparency: reduce)').matches) reduceTransparency = true;
       } catch {
         theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        reduceTransparency = true;
       }
 
       document.documentElement.dataset.theme = theme;
+      document.documentElement.dataset.reduceTransparency = String(reduceTransparency);
       document.documentElement.style.colorScheme = theme;
     })();
   </script>
@@ -58,8 +67,8 @@
       ]
     }
   </script>
-  <link rel="stylesheet" href="styles.css?v=20260717-18">
-  <script src="glass.js?v=20260717-3" defer></script>
+  <link rel="stylesheet" href="styles.css?v=20260717-19">
+  <script src="glass.js?v=20260717-4" defer></script>
   <script src="script.js?v=20260717-7" defer></script>
 </head>
 <body>
@@ -96,66 +105,78 @@
 
   <main class="site">
     <div class="stage" aria-hidden="true">
-      <video class="stage-video stage-video--desktop" autoplay muted loop playsinline preload="auto" poster="assets/hero.jpg?v=20260716-3">
+      <video class="stage-video stage-video--desktop" autoplay muted loop playsinline preload="auto" poster="assets/hero.jpg?v=20260716-3" aria-hidden="true" tabindex="-1">
         <source src="assets/hero-desktop-v2.mp4?v=20260717-1" type="video/mp4">
       </video>
-      <video class="stage-video stage-video--mobile" autoplay muted loop playsinline preload="metadata" poster="assets/hero-mobile.jpg?v=20260716-2">
+      <video class="stage-video stage-video--mobile" autoplay muted loop playsinline preload="metadata" poster="assets/hero-mobile.jpg?v=20260716-2" aria-hidden="true" tabindex="-1">
         <source src="assets/hero-mobile.mp4?v=20260716-2" type="video/mp4">
       </video>
       <div class="stage-overlay"></div>
     </div>
 
     <section class="showcase" id="content" tabindex="-1" aria-label="Герман Винокуров — профиль, экспертиза и контакты">
+      <h1 class="sr-only">Герман Винокуров — мужской стилист и барбер</h1>
       <article class="text-block text-block--profile glass-surface glass-surface--expanded" id="profile-panel" aria-labelledby="profile-title" hidden>
         <canvas class="glass-refractor" aria-hidden="true"></canvas>
-        <div class="text-block__scroll">
+        <header class="text-block__bar">
           <button class="text-block__index text-block__drag-handle" type="button" aria-label="Переместить панель «Профиль». Используйте стрелки, чтобы перемещать её, и клавишу Home, чтобы вернуть на место.">01 / Профиль</button>
-          <h1 id="profile-title">Герман<br>Винокуров</h1>
+          <button class="text-block__close" type="button" data-close-panel="profile" aria-label="Закрыть панель «Профиль»" title="Закрыть панель «Профиль»">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg>
+          </button>
+        </header>
+        <div class="text-block__scroll">
+          <h2 id="profile-title">Герман<br>Винокуров</h2>
           <p class="text-block__lead">Герман Винокуров&nbsp;— мужской стилист, барбер и&nbsp;эксперт по&nbsp;мужскому уходу с&nbsp;более чем 15&#8209;летним профессиональным опытом в&nbsp;индустрии мужского стиля и&nbsp;<span lang="en">grooming</span>.</p>
           <p>Свою карьеру начал в&nbsp;2009 году после получения профильного профессионального образования в&nbsp;сфере парикмахерского искусства. За&nbsp;годы работы Герман сформировал сильный международный профиль, объединяющий <span lang="en">grooming</span>, <span lang="en">fashion</span>, образование и&nbsp;развитие брендов.</p>
           <p>Является основателем и&nbsp;креативным директором <span lang="en">Barberherman &amp;&nbsp;Co</span>&nbsp;— бренда мужского ухода полного цикла, сочетающего услуги, обучение и&nbsp;розничное направление. Проект ориентирован на&nbsp;современную мужскую эстетику, высокие стандарты сервиса и&nbsp;осознанный подход к&nbsp;стилю.</p>
           <dl class="facts" aria-label="Ключевые факты">
-            <div><dt>С&nbsp;2009</dt><dd>в профессии</dd></div>
-            <div><dt>1&#8239;000+</dt><dd>обученных мастеров</dd></div>
-            <div><dt>Москва</dt><dd>международные проекты</dd></div>
+            <div><dt>С&nbsp;2009</dt><dd>в профессии и&nbsp;индустрии мужского ухода</dd></div>
+            <div><dt>1&#8239;000+</dt><dd>начинающих и&nbsp;профессиональных мастеров прошли обучение</dd></div>
+            <div><dt>Россия · Европа · США</dt><dd>география обучения и&nbsp;проектов</dd></div>
           </dl>
         </div>
       </article>
 
       <div class="stage-brand" aria-hidden="true">
-          <img src="assets/brand-logo.png" width="1168" height="424" alt="Herman & Co">
+          <img src="assets/brand-logo.png" width="1168" height="424" alt="">
       </div>
 
-      <nav class="multitool glass-surface" aria-label="Главное меню, запись, контакты и упоминания">
+      <nav class="multitool glass-surface is-open" aria-label="Главное меню, запись, контакты и упоминания">
         <canvas class="multitool__refractor glass-refractor" aria-hidden="true"></canvas>
         <div class="multitool__primary">
           <a class="multitool__booking" href="https://b11133.yclients.com/company/30187/personal/menu?o=" target="_blank" rel="noopener">Записаться</a>
-          <button class="multitool__menu-toggle" type="button" aria-label="Открыть меню" aria-controls="multitool-drawer" aria-expanded="false">
-            <span class="multitool__menu-label sr-only">Меню</span>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="1.25"></circle><circle cx="12" cy="12" r="1.25"></circle><circle cx="12" cy="19" r="1.25"></circle></svg>
+          <button class="multitool__menu-toggle" type="button" aria-label="Свернуть меню" aria-controls="multitool-drawer" aria-expanded="true">
+            <span class="multitool__menu-label sr-only">Свернуть</span>
+            <svg class="multitool__menu-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <g fill="none">
+                <path stroke="currentColor" stroke-linecap="round" stroke-width="1.5" d="M16.401 20.5L6 2m16 17a3 3 0 1 1-6 0a3 3 0 0 1 6 0Z"></path>
+                <path fill="currentColor" d="M5 21.25a.75.75 0 0 1 0 1.5zM8.75 19v.75h-1.5V19zm-.498 1.868a.75.75 0 0 1-1.307-.736zm9.094-19.236a.75.75 0 0 1 1.308.736zM2.75 19A2.25 2.25 0 0 0 5 21.25v1.5A3.75 3.75 0 0 1 1.25 19zm4.5 0A2.25 2.25 0 0 0 5 16.75v-1.5A3.75 3.75 0 0 1 8.75 19zM5 16.75A2.25 2.25 0 0 0 2.75 19h-1.5A3.75 3.75 0 0 1 5 15.25zm1.945 3.382l10.401-18.5l1.308.736l-10.402 18.5z"></path>
+              </g>
+            </svg>
           </button>
         </div>
 
-        <div class="multitool__drawer" id="multitool-drawer" hidden>
+        <div class="multitool__drawer" id="multitool-drawer">
           <div class="multitool__sections" aria-label="Разделы страницы">
-            <button type="button" data-panel="profile" aria-controls="profile-panel" aria-pressed="false"><span class="multitool__section-index">01</span><span class="multitool__section-label">Профиль</span></button>
-            <button type="button" data-panel="practice" aria-controls="practice-panel" aria-pressed="false"><span class="multitool__section-index">02</span><span class="multitool__section-label">Экспер&shy;тиза</span></button>
-            <button type="button" data-panel="media" aria-controls="media-panel" aria-pressed="false"><span class="multitool__section-index">03</span><span class="multitool__section-label">Медиа</span></button>
-            <button type="button" data-panel="partners" aria-controls="partners-panel" aria-pressed="false"><span class="multitool__section-index">04</span><span class="multitool__section-label">Парт&shy;нёрства</span></button>
-            <button type="button" data-panel="gallery" aria-controls="gallery-panel" aria-pressed="false"><span class="multitool__section-index">05</span><span class="multitool__section-label">Галерея</span></button>
+            <button type="button" data-panel="profile" aria-controls="profile-panel" aria-pressed="false" aria-expanded="false"><span class="multitool__section-index">01</span><span class="multitool__section-label">Профиль</span></button>
+            <button type="button" data-panel="practice" aria-controls="practice-panel" aria-pressed="false" aria-expanded="false"><span class="multitool__section-index">02</span><span class="multitool__section-label">Экспер&shy;тиза</span></button>
+            <button type="button" data-panel="media" aria-controls="media-panel" aria-pressed="false" aria-expanded="false"><span class="multitool__section-index">03</span><span class="multitool__section-label">Медиа</span></button>
+            <button type="button" data-panel="partners" aria-controls="partners-panel" aria-pressed="false" aria-expanded="false"><span class="multitool__section-index">04</span><span class="multitool__section-label">Парт&shy;нёрства</span></button>
+            <button type="button" data-panel="gallery" aria-controls="gallery-panel" aria-pressed="false" aria-expanded="false"><span class="multitool__section-index">05</span><span class="multitool__section-label">Галерея</span></button>
           </div>
 
-          <div class="multitool__contacts" aria-label="Контакты">
-          <a class="multitool__address" href="https://yandex.ru/maps/-/CPAwvS3O" target="_blank" rel="noopener" aria-label="Москва, Проспект Мира, 7, строение 3 — открыть в Яндекс Картах"><span>Проспект Мира, 7</span><span class="multitool__contact-kind">Карта</span></a>
-          <a class="multitool__icon-link" href="https://t.me/hermanlifetime" target="_blank" rel="noopener" aria-label="Telegram">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.3 3.3 18.2 20c-.2 1.1-.9 1.4-1.8.8l-4.8-3.5-2.3 2.2c-.3.3-.5.5-1 .5l.3-4.9 9-8.1c.4-.4-.1-.6-.6-.3L5.8 13.8 1 12.3c-1-.3-1-1 .2-1.5L20 3.5c.9-.3 1.7.2 1.3-.2Z"></path></svg>
-            <span>Telegram</span>
-          </a>
-          <a class="multitool__icon-link multitool__instagram" href="https://www.instagram.com/hermanvinakurau/" target="_blank" rel="noopener" aria-label="Instagram, сервис компании Meta, деятельность которой запрещена в России" aria-describedby="instagram-legal">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"></rect><circle cx="12" cy="12" r="4.25"></circle><circle cx="17.4" cy="6.7" r="1"></circle></svg>
-            <span>Instagram</span>
-          </a>
-          </div>
+          <section class="multitool__gallery" id="gallery-panel" aria-labelledby="gallery-title" hidden>
+            <header class="multitool__gallery-header">
+              <h2 id="gallery-title">Личный архив</h2>
+              <span class="multitool__gallery-count" aria-label="Изображение 1 из 1">01 / 01</span>
+            </header>
+            <div class="multitool__gallery-track" aria-live="polite">
+              <figure class="multitool__gallery-slide" data-gallery-slide>
+                <img class="multitool__portrait" src="assets/herman-childhood-original.jpeg?v=20260717-1" width="720" height="1280" alt="Герман Винокуров в детстве">
+                <figcaption class="sr-only">Фотография из личного архива Германа Винокурова</figcaption>
+              </figure>
+            </div>
+          </section>
 
           <section class="multitool__catalog" id="media-panel" aria-labelledby="media-title" data-catalog="media" hidden>
           <h2 id="media-title">Медиа и&nbsp;пресса</h2>
@@ -185,18 +206,17 @@
           </div>
           </section>
 
-          <section class="multitool__gallery" id="gallery-panel" aria-labelledby="gallery-title" hidden>
-            <header class="multitool__gallery-header">
-              <h2 id="gallery-title">Личный архив</h2>
-              <span class="multitool__gallery-count" aria-label="Изображение 1 из 1">01 / 01</span>
-            </header>
-            <div class="multitool__gallery-track" aria-live="polite">
-              <figure class="multitool__gallery-slide" data-gallery-slide>
-                <img class="multitool__portrait" src="assets/herman-childhood-squircle.png?v=20260717-1" width="1400" height="800" alt="Герман Винокуров в детстве">
-                <figcaption class="sr-only">Фотография из личного архива Германа Винокурова</figcaption>
-              </figure>
-            </div>
-          </section>
+          <div class="multitool__contacts" aria-label="Контакты">
+            <a class="multitool__address" href="https://yandex.ru/maps/-/CPAwvS3O" target="_blank" rel="noopener" aria-label="Москва, Проспект Мира, 7, строение 3 — открыть в Яндекс Картах"><span>Проспект Мира, 7</span><span class="multitool__contact-kind">Карта</span></a>
+            <a class="multitool__icon-link" href="https://t.me/hermanlifetime" target="_blank" rel="noopener" aria-label="Telegram">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.3 3.3 18.2 20c-.2 1.1-.9 1.4-1.8.8l-4.8-3.5-2.3 2.2c-.3.3-.5.5-1 .5l.3-4.9 9-8.1c.4-.4-.1-.6-.6-.3L5.8 13.8 1 12.3c-1-.3-1-1 .2-1.5L20 3.5c.9-.3 1.7.2 1.3-.2Z"></path></svg>
+              <span>Telegram</span>
+            </a>
+            <a class="multitool__icon-link multitool__instagram" href="https://www.instagram.com/hermanvinakurau/" target="_blank" rel="noopener" aria-label="Instagram, сервис компании Meta, деятельность которой запрещена в России" aria-describedby="instagram-legal">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"></rect><circle cx="12" cy="12" r="4.25"></circle><circle cx="17.4" cy="6.7" r="1"></circle></svg>
+              <span>Instagram<sup class="multitool__legal-star" aria-hidden="true">*</sup></span>
+            </a>
+          </div>
 
           <div class="multitool__footer">
           <div class="multitool__descriptor" aria-label="Мужской стилист, барбер, эксперт по мужскому уходу">
@@ -224,6 +244,12 @@
             <button class="motion-toggle" type="button" aria-label="Уменьшить движение" aria-pressed="false" title="Уменьшить движение">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 13H3c-.55 0-1-.45-1-1s.45-1 1-1h4c.55 0 1 .45 1 1s-.45 1-1 1M6 8c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1s.45 1 1 1h1c.55 0 1-.45 1-1m16 4c0 2.76-2.24 5-5 5H4c-.55 0-1-.45-1-1s.45-1 1-1h9c-.42-.58-.75-1.26-.9-2H10c-.55 0-1-.45-1-1s.45-1 1-1h2.1c.15-.74.48-1.42.9-2H8c-.55 0-1-.45-1-1s.45-1 1-1h9c2.76 0 5 2.24 5 5m-2 0c0-1.65-1.35-3-3-3s-3 1.35-3 3s1.35 3 3 3s3-1.35 3-3"/></svg>
             </button>
+            <button class="transparency-toggle" type="button" aria-label="Уменьшить прозрачность" aria-pressed="false" title="Уменьшить прозрачность">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="3.5" y="5.5" width="12" height="12" rx="2.5"></rect>
+                <rect x="8.5" y="8.5" width="12" height="12" rx="2.5"></rect>
+              </svg>
+            </button>
             <button class="theme-toggle" type="button" aria-label="Включить тёмную тему" aria-pressed="false" title="Включить тёмную тему">
               <svg class="theme-toggle__icon theme-toggle__icon--glasses" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 3a1 1 0 1 1 0 2H6.743l-2.4 8H10a1 1 0 0 1 1 1v1h2v-1a1 1 0 0 1 1-1h5.656l-2.4-8H16a1 1 0 0 1-.993-.883L15 4a1 1 0 0 1 1-1h2a1 1 0 0 1 .958.713l3.01 10.036l.022.112l.008.08L22 16.5a4.5 4.5 0 0 1-8.972.5h-2.056A4.5 4.5 0 0 1 2 16.5v-2.518l.004-.071l.014-.103l.018-.076l3.006-10.02A1 1 0 0 1 6 3z"></path></svg>
               <svg class="theme-toggle__icon theme-toggle__icon--stars" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M6.5 8.75L9 10l-2.5 1.25L5 15l-1.5-3.75L1 10l2.5-1.25L5 5zM10 12a1 1 0 1 1 0 2a1 1 0 0 1 0-2m3-3a1 1 0 1 1 0 2a1 1 0 0 1 0-2m.269-5.692L15 4l-1.731.691L12.5 7l-.77-2.309L10 4l1.73-.692L12.5 1zM3 2a1 1 0 1 1 0 2a1 1 0 0 1 0-2"></path></svg>
@@ -235,8 +261,13 @@
 
       <article class="text-block text-block--practice glass-surface glass-surface--expanded" id="practice-panel" aria-labelledby="practice-title" hidden>
         <canvas class="glass-refractor" aria-hidden="true"></canvas>
-        <div class="text-block__scroll">
+        <header class="text-block__bar">
           <button class="text-block__index text-block__drag-handle" type="button" aria-label="Переместить панель «Экспертиза». Используйте стрелки, чтобы перемещать её, и клавишу Home, чтобы вернуть на место.">02 / Практика</button>
+          <button class="text-block__close" type="button" data-close-panel="practice" aria-label="Закрыть панель «Экспертиза»" title="Закрыть панель «Экспертиза»">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg>
+          </button>
+        </header>
+        <div class="text-block__scroll">
           <h2 id="practice-title">Экспертиза</h2>
 
         <section class="practice-group">

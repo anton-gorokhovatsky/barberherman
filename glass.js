@@ -26,6 +26,7 @@
     uniform vec2 u_videoSize;
     uniform vec4 u_rect;
     uniform float u_open;
+    uniform float u_dark;
 
     vec2 videoUV(vec2 screenPoint) {
       float scale = max(u_viewport.x / u_videoSize.x, u_viewport.y / u_videoSize.y);
@@ -50,37 +51,51 @@
 
     void main() {
       vec2 centered = v_uv - .5;
-      float aspect = u_rect.w / max(u_rect.z, 1.0);
-      float centerLength = length(centered * vec2(1.0, aspect));
-      float edgeDistance = min(min(v_uv.x, 1.0 - v_uv.x), min(v_uv.y, 1.0 - v_uv.y));
-      float edgeLens = 1.0 - smoothstep(.025, .19, edgeDistance);
-      float bodyLens = 1.0 - smoothstep(.08, .58, centerLength);
-      vec2 direction = normalize(centered + vec2(.0001));
+      vec2 edgeDistance = min(v_uv, 1.0 - v_uv);
+      vec2 wallLens = 1.0 - smoothstep(vec2(.018), vec2(.155), edgeDistance);
+      float edgeLens = max(wallLens.x, wallLens.y);
+      vec2 lensNormal = normalize(
+        vec2(sign(centered.x) * wallLens.x, -sign(centered.y) * wallLens.y) + vec2(.0001)
+      );
 
       vec2 screenPoint = vec2(
         u_rect.x + v_uv.x * u_rect.z,
         u_rect.y + (1.0 - v_uv.y) * u_rect.w
       );
 
-      float edgeStrength = mix(10.0, 18.0, u_open);
-      float bodyStrength = mix(2.4, 5.0, u_open);
-      screenPoint -= direction * (edgeLens * edgeStrength + bodyLens * bodyStrength);
+      /* A web adaptation of the thicker Apple material: the body slightly
+         magnifies the scene while the rim bends it much more strongly. */
+      vec2 bodyShift = vec2(centered.x * u_rect.z, -centered.y * u_rect.w)
+        * mix(.018, .032, u_open);
+      float edgeStrength = mix(25.0, 42.0, u_open);
+      screenPoint -= bodyShift + lensNormal * edgeLens * edgeStrength;
 
       float scale = max(u_viewport.x / u_videoSize.x, u_viewport.y / u_videoSize.y);
       vec2 displaySize = u_videoSize * scale;
       vec2 px = 1.0 / displaySize;
       vec2 uv = videoUV(screenPoint);
-      float blurRadius = mix(1.1, 2.35, u_open) + edgeLens * 1.25;
+      float blurRadius = mix(.7, 1.25, u_open) + edgeLens * .8;
       vec4 color = softenedSample(uv, px, blurRadius);
 
-      vec2 chromaShift = direction * px * edgeLens * mix(1.4, 2.5, u_open);
+      vec2 chromaShift = lensNormal * px * edgeLens * mix(1.8, 3.0, u_open);
       color.r = texture2D(u_video, uv + chromaShift).r;
       color.b = texture2D(u_video, uv - chromaShift).b;
 
-      float edgeLight = edgeLens * (.055 + .045 * (1.0 - v_uv.y));
-      color.rgb += edgeLight;
-      color.rgb = mix(color.rgb, vec3(dot(color.rgb, vec3(.299, .587, .114))), .035);
-      gl_FragColor = vec4(color.rgb, .92);
+      float topLight = (1.0 - smoothstep(.0, .085, 1.0 - v_uv.y)) * .16;
+      float leftLight = (1.0 - smoothstep(.0, .07, v_uv.x)) * .07;
+      float bottomShade = (1.0 - smoothstep(.0, .09, v_uv.y)) * .07;
+      color.rgb += edgeLens * .025 + topLight + leftLight - bottomShade;
+      color.rgb = (color.rgb - .5) * 1.045 + .5;
+
+      /* System materials preserve legibility by adapting their density to
+         both content and appearance instead of laying down a fixed grey veil. */
+      float luminance = dot(color.rgb, vec3(.2126, .7152, .0722));
+      float lightDensity = (1.0 - smoothstep(.12, .62, luminance)) * mix(.24, .44, u_open);
+      float darkDensity = smoothstep(.34, .84, luminance) * mix(.25, .46, u_open);
+      vec3 lightMaterial = mix(color.rgb, vec3(.965, .97, .985), lightDensity);
+      vec3 darkMaterial = mix(color.rgb, vec3(.018, .022, .034), darkDensity);
+      color.rgb = mix(lightMaterial, darkMaterial, u_dark);
+      gl_FragColor = vec4(color.rgb, 1.0);
     }
   `;
 
@@ -145,6 +160,7 @@
       videoSize: gl.getUniformLocation(program, 'u_videoSize'),
       rect: gl.getUniformLocation(program, 'u_rect'),
       open: gl.getUniformLocation(program, 'u_open'),
+      dark: gl.getUniformLocation(program, 'u_dark'),
     };
 
     const texture = gl.createTexture();
@@ -187,6 +203,7 @@
       gl.uniform2f(uniforms.videoSize, video.videoWidth, video.videoHeight);
       gl.uniform4f(uniforms.rect, rect.left, rect.top, rect.width, rect.height);
       gl.uniform1f(uniforms.open, expanded ? 1 : 0);
+      gl.uniform1f(uniforms.dark, root.dataset.theme === 'dark' ? 1 : 0);
       gl.clear(gl.COLOR_BUFFER_BIT);
       gl.drawArrays(gl.TRIANGLES, 0, 6);
       surface.dataset.glassRenderer = 'webgl';
@@ -214,7 +231,12 @@
   function draw(time) {
     requestAnimationFrame(draw);
 
-    if (document.hidden || root.dataset.reduceMotion === 'true' || time - lastFrame < 32) return;
+    if (
+      document.hidden
+      || root.dataset.reduceMotion === 'true'
+      || root.dataset.reduceTransparency === 'true'
+      || time - lastFrame < 32
+    ) return;
 
     const video = activeVideo();
     if (!video || video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA || !video.videoWidth || !video.videoHeight) return;

@@ -1,6 +1,7 @@
 const root = document.documentElement;
 const themeToggle = document.querySelector('.theme-toggle');
 const motionToggle = document.querySelector('.motion-toggle');
+const transparencyToggle = document.querySelector('.transparency-toggle');
 const logoViewButtons = [...document.querySelectorAll('[data-logo-view]')];
 const logoViewToggle = document.querySelector('.logo-view-toggle');
 const themeColor = document.getElementById('theme-color');
@@ -9,6 +10,7 @@ const multitoolMenuToggle = document.querySelector('.multitool__menu-toggle');
 const multitoolMenuLabel = document.querySelector('.multitool__menu-label');
 const multitoolDrawer = document.getElementById('multitool-drawer');
 const sectionButtons = [...document.querySelectorAll('[data-panel]')];
+const panelCloseButtons = [...document.querySelectorAll('[data-close-panel]')];
 const showcase = document.querySelector('.showcase');
 const glassSurfaces = [...document.querySelectorAll('.glass-surface')];
 const draggablePanels = [...document.querySelectorAll('.text-block')];
@@ -23,9 +25,11 @@ const stageVideos = [...document.querySelectorAll('.stage-video')];
 const mobileQuery = window.matchMedia('(max-width: 900px)');
 const colorSchemeQuery = window.matchMedia('(prefers-color-scheme: dark)');
 const reduceMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+const reduceTransparencyQuery = window.matchMedia('(prefers-reduced-transparency: reduce)');
 const finePointerQuery = window.matchMedia('(hover: hover) and (pointer: fine)');
 const themeStorageKey = 'barberherman-theme';
 const motionStorageKey = 'barberherman-reduce-motion';
+const transparencyStorageKey = 'barberherman-reduce-transparency';
 const logoViewStorageKey = 'barberherman-logo-view';
 const queryParams = new URLSearchParams(window.location.search);
 const visualQASection = queryParams.get('qa-section');
@@ -35,11 +39,13 @@ const visualQAContrast = queryParams.get('qa-contrast');
 const visualQAMenu = queryParams.get('qa-menu');
 const visualQAPanels = queryParams.get('qa-panels');
 const visualQATheme = queryParams.get('qa-theme');
+const visualQATransparency = queryParams.get('qa-transparency');
 const visualQALogoView = queryParams.get('qa-logo-view');
 const visualQATickerPhase = queryParams.get('ticker-phase');
 
 let hasSavedTheme = false;
 let hasSavedReducedMotion = false;
+let reduceTransparencyPreference = true;
 let pointerFrame = 0;
 let latestPointerEvent = null;
 let latestGlassSurface = null;
@@ -54,21 +60,26 @@ if (['start', 'middle', 'seam'].includes(visualQATickerPhase)) {
 try {
   hasSavedTheme = ['light', 'dark'].includes(localStorage.getItem(themeStorageKey));
   hasSavedReducedMotion = localStorage.getItem(motionStorageKey) === 'true';
+  const savedTransparency = localStorage.getItem(transparencyStorageKey);
+  reduceTransparencyPreference = savedTransparency === 'true' || savedTransparency === 'false'
+    ? savedTransparency === 'true'
+    : true;
 } catch {
   hasSavedTheme = false;
   hasSavedReducedMotion = false;
+  reduceTransparencyPreference = true;
 }
 
 function applyTheme(theme, { persist = false } = {}) {
   const isDark = theme === 'dark';
-  const label = isDark ? 'Включить светлую тему' : 'Включить тёмную тему';
+  const title = isDark ? 'Включить светлую тему' : 'Включить тёмную тему';
 
   root.dataset.theme = isDark ? 'dark' : 'light';
   root.style.colorScheme = isDark ? 'dark' : 'light';
   themeToggle?.setAttribute('aria-pressed', String(isDark));
-  themeToggle?.setAttribute('aria-label', label);
+  themeToggle?.setAttribute('aria-label', 'Тёмная тема');
 
-  if (themeToggle) themeToggle.title = label;
+  if (themeToggle) themeToggle.title = title;
   themeColor?.setAttribute('content', isDark ? '#09090b' : '#e8e8e5');
 
   if (!persist) return;
@@ -112,7 +123,7 @@ function syncContextControls() {
   logoViewToggle.hidden = !hasVisibleCatalog;
 }
 
-function setPanelState(name, visible) {
+function setPanelState(name, visible, { returnFocus = false } = {}) {
   const panel = contentPanels[name];
   const button = sectionButtons.find((item) => item.dataset.panel === name);
 
@@ -120,8 +131,12 @@ function setPanelState(name, visible) {
 
   panel.hidden = !visible;
   button.setAttribute('aria-pressed', String(visible));
+  button.setAttribute('aria-expanded', String(visible));
+  if (visible && panel.classList.contains('text-block')) bringPanelForward(panel);
   syncContentPresence();
   syncContextControls();
+
+  if (!visible && returnFocus) button.focus({ preventScroll: true });
 }
 
 function closeAllPanels() {
@@ -135,8 +150,8 @@ function setMenuOpen(open, { resetPanels = false } = {}) {
   root.dataset.menuOpen = String(open);
   multitoolDrawer.hidden = !open;
   multitoolMenuToggle.setAttribute('aria-expanded', String(open));
-  multitoolMenuToggle.setAttribute('aria-label', open ? 'Закрыть меню' : 'Открыть меню');
-  if (multitoolMenuLabel) multitoolMenuLabel.textContent = open ? 'Свернуть' : 'Меню';
+  multitoolMenuToggle.setAttribute('aria-label', open ? 'Свернуть меню' : 'Развернуть меню');
+  if (multitoolMenuLabel) multitoolMenuLabel.textContent = open ? 'Свернуть' : 'Развернуть';
 
   if (!open && resetPanels) closeAllPanels();
 }
@@ -147,9 +162,14 @@ function applyVisualQAMenuState() {
     .filter((name) => name in contentPanels);
   const sectionPanel = visualQASection in contentPanels ? visualQASection : null;
 
+  if (visualQAMenu === 'closed') {
+    setMenuOpen(false, { resetPanels: true });
+    return;
+  }
+
   if (visualQAMenu !== 'open' && !requestedPanels.length && !sectionPanel) return;
 
-  setMenuOpen(visualQAMenu !== 'closed');
+  setMenuOpen(true);
 
   if (sectionPanel) requestedPanels.push(sectionPanel);
   [...new Set(requestedPanels)].forEach((name) => setPanelState(name, true));
@@ -157,6 +177,37 @@ function applyVisualQAMenuState() {
 
 function prefersReducedMotion() {
   return reduceMotionQuery.matches || hasSavedReducedMotion;
+}
+
+function prefersReducedTransparency() {
+  if (visualQATransparency === 'reduce') return true;
+  if (visualQATransparency === 'full') return false;
+  return reduceTransparencyQuery.matches || reduceTransparencyPreference;
+}
+
+function applyTransparencyPreference({ persist = false } = {}) {
+  const isReduced = prefersReducedTransparency();
+  const isSystemReduced = reduceTransparencyQuery.matches && !['reduce', 'full'].includes(visualQATransparency);
+  const title = isSystemReduced
+    ? 'Прозрачность уменьшена в настройках системы'
+    : isReduced
+      ? 'Включить стекло'
+      : 'Уменьшить прозрачность';
+
+  root.dataset.reduceTransparency = String(isReduced);
+  transparencyToggle?.setAttribute('aria-pressed', String(isReduced));
+  transparencyToggle?.setAttribute('aria-label', 'Уменьшенная прозрачность');
+  transparencyToggle?.setAttribute('aria-disabled', String(isSystemReduced));
+
+  if (transparencyToggle) transparencyToggle.title = title;
+
+  if (!persist) return;
+
+  try {
+    localStorage.setItem(transparencyStorageKey, String(reduceTransparencyPreference));
+  } catch {
+    // The selected preference still applies when storage is unavailable.
+  }
 }
 
 function syncStageVideos() {
@@ -187,7 +238,7 @@ function applyMotionPreference({ persist = false } = {}) {
 
   root.dataset.reduceMotion = String(isReduced);
   motionToggle?.setAttribute('aria-pressed', String(isReduced));
-  motionToggle?.setAttribute('aria-label', title);
+  motionToggle?.setAttribute('aria-label', 'Уменьшенное движение');
   motionToggle?.setAttribute('aria-disabled', String(isSystemReduced));
 
   if (motionToggle) motionToggle.title = title;
@@ -291,8 +342,12 @@ function enablePanelDragging(panel) {
 
   let dragState = null;
 
-  handle.addEventListener('pointerdown', (event) => {
+  panel.addEventListener('pointerdown', (event) => {
     if (mobileQuery.matches || event.button !== 0) return;
+    if (event.target.closest('a, button:not(.text-block__drag-handle), input, select, textarea, [contenteditable="true"]')) return;
+
+    const scrollSurface = event.target.closest('.text-block__scroll');
+    if (scrollSurface && event.clientX > scrollSurface.getBoundingClientRect().right - 18) return;
 
     const offset = panelOffset(panel);
     dragState = {
@@ -301,22 +356,31 @@ function enablePanelDragging(panel) {
       startY: event.clientY,
       offsetX: offset.x,
       offsetY: offset.y,
+      active: false,
     };
 
     bringPanelForward(panel);
-    panel.classList.add('is-dragging');
-    handle.setPointerCapture(event.pointerId);
-    event.preventDefault();
+    panel.setPointerCapture(event.pointerId);
   });
 
-  handle.addEventListener('pointermove', (event) => {
+  panel.addEventListener('pointermove', (event) => {
     if (!dragState || event.pointerId !== dragState.pointerId) return;
+
+    const deltaX = event.clientX - dragState.startX;
+    const deltaY = event.clientY - dragState.startY;
+
+    if (!dragState.active && Math.hypot(deltaX, deltaY) < 5) return;
+    if (!dragState.active) {
+      dragState.active = true;
+      panel.classList.add('is-dragging');
+    }
 
     setPanelOffset(
       panel,
-      dragState.offsetX + event.clientX - dragState.startX,
-      dragState.offsetY + event.clientY - dragState.startY,
+      dragState.offsetX + deltaX,
+      dragState.offsetY + deltaY,
     );
+    event.preventDefault();
   });
 
   const finishDrag = (event) => {
@@ -326,9 +390,9 @@ function enablePanelDragging(panel) {
     panel.classList.remove('is-dragging');
   };
 
-  handle.addEventListener('pointerup', finishDrag);
-  handle.addEventListener('pointercancel', finishDrag);
-  handle.addEventListener('lostpointercapture', () => {
+  panel.addEventListener('pointerup', finishDrag);
+  panel.addEventListener('pointercancel', finishDrag);
+  panel.addEventListener('lostpointercapture', () => {
     dragState = null;
     panel.classList.remove('is-dragging');
   });
@@ -371,6 +435,7 @@ try {
 applyTheme(['light', 'dark'].includes(visualQATheme) ? visualQATheme : root.dataset.theme);
 applyLogoView(visualQALogoView || initialLogoView);
 applyMotionPreference();
+applyTransparencyPreference();
 lockVideoPhaseForVisualQA();
 applyVisualQAMenuState();
 syncContextControls();
@@ -388,6 +453,13 @@ motionToggle?.addEventListener('click', () => {
 
   hasSavedReducedMotion = !hasSavedReducedMotion;
   applyMotionPreference({ persist: true });
+});
+
+transparencyToggle?.addEventListener('click', () => {
+  if (reduceTransparencyQuery.matches) return;
+
+  reduceTransparencyPreference = !reduceTransparencyPreference;
+  applyTransparencyPreference({ persist: true });
 });
 
 logoViewButtons.forEach((button) => {
@@ -409,10 +481,30 @@ sectionButtons.forEach((button) => {
   });
 });
 
+panelCloseButtons.forEach((button) => {
+  button.addEventListener('click', () => {
+    setPanelState(button.dataset.closePanel, false, { returnFocus: true });
+  });
+});
+
 draggablePanels.forEach(enablePanelDragging);
 
 document.addEventListener('keydown', (event) => {
-  if (event.key !== 'Escape' || multitoolMenuToggle?.getAttribute('aria-expanded') !== 'true') return;
+  if (event.key !== 'Escape') return;
+
+  const visiblePanel = draggablePanels
+    .filter((panel) => !panel.hidden)
+    .sort((a, b) => (Number.parseInt(a.style.zIndex, 10) || 0) - (Number.parseInt(b.style.zIndex, 10) || 0))
+    .at(-1);
+
+  if (visiblePanel) {
+    const name = Object.entries(contentPanels).find(([, panel]) => panel === visiblePanel)?.[0];
+    if (name) setPanelState(name, false, { returnFocus: true });
+    event.preventDefault();
+    return;
+  }
+
+  if (multitoolMenuToggle?.getAttribute('aria-expanded') !== 'true') return;
 
   setMenuOpen(false, { resetPanels: true });
   multitoolMenuToggle.focus();
@@ -423,6 +515,7 @@ mobileQuery.addEventListener('change', () => {
   if (mobileQuery.matches) draggablePanels.forEach(resetPanelPosition);
 });
 reduceMotionQuery.addEventListener('change', applyMotionPreference);
+reduceTransparencyQuery.addEventListener('change', applyTransparencyPreference);
 colorSchemeQuery.addEventListener('change', (event) => {
   if (!hasSavedTheme) applyTheme(event.matches ? 'dark' : 'light');
 });
