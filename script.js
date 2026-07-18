@@ -5,9 +5,6 @@ const transparencyToggle = document.querySelector('.transparency-toggle');
 const logoViewButtons = [...document.querySelectorAll('[data-logo-view]')];
 const logoViewToggle = document.querySelector('.logo-view-toggle');
 const themeColor = document.getElementById('theme-color');
-const multitool = document.querySelector('.multitool');
-const multitoolMenuToggle = document.querySelector('.multitool__menu-toggle');
-const multitoolMenuLabel = document.querySelector('.multitool__menu-label');
 const multitoolDrawer = document.getElementById('multitool-drawer');
 const moduleStatus = document.getElementById('module-status');
 const sectionButtons = [...document.querySelectorAll('[data-panel]')];
@@ -37,12 +34,12 @@ const visualQASection = queryParams.get('qa-section');
 const visualQAVideoPhase = queryParams.get('hero-phase');
 const visualQATextScale = queryParams.get('qa-text');
 const visualQAContrast = queryParams.get('qa-contrast');
-const visualQAMenu = queryParams.get('qa-menu');
 const visualQAPanels = queryParams.get('qa-panels');
 const visualQATheme = queryParams.get('qa-theme');
 const visualQATransparency = queryParams.get('qa-transparency');
 const visualQALogoView = queryParams.get('qa-logo-view');
 const visualQATickerPhase = queryParams.get('ticker-phase');
+const visualQAFocus = queryParams.get('qa-focus');
 
 let hasSavedTheme = false;
 let hasSavedReducedMotion = false;
@@ -51,6 +48,7 @@ let pointerFrame = 0;
 let latestPointerEvent = null;
 let latestGlassSurface = null;
 let panelLayer = 6;
+let mostRecentPanelName = null;
 
 if (['125', '150', '200'].includes(visualQATextScale)) root.dataset.qaText = visualQATextScale;
 if (visualQAContrast === 'more') root.dataset.qaContrast = 'more';
@@ -130,10 +128,18 @@ function setPanelState(name, visible, { returnFocus = false } = {}) {
 
   if (!panel || !button) return;
 
+  const wasVisible = !panel.hidden;
   panel.hidden = !visible;
   button.setAttribute('aria-pressed', String(visible));
   button.setAttribute('aria-expanded', String(visible));
-  if (visible && panel.classList.contains('text-block')) bringPanelForward(panel);
+  if (visible) {
+    mostRecentPanelName = name;
+    if (!wasVisible) {
+      const scrollSurface = panel.querySelector('.text-block__scroll');
+      if (scrollSurface) scrollSurface.scrollTop = 0;
+    }
+    if (panel.classList.contains('text-block')) bringPanelForward(panel);
+  }
   syncContentPresence();
   syncContextControls();
 
@@ -144,53 +150,56 @@ function closeAllPanels() {
   Object.keys(contentPanels).forEach((name) => setPanelState(name, false));
 }
 
+function keepSinglePanelOnMobile(preferredName = mostRecentPanelName) {
+  if (!mobileQuery.matches) return;
+
+  const visibleNames = Object.keys(contentPanels)
+    .filter((name) => contentPanels[name] && !contentPanels[name].hidden);
+
+  if (visibleNames.length < 2) return;
+
+  const nameToKeep = visibleNames.includes(preferredName)
+    ? preferredName
+    : visibleNames.at(-1);
+
+  visibleNames.forEach((name) => {
+    if (name !== nameToKeep) setPanelState(name, false);
+  });
+}
+
 function revealPanel(name) {
   const panel = contentPanels[name];
   if (!panel) return;
 
+  const button = sectionButtons.find((item) => item.dataset.panel === name);
   const title = panel.querySelector('h2');
-  const label = title?.textContent?.trim() || name;
+  const label = button?.querySelector('.multitool__section-label')?.textContent?.trim()
+    || title?.textContent?.trim()
+    || name;
   if (moduleStatus) moduleStatus.textContent = `Открыт раздел «${label}»`;
 
   requestAnimationFrame(() => {
-    if (panel.matches('[tabindex]')) panel.focus({ preventScroll: true });
+    const isInlinePanel = Boolean(panel.closest('.multitool__drawer'));
+    if ((mobileQuery.matches || isInlinePanel) && panel.matches('[tabindex]')) {
+      panel.focus({ preventScroll: true });
+    }
 
-    if (mobileQuery.matches || panel.closest('.multitool__drawer')) {
-      panel.scrollIntoView({
-        block: 'start',
-        behavior: prefersReducedMotion() ? 'auto' : 'smooth',
-      });
+    const behavior = prefersReducedMotion() ? 'auto' : 'smooth';
+
+    if (isInlinePanel && multitoolDrawer) {
+      multitoolDrawer.scrollTo({ top: panel.offsetTop, behavior });
+      if (mobileQuery.matches) document.querySelector('.multitool')?.scrollIntoView({ block: 'start', behavior });
+    } else if (mobileQuery.matches) {
+      panel.scrollIntoView({ block: 'start', behavior });
     }
   });
 }
 
-function setMenuOpen(open, { resetPanels = false } = {}) {
-  if (!multitool || !multitoolMenuToggle || !multitoolDrawer) return;
-
-  multitool.classList.toggle('is-open', open);
-  root.dataset.menuOpen = String(open);
-  multitoolDrawer.hidden = !open;
-  multitoolMenuToggle.setAttribute('aria-expanded', String(open));
-  multitoolMenuToggle.setAttribute('aria-label', open ? 'Свернуть меню' : 'Развернуть меню');
-  if (multitoolMenuLabel) multitoolMenuLabel.textContent = open ? 'Свернуть' : 'Развернуть';
-
-  if (!open && resetPanels) closeAllPanels();
-}
-
-function applyVisualQAMenuState() {
+function applyVisualQAContentState() {
   const requestedPanels = (visualQAPanels || '')
     .split(',')
     .filter((name) => name in contentPanels);
   const sectionPanel = visualQASection in contentPanels ? visualQASection : null;
-
-  if (visualQAMenu === 'closed') {
-    setMenuOpen(false, { resetPanels: true });
-    return;
-  }
-
-  if (visualQAMenu !== 'open' && !requestedPanels.length && !sectionPanel) return;
-
-  setMenuOpen(true);
 
   if (sectionPanel) requestedPanels.push(sectionPanel);
   [...new Set(requestedPanels)].forEach((name) => setPanelState(name, true));
@@ -314,7 +323,15 @@ async function focusVisualQASection() {
     // The QA focus still runs when the Font Loading API is unavailable.
   }
 
-  requestAnimationFrame(() => target.scrollIntoView({ block: 'center' }));
+  requestAnimationFrame(() => {
+    if (target.closest('.multitool__drawer') && multitoolDrawer) {
+      multitoolDrawer.scrollTop = target.offsetTop;
+      if (mobileQuery.matches) document.querySelector('.multitool')?.scrollIntoView({ block: 'start' });
+      return;
+    }
+
+    target.scrollIntoView({ block: 'center' });
+  });
 }
 
 function paintGlassHighlight() {
@@ -459,10 +476,14 @@ applyLogoView(visualQALogoView || initialLogoView);
 applyMotionPreference();
 applyTransparencyPreference();
 lockVideoPhaseForVisualQA();
-applyVisualQAMenuState();
+applyVisualQAContentState();
 syncContextControls();
 focusVisualQASection();
 syncStageVideos();
+
+if (visualQAFocus === 'skip') {
+  requestAnimationFrame(() => document.querySelector('.skip-link')?.focus());
+}
 
 requestAnimationFrame(() => root.classList.add('theme-ready'));
 
@@ -490,16 +511,11 @@ logoViewButtons.forEach((button) => {
   });
 });
 
-multitoolMenuToggle?.addEventListener('click', () => {
-  const willOpen = multitoolMenuToggle.getAttribute('aria-expanded') !== 'true';
-  setMenuOpen(willOpen, { resetPanels: !willOpen });
-});
-
 sectionButtons.forEach((button) => {
   button.addEventListener('click', () => {
     const name = button.dataset.panel;
     const willShow = button.getAttribute('aria-pressed') !== 'true';
-    if (willShow) closeAllPanels();
+    if (willShow && mobileQuery.matches) closeAllPanels();
     setPanelState(name, willShow);
     if (willShow) revealPanel(name);
   });
@@ -516,27 +532,22 @@ draggablePanels.forEach(enablePanelDragging);
 document.addEventListener('keydown', (event) => {
   if (event.key !== 'Escape') return;
 
-  const visiblePanel = draggablePanels
-    .filter((panel) => !panel.hidden)
-    .sort((a, b) => (Number.parseInt(a.style.zIndex, 10) || 0) - (Number.parseInt(b.style.zIndex, 10) || 0))
-    .at(-1);
+  const recentPanel = mostRecentPanelName ? contentPanels[mostRecentPanelName] : null;
+  const fallbackPanel = Object.entries(contentPanels).filter(([, panel]) => panel && !panel.hidden).at(-1);
+  const name = recentPanel && !recentPanel.hidden ? mostRecentPanelName : fallbackPanel?.[0];
 
-  if (visiblePanel) {
-    const name = Object.entries(contentPanels).find(([, panel]) => panel === visiblePanel)?.[0];
-    if (name) setPanelState(name, false, { returnFocus: true });
+  if (name) {
+    setPanelState(name, false, { returnFocus: true });
     event.preventDefault();
-    return;
   }
-
-  if (multitoolMenuToggle?.getAttribute('aria-expanded') !== 'true') return;
-
-  setMenuOpen(false, { resetPanels: true });
-  multitoolMenuToggle.focus();
 });
 
 mobileQuery.addEventListener('change', () => {
   syncStageVideos();
-  if (mobileQuery.matches) draggablePanels.forEach(resetPanelPosition);
+  if (mobileQuery.matches) {
+    draggablePanels.forEach(resetPanelPosition);
+    keepSinglePanelOnMobile();
+  }
 });
 reduceMotionQuery.addEventListener('change', applyMotionPreference);
 reduceTransparencyQuery.addEventListener('change', applyTransparencyPreference);

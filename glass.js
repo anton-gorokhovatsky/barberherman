@@ -52,7 +52,7 @@
     void main() {
       vec2 centered = v_uv - .5;
       vec2 edgeDistance = min(v_uv, 1.0 - v_uv);
-      vec2 wallLens = 1.0 - smoothstep(vec2(.018), vec2(.155), edgeDistance);
+      vec2 wallLens = 1.0 - smoothstep(vec2(.012), vec2(.07), edgeDistance);
       float edgeLens = max(wallLens.x, wallLens.y);
       vec2 lensNormal = normalize(
         vec2(sign(centered.x) * wallLens.x, -sign(centered.y) * wallLens.y) + vec2(.0001)
@@ -66,20 +66,19 @@
       /* A web adaptation of the thicker Apple material: the body slightly
          magnifies the scene while the rim bends it much more strongly. */
       vec2 bodyShift = vec2(centered.x * u_rect.z, -centered.y * u_rect.w)
-        * mix(.018, .032, u_open);
-      float edgeStrength = mix(18.0, 30.0, u_open);
+        * mix(.0015, .003, u_open);
+      float edgeStrength = mix(5.0, 9.0, u_open);
       screenPoint -= bodyShift + lensNormal * edgeLens * edgeStrength;
 
       float scale = max(u_viewport.x / u_videoSize.x, u_viewport.y / u_videoSize.y);
       vec2 displaySize = u_videoSize * scale;
       vec2 px = 1.0 / displaySize;
       vec2 uv = videoUV(screenPoint);
-      float blurRadius = mix(2.2, 4.2, u_open) + edgeLens * 1.2;
+      float blurRadius = mix(3.4, 5.4, u_open) + edgeLens * .8;
       vec4 color = softenedSample(uv, px, blurRadius);
 
-      vec2 chromaShift = lensNormal * px * edgeLens * mix(.75, 1.35, u_open);
-      color.r = texture2D(u_video, uv + chromaShift).r;
-      color.b = texture2D(u_video, uv - chromaShift).b;
+      /* Keep people and brand photography chromatically intact. The glass
+         bends luminance at its rim, but never splits skin tones into RGB. */
 
       float topLight = (1.0 - smoothstep(.0, .085, 1.0 - v_uv.y)) * .16;
       float leftLight = (1.0 - smoothstep(.0, .07, v_uv.x)) * .07;
@@ -87,11 +86,12 @@
       color.rgb += edgeLens * .025 + topLight + leftLight - bottomShade;
       color.rgb = (color.rgb - .5) * 1.045 + .5;
 
-      /* System materials preserve legibility by adapting their density to
-         both content and appearance instead of laying down a fixed grey veil. */
+      /* Adapt density gently: strong per-pixel correction turns faces into
+         cut-out silhouettes. A mostly even veil keeps skin and photography
+         coherent while still responding to the scene and appearance. */
       float luminance = dot(color.rgb, vec3(.2126, .7152, .0722));
-      float lightDensity = (1.0 - smoothstep(.12, .62, luminance)) * mix(.28, .58, u_open);
-      float darkDensity = smoothstep(.34, .84, luminance) * mix(.28, .54, u_open);
+      float lightDensity = mix(.22, .42, u_open) + (1.0 - luminance) * .04;
+      float darkDensity = mix(.24, .44, u_open) + luminance * .035;
       vec3 lightMaterial = mix(color.rgb, vec3(.965, .97, .985), lightDensity);
       vec3 darkMaterial = mix(color.rgb, vec3(.018, .022, .034), darkDensity);
       color.rgb = mix(lightMaterial, darkMaterial, u_dark);
