@@ -1,0 +1,7 @@
+{
+  "name": "barberherman",
+  "private": true,
+  "scripts": {
+    "test": "node --check script.js && node --test tests/static-audit.mjs"
+  }
+}
