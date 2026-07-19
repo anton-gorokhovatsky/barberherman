@@ -745,6 +745,7 @@ async function syncPresence() {
     const listResponse = await fetch(presenceUrl('', auth, {
       orderBy: JSON.stringify('seenAt'),
       startAt: serverNow - presenceActiveWindow,
+      limitToLast: 500,
     }), { cache: 'no-store', credentials: 'omit' });
     if (!listResponse.ok) throw new Error(`Presence read failed: ${listResponse.status}`);
     const sessions = await listResponse.json();
