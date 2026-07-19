@@ -1799,6 +1799,10 @@ html[data-theme="dark"] .theme-toggle__icon--light {
     font-size: min(var(--type-h2), 13.5vw);
   }
 
+  .text-block h3 {
+    font-size: min(var(--type-ui), 9.6cqi);
+  }
+
   .text-block p,
   .text-block li,
   .text-block dd,
@@ -1942,6 +1946,7 @@ html[data-theme="dark"] .theme-toggle__icon--light {
   .multitool__module-bar h2 {
     min-height: 48px;
     padding: 14px;
+    font-size: min(var(--type-ui), 8vw);
   }
 
   .multitool__module-actions {
@@ -1987,6 +1992,15 @@ html[data-theme="dark"] .theme-toggle__icon--light {
   .multitool__gallery-header {
     min-height: 52px;
     padding-inline: 13px;
+  }
+
+  .multitool__gallery-header h2 {
+    font-size: min(var(--type-ui), 7.2vw);
+  }
+
+  .multitool__gallery-count {
+    padding-inline: 8px;
+    font-size: min(var(--type-caption), 5.5vw);
   }
 
   .multitool__gallery-track {

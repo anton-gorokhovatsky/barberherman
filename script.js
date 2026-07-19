@@ -570,10 +570,6 @@ function renderOnlineCount(count) {
   root.dataset.presenceAvailable = 'true';
   onlineCountLabel.textContent = String(safeCount);
   onlineUnitLabel.textContent = visitorUnit(safeCount);
-  onlineCountLabel.closest('.multitool__presence')?.setAttribute(
-    'aria-label',
-    `Сейчас на сайте ${safeCount}${visitorUnit(safeCount)}`
-  );
 }
 
 function normalizePresenceAuth(payload) {
