@@ -983,7 +983,8 @@ html[data-presence-available="false"] .multitool__weather {
 }
 
 .multitool__icon-link + .multitool__icon-link,
-.theme-toggle {
+.theme-toggle,
+.multitool__menu-toggle {
   border-left: var(--tool-rule);
 }
 
