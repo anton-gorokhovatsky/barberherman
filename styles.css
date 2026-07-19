@@ -79,7 +79,11 @@
   --photo-radius: clamp(68px, 11vw, 180px);
   --motion-fast: 140ms;
   --motion-medium: 220ms;
+  --motion-panel-enter: 360ms;
+  --motion-panel-exit: 240ms;
   --ease-out: cubic-bezier(.2, .8, .2, 1);
+  --ease-panel-enter: cubic-bezier(.16, 1, .3, 1);
+  --ease-panel-exit: cubic-bezier(.4, 0, .8, .2);
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
@@ -288,11 +292,13 @@ html[data-content-open="true"] .stage-overlay {
 .text-block--profile {
   grid-area: stack;
   justify-self: start;
+  transform-origin: left center;
 }
 
 .text-block--practice {
   grid-area: stack;
   justify-self: end;
+  transform-origin: right center;
 }
 
 .text-block__bar {
@@ -626,6 +632,10 @@ html[data-content-open="true"] .stage-overlay {
   cursor: grabbing;
   transition: none;
   user-select: none;
+}
+
+.multitool.is-dragging * {
+  cursor: grabbing !important;
 }
 
 .multitool__drawer {
@@ -1530,6 +1540,13 @@ html[data-theme="dark"] .theme-toggle__icon--light {
 
   .practice-group + .practice-group {
     margin-top: 22px;
+  }
+}
+
+@media (min-width: 901px) {
+  .showcase {
+    height: 100svh;
+    grid-template-rows: minmax(0, 1fr);
   }
 }
 

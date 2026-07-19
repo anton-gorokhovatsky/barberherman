@@ -81,6 +81,7 @@ let presenceTimer = 0;
 let presenceAuth = null;
 let presenceSyncing = false;
 let presenceCleanupAt = 0;
+const panelAnimations = new Map();
 
 function reachMetrikaGoal(goal, params = {}) {
   if (!goal || typeof window.ym !== 'function') return;
@@ -186,22 +187,141 @@ function syncTextScrollFade(scrollSurface) {
   panel.classList.toggle('is-scroll-end', isAtEnd);
 }
 
+function panelIsOpen(name) {
+  const button = sectionButtons.find((item) => item.dataset.panel === name);
+  return button?.getAttribute('aria-pressed') === 'true';
+}
+
+function panelMotionDuration(token, fallback) {
+  const value = getComputedStyle(root).getPropertyValue(token).trim();
+  const amount = Number.parseFloat(value);
+  if (!Number.isFinite(amount)) return fallback;
+  return value.endsWith('ms') ? amount : value.endsWith('s') ? amount * 1000 : fallback;
+}
+
+function panelMotionEasing(token, fallback) {
+  return getComputedStyle(root).getPropertyValue(token).trim() || fallback;
+}
+
+function setPanelInteractionState(panel, visible) {
+  panel.toggleAttribute('inert', !visible);
+  if (visible) panel.removeAttribute('aria-hidden');
+  else panel.setAttribute('aria-hidden', 'true');
+}
+
+function cancelPanelAnimation(panel) {
+  const current = panelAnimations.get(panel);
+  if (!current) return;
+
+  current.animation.onfinish = null;
+  current.animation.cancel();
+  panelAnimations.delete(panel);
+  panel.style.removeProperty('overflow');
+}
+
+function settlePanelAnimation(panel, visible, animation = null) {
+  const current = panelAnimations.get(panel);
+  if (animation && current?.animation !== animation) return;
+
+  if (current) {
+    current.animation.onfinish = null;
+    current.animation.cancel();
+    panelAnimations.delete(panel);
+  }
+
+  panel.style.removeProperty('overflow');
+  panel.hidden = !visible;
+  setPanelInteractionState(panel, visible);
+  syncContentPresence();
+  requestAnimationFrame(() => {
+    clampCurrentMultitoolPosition();
+    const scrollSurface = visible ? panel.querySelector('.text-block__scroll') : null;
+    if (scrollSurface) syncTextScrollFade(scrollSurface);
+  });
+}
+
+function settleAllPanelAnimations() {
+  [...panelAnimations.entries()].forEach(([panel, current]) => {
+    settlePanelAnimation(panel, current.visible, current.animation);
+  });
+}
+
+function animatePanelVisibility(panel, visible, { animate = true } = {}) {
+  cancelPanelAnimation(panel);
+
+  if (visible) panel.hidden = false;
+  setPanelInteractionState(panel, visible);
+
+  if (!animate || prefersReducedMotion() || typeof panel.animate !== 'function' || (!visible && panel.hidden)) {
+    settlePanelAnimation(panel, visible);
+    return;
+  }
+
+  if (visible && panel.classList.contains('text-block') && !mobileQuery.matches) {
+    const offset = panelOffset(panel);
+    setPanelOffset(panel, offset.x, offset.y);
+  }
+
+  const isFlowPanel = mobileQuery.matches || Boolean(panel.closest('.multitool__drawer'));
+  const entering = visible;
+  const duration = panelMotionDuration(
+    entering ? '--motion-panel-enter' : '--motion-panel-exit',
+    entering ? 360 : 240,
+  );
+  const easing = panelMotionEasing(
+    entering ? '--ease-panel-enter' : '--ease-panel-exit',
+    entering ? 'cubic-bezier(.16, 1, .3, 1)' : 'cubic-bezier(.4, 0, .8, .2)',
+  );
+  let keyframes;
+
+  if (isFlowPanel) {
+    const panelHeight = panel.getBoundingClientRect().height;
+    panel.style.overflow = 'hidden';
+    keyframes = entering
+      ? [
+          { height: '0px', opacity: 0, translate: '0 -10px' },
+          { height: `${panelHeight}px`, opacity: 1, translate: '0 0' },
+        ]
+      : [
+          { height: `${panelHeight}px`, opacity: 1, translate: '0 0' },
+          { height: '0px', opacity: 0, translate: '0 -8px' },
+        ];
+  } else {
+    const direction = panel.classList.contains('text-block--profile') ? -18 : 18;
+    keyframes = entering
+      ? [
+          { opacity: 0, scale: '.985', translate: `${direction}px 10px` },
+          { opacity: 1, scale: '1', translate: '0 0' },
+        ]
+      : [
+          { opacity: 1, scale: '1', translate: '0 0' },
+          { opacity: 0, scale: '.992', translate: `${direction}px 8px` },
+        ];
+  }
+
+  const animation = panel.animate(keyframes, { duration, easing, fill: 'both' });
+  panelAnimations.set(panel, { animation, visible });
+  animation.onfinish = () => settlePanelAnimation(panel, visible, animation);
+}
+
 function syncContentPresence() {
-  const hasVisibleText = ['profile', 'practice'].some((key) => contentPanels[key] && !contentPanels[key].hidden);
+  const hasVisibleText = ['profile', 'practice'].some(panelIsOpen);
   showcase?.classList.toggle('has-content', hasVisibleText);
   root.dataset.contentOpen = String(hasVisibleText);
 }
 
-function setPanelState(name, visible, { returnFocus = false } = {}) {
+function setPanelState(name, visible, { returnFocus = false, animate = true } = {}) {
   const panel = contentPanels[name];
   const button = sectionButtons.find((item) => item.dataset.panel === name);
 
   if (!panel || !button) return;
 
-  const wasVisible = !panel.hidden;
-  panel.hidden = !visible;
+  const wasVisible = panelIsOpen(name);
+  if (wasVisible === visible) return;
+
   button.setAttribute('aria-pressed', String(visible));
   button.setAttribute('aria-expanded', String(visible));
+  animatePanelVisibility(panel, visible, { animate });
   if (visible) {
     mostRecentPanelName = name;
     if (!wasVisible) {
@@ -217,10 +337,6 @@ function setPanelState(name, visible, { returnFocus = false } = {}) {
   syncContentPresence();
   requestAnimationFrame(() => {
     clampCurrentMultitoolPosition();
-    if (visible) {
-      const offset = panelOffset(panel);
-      setPanelOffset(panel, offset.x, offset.y);
-    }
   });
 
   if (!visible && returnFocus) {
@@ -234,15 +350,14 @@ function setPanelState(name, visible, { returnFocus = false } = {}) {
   }
 }
 
-function closeAllPanels() {
-  Object.keys(contentPanels).forEach((name) => setPanelState(name, false));
+function closeAllPanels({ animate = true } = {}) {
+  Object.keys(contentPanels).forEach((name) => setPanelState(name, false, { animate }));
 }
 
 function keepSinglePanelOnMobile(preferredName = mostRecentPanelName) {
   if (!mobileQuery.matches) return;
 
-  const visibleNames = Object.keys(contentPanels)
-    .filter((name) => contentPanels[name] && !contentPanels[name].hidden);
+  const visibleNames = Object.keys(contentPanels).filter(panelIsOpen);
 
   if (visibleNames.length < 2) return;
 
@@ -290,7 +405,7 @@ function applyVisualQAContentState() {
   const sectionPanel = visualQASection in contentPanels ? visualQASection : null;
 
   if (sectionPanel) requestedPanels.push(sectionPanel);
-  [...new Set(requestedPanels)].forEach((name) => setPanelState(name, true));
+  [...new Set(requestedPanels)].forEach((name) => setPanelState(name, true, { animate: false }));
 }
 
 function prefersReducedMotion() {
@@ -686,6 +801,7 @@ function applyMotionPreference({ persist = false } = {}) {
   motionToggle?.setAttribute('aria-disabled', String(isSystemReduced));
 
   if (motionToggle) motionToggle.title = title;
+  if (isReduced) settleAllPanelAnimations();
 
   if (persist) {
     try {
@@ -1000,11 +1116,28 @@ function enableMultitoolDragging() {
   if (!multitool || !multitoolDragHandle) return;
 
   let dragState = null;
+  let suppressNextClick = false;
+
+  multitool.addEventListener('click', (event) => {
+    if (!suppressNextClick) return;
+
+    suppressNextClick = false;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+  }, true);
+
+  multitool.addEventListener('dragstart', (event) => {
+    if (dragState) event.preventDefault();
+  });
 
   multitool.addEventListener('pointerdown', (event) => {
-    const usesHandle = Boolean(event.target.closest('.multitool__drag-handle'));
-    const usesFrame = event.target === multitool;
-    if (mobileQuery.matches || !finePointerQuery.matches || event.button !== 0 || (!usesHandle && !usesFrame)) return;
+    if (mobileQuery.matches || !finePointerQuery.matches || event.button !== 0) return;
+
+    const drawer = event.target.closest('.multitool__drawer');
+    if (drawer && drawer.scrollHeight > drawer.clientHeight) {
+      const drawerRect = drawer.getBoundingClientRect();
+      if (event.clientX > drawerRect.right - 18) return;
+    }
 
     const offset = multitoolOffset();
     dragState = {
@@ -1018,10 +1151,9 @@ function enableMultitoolDragging() {
 
     panelLayer += 1;
     multitool.style.zIndex = String(panelLayer);
-    multitool.setPointerCapture(event.pointerId);
   });
 
-  multitool.addEventListener('pointermove', (event) => {
+  window.addEventListener('pointermove', (event) => {
     if (!dragState || event.pointerId !== dragState.pointerId) return;
 
     const deltaX = event.clientX - dragState.startX;
@@ -1044,17 +1176,15 @@ function enableMultitoolDragging() {
     dragState = null;
     multitool.classList.remove('is-dragging');
     if (moved) {
+      suppressNextClick = true;
+      window.setTimeout(() => { suppressNextClick = false; }, 0);
       if (document.activeElement === multitoolDragHandle) multitoolDragHandle.blur();
       showMultitoolStatus('Меню перемещено · двойной клик — вернуть в центр', { duration: 2600 });
     }
   };
 
-  multitool.addEventListener('pointerup', finishDrag);
-  multitool.addEventListener('pointercancel', finishDrag);
-  multitool.addEventListener('lostpointercapture', () => {
-    dragState = null;
-    multitool.classList.remove('is-dragging');
-  });
+  window.addEventListener('pointerup', finishDrag);
+  window.addEventListener('pointercancel', finishDrag);
 
   multitoolDragHandle.addEventListener('dblclick', (event) => {
     if (mobileQuery.matches) return;
@@ -1155,7 +1285,7 @@ sectionButtons.forEach((button) => {
   button.addEventListener('click', () => {
     const name = button.dataset.panel;
     const willShow = button.getAttribute('aria-pressed') !== 'true';
-    if (willShow && mobileQuery.matches) closeAllPanels();
+    if (willShow && mobileQuery.matches) closeAllPanels({ animate: false });
     setPanelState(name, willShow);
     if (willShow) {
       reachMetrikaGoal('module_open', { module: name });
@@ -1196,8 +1326,8 @@ document.addEventListener('keydown', (event) => {
   if (event.key !== 'Escape') return;
 
   const recentPanel = mostRecentPanelName ? contentPanels[mostRecentPanelName] : null;
-  const fallbackPanel = Object.entries(contentPanels).filter(([, panel]) => panel && !panel.hidden).at(-1);
-  const name = recentPanel && !recentPanel.hidden ? mostRecentPanelName : fallbackPanel?.[0];
+  const fallbackName = Object.keys(contentPanels).filter(panelIsOpen).at(-1);
+  const name = recentPanel && panelIsOpen(mostRecentPanelName) ? mostRecentPanelName : fallbackName;
 
   if (name) {
     setPanelState(name, false, { returnFocus: true });
@@ -1206,6 +1336,7 @@ document.addEventListener('keydown', (event) => {
 });
 
 mobileQuery.addEventListener('change', () => {
+  settleAllPanelAnimations();
   syncStageVideos();
   syncMultitoolDragAvailability();
   syncPanelDragAvailability();
