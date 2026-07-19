@@ -216,7 +216,7 @@ button {
   opacity: 0;
   pointer-events: none;
   transform: translateY(calc(-100% - 24px));
-  transition: transform 180ms ease, opacity 120ms linear;
+  transition: transform 180ms ease;
 }
 
 .skip-link:focus {
@@ -666,6 +666,7 @@ html[data-content-open="true"] .stage-overlay {
   padding: 14px 18px;
   font: 400 2rem/.82 "Herman Bebas", Impact, sans-serif;
   letter-spacing: .024em;
+  text-decoration: none;
   text-transform: uppercase;
 }
 
@@ -675,7 +676,8 @@ html[data-content-open="true"] .stage-overlay {
   align-items: center;
   padding: 12px 18px;
   border-left: var(--tool-rule);
-  font: 620 min(var(--type-ui), 5.8vw)/1.1 var(--font);
+  font: 540 min(var(--type-ui), 5.8vw)/1.1 var(--font);
+  letter-spacing: -.012em;
   text-decoration: none;
   white-space: nowrap;
 }

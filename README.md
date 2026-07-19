@@ -12,17 +12,27 @@ python3 -m http.server 8080
 
 Откройте `http://localhost:8080`.
 
-Точечные статические регрессионные проверки не требуют зависимостей:
+Для полного локального gate установите зафиксированные зависимости:
 
 ```bash
-npm test
+pnpm install --frozen-lockfile
+pnpm exec playwright install chromium webkit
+pnpm test
 ```
 
-Они проверяют синтаксис основного скрипта, согласованность breakpoint постеров и видео, opt-in Метрики, порядок и ARIA модулей, первый скиплинк, reduced motion, общую сессию счётчика и наличие локальных assets.
+`pnpm test` запускает статический аудит и браузерную матрицу Chromium/WebKit на ширинах 320, 430 и 1060 px. Проверяются синтаксис основного скрипта, breakpoint постеров и видео, opt-in Метрики, порядок и ARIA модулей, первый скиплинк, reflow и 200% текста, reduced motion, общая сессия счётчика, локальные assets, базовая axe-проверка, `robots.txt`, `sitemap.xml` и полезная 404-страница.
+
+Только быстрые проверки исходников:
+
+```bash
+pnpm run test:static
+```
 
 ## Публикация
 
 Проект подготовлен для GitHub Pages. Канонический адрес сайта — `https://barberherman.ru/`; привязка домена и HTTPS управляются в настройках GitHub Pages.
+
+Workflow `.github/workflows/quality.yml` повторяет полный gate при каждом push в `main` и для pull request.
 
 Шрифты Bebas Neue и Golos Text Variable хранятся локально на условиях SIL Open Font License 1.1; тексты лицензий находятся рядом с файлами шрифтов.
 

@@ -1,7 +1,14 @@
 {
   "name": "barberherman",
   "private": true,
+  "packageManager": "pnpm@11.9.0",
   "scripts": {
-    "test": "node --check script.js && node --test tests/static-audit.mjs"
+    "test": "pnpm run test:static && pnpm run test:browser",
+    "test:static": "node --check script.js && node --test tests/static-audit.mjs",
+    "test:browser": "playwright test"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.12.1",
+    "@playwright/test": "1.61.1"
   }
 }

@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ru" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="robots" content="noindex,follow">
+  <meta name="color-scheme" content="light dark">
+  <meta id="theme-color" name="theme-color" content="#f7f7f5">
+  <title>Страница не найдена — HERMAN &amp; CO</title>
+  <link rel="icon" href="assets/favicon.png" type="image/png">
+  <link rel="preload" href="assets/type/golos-text/GolosText-Cyrillic.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/type/golos-text/GolosText-Latin.woff2" as="font" type="font/woff2" crossorigin>
+  <script>
+    (() => {
+      let theme = 'light';
+      try {
+        const savedTheme = localStorage.getItem('barberherman-theme');
+        theme = savedTheme === 'light' || savedTheme === 'dark'
+          ? savedTheme
+          : matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      } catch {
+        theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+      document.documentElement.dataset.theme = theme;
+      document.documentElement.style.colorScheme = theme;
+      document.getElementById('theme-color').content = theme === 'dark' ? '#09090b' : '#f7f7f5';
+    })();
+  </script>
+  <link rel="stylesheet" href="styles.css?v=20260719-19">
+</head>
+<body class="privacy-page">
+  <a class="skip-link" href="#content">К основному содержанию</a>
+  <div class="stage" aria-hidden="true"></div>
+  <main class="privacy-site" id="content" tabindex="-1">
+    <article class="privacy-document glass-surface glass-surface--expanded">
+      <header class="privacy-document__header">
+        <a class="privacy-document__brand" href="/" aria-label="Herman &amp; Co — на главную">
+          <span class="brand-lockup__word">Herman &amp;Co</span>
+        </a>
+        <a class="privacy-document__back" href="/">На главную</a>
+      </header>
+      <div class="privacy-document__body">
+        <p class="privacy-document__updated">Ошибка 404</p>
+        <h1>Страница не найдена</h1>
+        <p>Возможно, адрес изменился или&nbsp;в&nbsp;нём есть опечатка. Вернитесь на&nbsp;главную страницу&nbsp;— всё основное находится там.</p>
+        <p><a class="privacy-document__settings" href="/">Вернуться на&nbsp;главную</a></p>
+      </div>
+    </article>
+  </main>
+</body>
+</html>
