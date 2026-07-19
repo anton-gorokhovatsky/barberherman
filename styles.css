@@ -835,7 +835,7 @@ html[data-content-open="true"] .stage-overlay {
   --primary-floor: 96px;
   --brand-optical-shift: clamp(4px, calc(2.86px + .202vw), 5px);
   --booking-optical-shift: 0px;
-  --secondary-floor: 96px;
+  --secondary-floor: 72px;
   --module-floor: 96px;
   --tertiary-floor: 76px;
   --utility-floor: 64px;
@@ -1030,6 +1030,7 @@ html[data-qa-text] .multitool__section-label {
   font-size: 1.35rem;
   font-weight: 400;
   line-height: 1;
+  transform: translateY(3.5px);
 }
 
 .multitool__sections button:nth-child(even) {
@@ -1053,6 +1054,7 @@ html[data-qa-text] .multitool__section-label {
 .multitool__sections button:nth-child(5)::after {
   grid-row: 1 / -1;
   align-self: center;
+  transform: none;
 }
 
 .multitool__sections button[aria-pressed="true"] {
@@ -1199,8 +1201,9 @@ html[data-presence-available="false"] .multitool__weather {
 }
 
 .multitool__icon-link {
+  justify-content: flex-start;
   gap: 9px;
-  padding: 10px 12px;
+  padding: 10px var(--floor-inline);
   font: 620 clamp(.875rem, 1.3vw, 1.05rem)/1 var(--font);
   letter-spacing: -.015em;
 }
@@ -1481,8 +1484,9 @@ html[data-theme="dark"] .logo-uomo img {
 }
 
 .multitool__footer {
+  --service-rail: calc(var(--utility-floor) + var(--utility-floor) + var(--utility-floor));
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) var(--service-rail);
   border-top: 0;
   container-type: inline-size;
 }
@@ -1502,28 +1506,26 @@ html[data-theme="dark"] .logo-uomo img {
   mask-image: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, .22) 3%, #000 8%, #000 92%, rgba(0, 0, 0, .22) 97%, transparent 100%);
 }
 
-.multitool__legal {
-  display: grid;
-  grid-column: 1 / -1;
-  grid-template-columns: minmax(0, 1fr) 190px;
-  align-items: stretch;
-  border-top: var(--tool-rule);
-}
-
 .multitool__legal-copy {
+  grid-column: 1;
+  grid-row: 2;
   max-width: none;
   margin: 0;
   padding: 10px var(--floor-inline) 11px;
+  border-top: var(--tool-rule);
   color: color-mix(in srgb, var(--tool-ink), transparent 38%);
   font-size: max(12px, min(var(--type-legal), 2.4cqi)) !important;
 }
 
 .multitool__privacy-link {
   display: flex;
+  grid-column: 2;
+  grid-row: 2;
   min-width: 0;
   min-height: 44px;
   align-items: center;
   padding: 10px var(--floor-inline);
+  border-top: var(--tool-rule);
   border-left: var(--tool-rule);
   font: 500 max(12px, min(var(--type-legal), 3.1cqi))/1.15 var(--font);
   text-decoration-thickness: 1px;
@@ -1582,6 +1584,7 @@ html[data-ticker-phase="seam"] .multitool__descriptor-track {
 .multitool__meta {
   display: grid;
   grid-column: 1;
+  grid-row: 3;
   grid-template-columns: minmax(0, 1fr);
   border-top: var(--tool-rule);
   container-type: inline-size;
@@ -1628,11 +1631,12 @@ html[data-ticker-phase="seam"] .multitool__descriptor-track {
 
 .multitool__service {
   display: grid;
-  width: auto;
+  width: 100%;
   grid-column: 2;
+  grid-row: 3;
   min-height: var(--utility-floor);
-  grid-template-columns: repeat(3, var(--utility-floor));
-  justify-self: end;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  justify-self: stretch;
   border-top: var(--tool-rule);
   border-left: var(--tool-rule);
 }
@@ -1988,14 +1992,17 @@ html[data-theme="dark"] .theme-toggle__icon--light {
 @media (max-width: 900px) {
   .multitool__footer {
     --utility-floor: 44px;
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: var(--split-grid);
   }
 
-  .multitool__legal {
-    grid-template-columns: minmax(0, 1fr);
+  .multitool__legal-copy {
+    grid-column: 1 / -1;
+    grid-row: 2;
   }
 
   .multitool__privacy-link {
+    grid-column: 1 / -1;
+    grid-row: 3;
     min-height: 44px;
     padding-block: 8px;
     border-top: var(--tool-rule);
@@ -2003,10 +2010,12 @@ html[data-theme="dark"] .theme-toggle__icon--light {
   }
 
   .multitool__meta {
-    grid-column: 1;
+    grid-column: 1 / -1;
+    grid-row: 4;
     min-height: 44px;
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: 44px;
+    border-left: 0;
   }
 
   .multitool__credit {
@@ -2015,12 +2024,14 @@ html[data-theme="dark"] .theme-toggle__icon--light {
   }
 
   .multitool__service {
-    width: auto;
-    grid-column: 2;
+    width: 100%;
+    grid-column: 1 / -1;
+    grid-row: 5;
     min-height: 44px;
-    grid-template-columns: repeat(4, 44px);
+    grid-template-columns: repeat(4, minmax(44px, 1fr));
     grid-template-rows: 44px;
-    border-left: var(--tool-rule);
+    justify-content: stretch;
+    border-left: 0;
   }
 
   .multitool__menu-toggle,
@@ -2131,10 +2142,6 @@ html[data-theme="dark"] .theme-toggle__icon--light {
     padding-block: 12px;
   }
 
-  .multitool__legal {
-    padding-inline: 0;
-  }
-
   .privacy-consent__copy {
     padding: 14px 14px 15px;
   }
@@ -2183,18 +2190,18 @@ html[data-theme="dark"] .theme-toggle__icon--light {
   }
 
   .multitool__meta {
-    grid-column: 1;
+    grid-column: 1 / -1;
     min-height: 44px;
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: 44px;
   }
 
   .multitool__service {
-    grid-column: 2;
+    grid-column: 1 / -1;
   }
 
   .multitool__footer {
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: var(--split-grid);
   }
 
   /* Continuous typography keeps responding to the reader's base size until
@@ -2281,10 +2288,15 @@ html[data-theme="dark"] .theme-toggle__icon--light {
 
   .multitool__sections button::after {
     font-size: min(1.35rem, 6.4vw);
+    transform: translateY(-4px);
   }
 
   .multitool__sections button:nth-child(5) {
     min-height: var(--tertiary-floor);
+  }
+
+  .multitool__sections button:nth-child(5)::after {
+    transform: none;
   }
 
   .multitool__address {
@@ -2317,6 +2329,7 @@ html[data-theme="dark"] .theme-toggle__icon--light {
     min-height: var(--secondary-floor);
     position: relative;
     flex-direction: row;
+    justify-content: center;
     gap: 0;
     padding: 8px 4px;
     font-size: min(.68rem, 3.4vw);
@@ -2444,11 +2457,13 @@ html[data-theme="dark"] .theme-toggle__icon--light {
   }
 
   .multitool__service {
-    width: auto;
+    width: 100%;
+    grid-column: 1 / -1;
     min-height: 44px;
-    grid-template-columns: repeat(4, 44px);
+    grid-template-columns: repeat(4, minmax(44px, 1fr));
     grid-template-rows: 44px;
-    border-left: var(--tool-rule);
+    justify-content: stretch;
+    border-left: 0;
   }
 
   .multitool__menu-toggle,
