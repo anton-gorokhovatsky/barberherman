@@ -648,13 +648,14 @@ html[data-content-open="true"] .stage-overlay {
 }
 
 .privacy-document {
+  --document-inline: clamp(20px, 4vw, 44px);
   width: min(100%, 860px);
 }
 
 .privacy-document__header {
   display: grid;
   min-height: 72px;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: stretch;
   border-bottom: var(--tool-rule);
 }
@@ -663,18 +664,23 @@ html[data-content-open="true"] .stage-overlay {
   display: flex;
   min-width: 0;
   align-items: center;
-  padding: 14px 18px;
+  padding: 14px var(--document-inline);
+  text-decoration: none;
+}
+
+.privacy-document__brand-word {
+  display: block;
   font: 400 2rem/.82 "Herman Bebas", Impact, sans-serif;
   letter-spacing: .024em;
-  text-decoration: none;
   text-transform: uppercase;
+  transform: translateY(4px);
 }
 
 .privacy-document__back {
   display: flex;
   min-height: 54px;
   align-items: center;
-  padding: 12px 18px;
+  padding: 12px var(--document-inline);
   border-left: var(--tool-rule);
   font: 540 min(var(--type-ui), 5.8vw)/1.1 var(--font);
   letter-spacing: -.012em;
@@ -684,7 +690,7 @@ html[data-content-open="true"] .stage-overlay {
 
 .privacy-document__body {
   container-type: inline-size;
-  padding: clamp(20px, 4vw, 44px);
+  padding: var(--document-inline);
 }
 
 .privacy-document h1,
@@ -2050,6 +2056,10 @@ html[data-theme="dark"] .theme-toggle__icon--light {
 }
 
 @media (max-width: 600px) {
+  .privacy-document {
+    --document-inline: 16px;
+  }
+
   .privacy-consent {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -2075,12 +2085,15 @@ html[data-theme="dark"] .theme-toggle__icon--light {
   }
 
   .privacy-document__brand {
-    padding-inline: 14px;
+    padding-inline: var(--document-inline);
+  }
+
+  .privacy-document__brand-word {
     font-size: min(1.75rem, 8vw);
   }
 
   .privacy-document__back {
-    padding-inline: 14px;
+    padding-inline: var(--document-inline);
   }
 
   .multitool {
@@ -2166,7 +2179,7 @@ html[data-theme="dark"] .theme-toggle__icon--light {
   }
 
   .privacy-document__body {
-    padding: 20px 16px 28px;
+    padding: 20px var(--document-inline) 28px;
   }
 
   .privacy-document h1 {
