@@ -1554,7 +1554,7 @@ html[data-ticker-phase="seam"] .multitool__descriptor-track {
 .multitool__meta {
   display: grid;
   grid-column: 1;
-  grid-template-columns: minmax(126px, .72fr) minmax(0, 1.28fr);
+  grid-template-columns: minmax(0, .84fr) minmax(0, 1.16fr);
   border-top: var(--tool-rule);
   container-type: inline-size;
 }
@@ -1578,7 +1578,7 @@ html[data-ticker-phase="seam"] .multitool__descriptor-track {
   gap: 9px;
   padding: 12px var(--floor-inline);
   border-left: var(--tool-rule);
-  font: 600 clamp(.82rem, 1.35vw, 1.02rem)/1.2 var(--font);
+  font: 600 max(12px, min(var(--type-caption), 3.5cqi))/1.15 var(--font);
   text-align: left;
   text-decoration: none;
 }
@@ -1965,6 +1965,46 @@ html[data-theme="dark"] .theme-toggle__icon--light {
   .multitool__catalog,
   .multitool__gallery {
     scroll-margin-top: max(12px, var(--safe-top));
+  }
+}
+
+@media (max-width: 900px) {
+  .multitool__meta {
+    min-height: 88px;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: repeat(2, 44px);
+  }
+
+  .multitool__privacy-link {
+    min-height: 44px;
+    border-bottom: var(--tool-rule);
+  }
+
+  .multitool__credit {
+    min-height: 44px;
+    border-left: 0;
+  }
+
+  .multitool__service {
+    min-height: 88px;
+    grid-template-columns: repeat(2, minmax(44px, 1fr));
+    grid-template-rows: repeat(2, 44px);
+  }
+
+  .multitool__menu-toggle,
+  .analytics-settings,
+  .motion-toggle,
+  .theme-toggle {
+    min-height: 44px;
+  }
+
+  .theme-toggle,
+  .multitool__menu-toggle {
+    border-top: var(--tool-rule);
+  }
+
+  .theme-toggle {
+    border-left: 0;
   }
 }
 
