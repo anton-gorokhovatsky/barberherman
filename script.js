@@ -4,9 +4,14 @@ const motionToggle = document.querySelector('.motion-toggle');
 const logoViewButtons = [...document.querySelectorAll('button[data-logo-view]')];
 const themeColor = document.getElementById('theme-color');
 const multitool = document.querySelector('.multitool');
+const multitoolPrimary = document.querySelector('.multitool__primary');
+const multitoolBooking = document.querySelector('.multitool__booking');
 const multitoolDragHandle = document.querySelector('.multitool__drag-handle');
+const multitoolMenuToggle = document.querySelector('.multitool__menu-toggle');
+const multitoolMenuLabel = document.querySelector('.multitool__menu-label');
 const multitoolStatus = document.querySelector('.multitool__status');
 const multitoolDrawer = document.getElementById('multitool-drawer');
+const multitoolService = document.querySelector('.multitool__service');
 const moduleStatus = document.getElementById('module-status');
 const sectionButtons = [...document.querySelectorAll('[data-panel]')];
 const panelCloseButtons = [...document.querySelectorAll('[data-close-panel]')];
@@ -40,6 +45,7 @@ const logoViewStorageKey = 'barberherman-logo-view';
 const queryParams = new URLSearchParams(window.location.search);
 const visualQASection = queryParams.get('qa-section');
 const visualQAVideoPhase = queryParams.get('hero-phase');
+const visualQAMenu = queryParams.get('qa-menu');
 const visualQATextScale = queryParams.get('qa-text');
 const visualQAContrast = queryParams.get('qa-contrast');
 const visualQAPanels = queryParams.get('qa-panels');
@@ -81,6 +87,8 @@ let presenceTimer = 0;
 let presenceAuth = null;
 let presenceSyncing = false;
 let presenceCleanupAt = 0;
+let menuOpen = true;
+let menuDrawerAnimation = null;
 const panelAnimations = new Map();
 
 function reachMetrikaGoal(goal, params = {}) {
@@ -304,8 +312,133 @@ function animatePanelVisibility(panel, visible, { animate = true } = {}) {
   animation.onfinish = () => settlePanelAnimation(panel, visible, animation);
 }
 
+function setMenuDrawerInteractionState(open) {
+  multitoolDrawer?.toggleAttribute('inert', !open);
+  if (open) multitoolDrawer?.removeAttribute('aria-hidden');
+  else multitoolDrawer?.setAttribute('aria-hidden', 'true');
+}
+
+function cancelMenuDrawerAnimation() {
+  if (!menuDrawerAnimation) return;
+
+  menuDrawerAnimation.animation.onfinish = null;
+  menuDrawerAnimation.animation.cancel();
+  menuDrawerAnimation = null;
+  multitoolDrawer?.style.removeProperty('overflow');
+}
+
+function settleMenuDrawer(open, animation = null) {
+  if (animation && menuDrawerAnimation?.animation !== animation) return;
+
+  if (menuDrawerAnimation) {
+    menuDrawerAnimation.animation.onfinish = null;
+    menuDrawerAnimation.animation.cancel();
+    menuDrawerAnimation = null;
+  }
+
+  if (!multitoolDrawer) return;
+  multitoolDrawer.style.removeProperty('overflow');
+  multitoolDrawer.hidden = !open;
+  setMenuDrawerInteractionState(open);
+}
+
+function animateMenuDrawer(open, { animate = true, startHeight = null } = {}) {
+  if (!multitoolDrawer) return;
+
+  cancelMenuDrawerAnimation();
+  if (open) {
+    multitoolDrawer.hidden = false;
+    setMenuDrawerInteractionState(true);
+  } else {
+    setMenuDrawerInteractionState(false);
+  }
+
+  if (!animate || prefersReducedMotion() || typeof multitoolDrawer.animate !== 'function') {
+    settleMenuDrawer(open);
+    return;
+  }
+
+  const drawerHeight = open
+    ? multitoolDrawer.getBoundingClientRect().height
+    : Number.isFinite(startHeight) ? startHeight : multitoolDrawer.getBoundingClientRect().height;
+  const entering = open;
+  const duration = panelMotionDuration(
+    entering ? '--motion-panel-enter' : '--motion-panel-exit',
+    entering ? 360 : 240,
+  );
+  const easing = panelMotionEasing(
+    entering ? '--ease-panel-enter' : '--ease-panel-exit',
+    entering ? 'cubic-bezier(.16, 1, .3, 1)' : 'cubic-bezier(.4, 0, .8, .2)',
+  );
+  const keyframes = entering
+    ? [
+        { height: '0px', opacity: 0, translate: '0 -8px' },
+        { height: `${drawerHeight}px`, opacity: 1, translate: '0 0' },
+      ]
+    : [
+        { height: `${drawerHeight}px`, opacity: 1, translate: '0 0' },
+        { height: '0px', opacity: 0, translate: '0 -6px' },
+      ];
+
+  multitoolDrawer.style.overflow = 'hidden';
+  const animation = multitoolDrawer.animate(keyframes, { duration, easing, fill: 'both' });
+  menuDrawerAnimation = { animation, open };
+  animation.onfinish = () => settleMenuDrawer(open, animation);
+}
+
+function placeMenuToggle(open) {
+  if (!multitoolMenuToggle || !multitoolPrimary || !multitoolService) return;
+
+  if (open) multitoolService.prepend(multitoolMenuToggle);
+  else multitoolPrimary.append(multitoolMenuToggle);
+}
+
+function setMenuOpen(open, { animate = true } = {}) {
+  if (!multitool || !multitoolMenuToggle || !multitoolDrawer) return;
+
+  const nextOpen = mobileQuery.matches ? Boolean(open) : true;
+  const stateIsApplied = menuOpen === nextOpen && root.dataset.menuOpen === String(nextOpen);
+  if (stateIsApplied) return;
+
+  settleAllPanelAnimations();
+  const toggleHadFocus = document.activeElement === multitoolMenuToggle;
+  const closingHeight = !nextOpen && !multitoolDrawer.hidden
+    ? multitoolDrawer.getBoundingClientRect().height
+    : null;
+
+  menuOpen = nextOpen;
+  multitool.classList.toggle('is-open', nextOpen);
+  root.dataset.menuOpen = String(nextOpen);
+  multitoolMenuToggle.setAttribute('aria-expanded', String(nextOpen));
+  multitoolMenuToggle.setAttribute('aria-label', nextOpen ? 'Свернуть меню' : 'Развернуть меню');
+  multitoolMenuToggle.title = nextOpen ? 'Свернуть меню' : 'Развернуть меню';
+  if (multitoolMenuLabel) {
+    multitoolMenuLabel.textContent = nextOpen ? 'Свернуть меню' : 'Развернуть меню';
+  }
+  placeMenuToggle(nextOpen);
+
+  ['profile', 'practice'].forEach((name) => {
+    if (panelIsOpen(name)) animatePanelVisibility(contentPanels[name], nextOpen, { animate });
+  });
+  syncContentPresence();
+  animateMenuDrawer(nextOpen, { animate, startHeight: closingHeight });
+  syncStageVideos();
+
+  if (!nextOpen) {
+    requestAnimationFrame(() => {
+      window.scrollTo({
+        top: 0,
+        behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+      });
+      multitoolMenuToggle.focus({ preventScroll: true });
+    });
+  } else if (toggleHadFocus && multitoolBooking) {
+    requestAnimationFrame(() => multitoolBooking.focus({ preventScroll: true }));
+  }
+}
+
 function syncContentPresence() {
-  const hasVisibleText = ['profile', 'practice'].some(panelIsOpen);
+  const hasVisibleText = menuOpen && ['profile', 'practice'].some(panelIsOpen);
   showcase?.classList.toggle('has-content', hasVisibleText);
   root.dataset.contentOpen = String(hasVisibleText);
 }
@@ -770,7 +903,8 @@ function syncStageVideos() {
   stageVideos.forEach((video) => {
     const isMobileVideo = video.classList.contains('stage-video--mobile');
     const isBreakpointVideo = mobile === isMobileVideo;
-    const shouldLoad = isBreakpointVideo && (Boolean(visualQAVideoPhase) || (!isReduced && !saveData));
+    const shouldLoad = isBreakpointVideo
+      && (Boolean(visualQAVideoPhase) || (!isReduced && (!saveData || !menuOpen)));
     const shouldPlay = shouldLoad && !visualQAVideoPhase && !document.hidden;
 
     if (shouldLoad) attachVideoSource(video);
@@ -801,7 +935,12 @@ function applyMotionPreference({ persist = false } = {}) {
   motionToggle?.setAttribute('aria-disabled', String(isSystemReduced));
 
   if (motionToggle) motionToggle.title = title;
-  if (isReduced) settleAllPanelAnimations();
+  if (isReduced) {
+    settleAllPanelAnimations();
+    if (menuDrawerAnimation) {
+      settleMenuDrawer(menuDrawerAnimation.open, menuDrawerAnimation.animation);
+    }
+  }
 
   if (persist) {
     try {
@@ -1237,6 +1376,7 @@ loadWeather();
 startPresence();
 lockVideoPhaseForVisualQA();
 applyVisualQAContentState();
+setMenuOpen(visualQAMenu !== 'compact', { animate: false });
 focusVisualQASection();
 syncStageVideos();
 syncMultitoolDragAvailability();
@@ -1264,6 +1404,10 @@ motionToggle?.addEventListener('click', () => {
   hasSavedReducedMotion = !hasSavedReducedMotion;
   applyMotionPreference({ persist: true });
   showMultitoolStatus(hasSavedReducedMotion ? 'Движение уменьшено' : 'Движение включено');
+});
+
+multitoolMenuToggle?.addEventListener('click', () => {
+  setMenuOpen(!menuOpen);
 });
 
 logoViewButtons.forEach((button) => {
@@ -1324,6 +1468,7 @@ textScrollSurfaces.forEach((scrollSurface) => {
 
 document.addEventListener('keydown', (event) => {
   if (event.key !== 'Escape') return;
+  if (mobileQuery.matches && !menuOpen) return;
 
   const recentPanel = mostRecentPanelName ? contentPanels[mostRecentPanelName] : null;
   const fallbackName = Object.keys(contentPanels).filter(panelIsOpen).at(-1);
@@ -1332,11 +1477,15 @@ document.addEventListener('keydown', (event) => {
   if (name) {
     setPanelState(name, false, { returnFocus: true });
     event.preventDefault();
+  } else if (mobileQuery.matches) {
+    setMenuOpen(false);
+    event.preventDefault();
   }
 });
 
 mobileQuery.addEventListener('change', () => {
   settleAllPanelAnimations();
+  if (!mobileQuery.matches) setMenuOpen(true, { animate: false });
   syncStageVideos();
   syncMultitoolDragAvailability();
   syncPanelDragAvailability();

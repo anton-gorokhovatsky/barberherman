@@ -386,6 +386,7 @@ html[data-content-open="true"] .stage-overlay {
 .multitool__address,
 .multitool__icon-link,
 .logo-view-toggle button,
+.multitool__menu-toggle,
 .motion-toggle,
 .theme-toggle {
   transition:
@@ -941,6 +942,7 @@ html[data-presence-available="false"] .multitool__weather {
 
 .multitool__address,
 .multitool__icon-link,
+.multitool__menu-toggle,
 .motion-toggle,
 .theme-toggle {
   display: flex;
@@ -986,6 +988,7 @@ html[data-presence-available="false"] .multitool__weather {
 }
 
 .multitool__icon-link svg,
+.multitool__menu-toggle svg,
 .motion-toggle svg,
 .theme-toggle svg {
   display: block;
@@ -1384,6 +1387,32 @@ html[data-ticker-phase="seam"] .multitool__descriptor-track {
   border-left: var(--tool-rule);
 }
 
+.multitool__menu-toggle {
+  display: none;
+  position: relative;
+  min-width: 0;
+  min-height: var(--utility-floor);
+  padding: 0;
+  cursor: pointer;
+}
+
+.multitool__menu-toggle svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+  stroke-width: 1.65;
+  transform: rotate(180deg);
+  transition: transform var(--motion-medium) var(--ease-out);
+  vector-effect: non-scaling-stroke;
+}
+
+.multitool__menu-toggle[aria-expanded="false"] svg {
+  transform: none;
+}
+
 .logo-view-toggle {
   display: grid;
   min-width: 0;
@@ -1624,7 +1653,26 @@ html[data-theme="dark"] .theme-toggle__icon--light {
   }
 
   .multitool__service {
-    width: 140px;
+    width: 210px;
+    grid-template-columns: repeat(3, 70px);
+  }
+
+  .multitool__menu-toggle {
+    display: flex;
+  }
+
+  html[data-menu-open="false"] .multitool__brand {
+    display: none;
+  }
+
+  html[data-menu-open="false"] .multitool__primary {
+    grid-template-columns: minmax(0, 1fr) 58px;
+  }
+
+  html[data-menu-open="false"] .multitool__primary > .multitool__menu-toggle {
+    min-width: 58px;
+    min-height: var(--primary-floor);
+    border-left: var(--tool-rule);
   }
 
   .multitool__drawer {
@@ -1952,10 +2000,11 @@ html[data-theme="dark"] .theme-toggle__icon--light {
   .multitool__service {
     width: 100%;
     min-height: 54px;
-    grid-template-columns: repeat(2, minmax(54px, 1fr));
+    grid-template-columns: repeat(3, minmax(54px, 1fr));
     border-left: 0;
   }
 
+  .multitool__menu-toggle,
   .motion-toggle,
   .theme-toggle {
     min-height: 54px;
@@ -2076,6 +2125,7 @@ html[data-qa-contrast="more"] :is(.multitool__booking, .multitool__contacts, .mu
 
 @media print {
   .stage,
+  .multitool__menu-toggle,
   .motion-toggle,
   .theme-toggle {
     display: none;
