@@ -185,11 +185,20 @@ function syncAnalyticsControls() {
   });
   if (privacySettingsLabel) {
     privacySettingsLabel.textContent = analyticsConsent === 'granted'
-      ? 'Статистика включена'
+      ? 'Статистика · вкл.'
       : analyticsConsent === 'denied'
-        ? 'Статистика выключена'
-        : 'Настроить статистику';
+        ? 'Статистика · выкл.'
+        : 'Статистика';
   }
+  privacySettingsButtons.forEach((button) => {
+    const settingsLabel = analyticsConsent === 'granted'
+      ? 'Настроить статистику: сейчас включена'
+      : analyticsConsent === 'denied'
+        ? 'Настроить статистику: сейчас выключена'
+        : 'Настроить статистику';
+    button.setAttribute('aria-label', settingsLabel);
+    button.setAttribute('title', settingsLabel);
+  });
 }
 
 function hidePrivacyConsent({ returnFocus = false } = {}) {

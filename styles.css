@@ -387,6 +387,7 @@ html[data-content-open="true"] .stage-overlay {
 .multitool__icon-link,
 .logo-view-toggle button,
 .multitool__menu-toggle,
+.analytics-settings,
 .motion-toggle,
 .theme-toggle {
   transition:
@@ -540,32 +541,6 @@ html[data-content-open="true"] .stage-overlay {
   text-transform: none;
 }
 
-.multitool__privacy-actions {
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0 4px;
-  margin-inline-start: .55em;
-  vertical-align: middle;
-}
-
-.multitool__privacy-actions a,
-.multitool__privacy-actions button {
-  display: inline-flex;
-  min-height: 44px;
-  align-items: center;
-  padding: 8px 7px;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 3px;
-  cursor: pointer;
-}
-
 .privacy-consent {
   position: fixed;
   left: max(10px, var(--safe-left));
@@ -603,8 +578,15 @@ html[data-content-open="true"] .stage-overlay {
   margin: 0;
 }
 
+.privacy-consent__heading {
+  display: grid;
+  min-height: 44px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  margin: -8px -8px 2px 0;
+}
+
 .privacy-consent__copy h2 {
-  margin-bottom: 7px;
   font: 700 var(--type-ui)/1.05 var(--font);
   letter-spacing: .055em;
   text-transform: uppercase;
@@ -617,12 +599,13 @@ html[data-content-open="true"] .stage-overlay {
   text-wrap: pretty;
 }
 
-.privacy-consent__copy a {
+.privacy-consent__heading a {
   display: inline-flex;
   min-height: 44px;
   align-items: center;
+  padding-inline: 8px;
+  font: 500 var(--type-caption)/1 var(--font);
   text-underline-offset: 3px;
-  vertical-align: middle;
 }
 
 .privacy-consent__actions {
@@ -847,6 +830,7 @@ html[data-content-open="true"] .stage-overlay {
   --tertiary-floor: 76px;
   --utility-floor: 78px;
   --floor-inline: 19px;
+  --split-grid: repeat(2, minmax(0, 1fr));
   grid-area: stack;
   z-index: 5;
   width: min(100%, 760px);
@@ -881,7 +865,7 @@ html[data-content-open="true"] .stage-overlay {
   z-index: 4;
   display: grid;
   min-height: var(--primary-floor);
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: var(--split-grid);
   border-bottom: var(--tool-rule);
   container-type: inline-size;
 }
@@ -970,7 +954,7 @@ html[data-theme="light"] .multitool__brand > img {
 
 .multitool__sections {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: var(--split-grid);
   border-top: 0;
 }
 
@@ -1102,14 +1086,14 @@ html[data-qa-text] .multitool__section-label {
 
 .multitool__contacts {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 2fr) repeat(2, minmax(0, 1fr));
   min-height: var(--secondary-floor);
 }
 
 .multitool__live {
   display: grid;
   min-height: 68px;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: var(--split-grid);
   border-top: var(--tool-rule);
 }
 
@@ -1171,6 +1155,7 @@ html[data-presence-available="false"] .multitool__weather {
 .multitool__address,
 .multitool__icon-link,
 .multitool__menu-toggle,
+.analytics-settings,
 .motion-toggle,
 .theme-toggle {
   display: flex;
@@ -1190,7 +1175,7 @@ html[data-presence-available="false"] .multitool__weather {
   align-items: flex-start;
   justify-content: center;
   gap: 6px;
-  padding: 12px 18px;
+  padding: 12px var(--floor-inline);
   border-right: var(--tool-rule);
   font: 640 clamp(.925rem, 1.5vw, 1.12rem)/1 var(--font);
   letter-spacing: -.015em;
@@ -1218,6 +1203,7 @@ html[data-presence-available="false"] .multitool__weather {
 
 .multitool__icon-link svg,
 .multitool__menu-toggle svg,
+.analytics-settings svg,
 .motion-toggle svg,
 .theme-toggle svg {
   display: block;
@@ -1486,7 +1472,9 @@ html[data-theme="dark"] .logo-uomo img {
 
 .multitool__footer {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: var(--split-grid);
+  border-top: 0;
+  container-type: inline-size;
 }
 
 .multitool__descriptor {
@@ -1508,9 +1496,10 @@ html[data-theme="dark"] .logo-uomo img {
   grid-column: 1 / -1;
   max-width: none;
   margin: 0;
-  padding: 12px 18px 14px;
+  padding: 10px var(--floor-inline) 11px;
   border-top: var(--tool-rule);
   color: color-mix(in srgb, var(--tool-ink), transparent 38%);
+  font-size: max(12px, min(var(--type-legal), 2.4cqi)) !important;
 }
 
 .multitool__legal-mark {
@@ -1565,8 +1554,20 @@ html[data-ticker-phase="seam"] .multitool__descriptor-track {
 .multitool__meta {
   display: grid;
   grid-column: 1;
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: minmax(126px, .72fr) minmax(0, 1.28fr);
   border-top: var(--tool-rule);
+  container-type: inline-size;
+}
+
+.multitool__privacy-link {
+  display: flex;
+  min-width: 0;
+  min-height: var(--utility-floor);
+  align-items: center;
+  padding: 12px var(--floor-inline);
+  font: 500 max(12px, min(var(--type-legal), 3.1cqi))/1.15 var(--font);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
 }
 
 .multitool__credit {
@@ -1575,7 +1576,8 @@ html[data-ticker-phase="seam"] .multitool__descriptor-track {
   min-height: var(--utility-floor);
   align-items: center;
   gap: 9px;
-  padding: 12px 18px;
+  padding: 12px var(--floor-inline);
+  border-left: var(--tool-rule);
   font: 600 clamp(.82rem, 1.35vw, 1.02rem)/1.2 var(--font);
   text-align: left;
   text-decoration: none;
@@ -1608,12 +1610,43 @@ html[data-ticker-phase="seam"] .multitool__descriptor-track {
 
 .multitool__service {
   display: grid;
+  width: 100%;
   grid-column: 2;
   min-height: var(--utility-floor);
-  grid-template-columns: repeat(2, 70px);
-  justify-self: end;
+  grid-template-columns: repeat(3, 70px);
+  justify-content: end;
+  justify-self: stretch;
   border-top: var(--tool-rule);
   border-left: var(--tool-rule);
+}
+
+.analytics-settings {
+  position: relative;
+  min-width: 0;
+  min-height: var(--utility-floor);
+  padding: 0;
+  cursor: pointer;
+}
+
+.analytics-settings svg {
+  width: 23px;
+  height: 23px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+  stroke-width: 1.55;
+  vector-effect: non-scaling-stroke;
+}
+
+.analytics-settings__state {
+  display: none;
+}
+
+html[data-analytics-consent="prompt"] .analytics-settings__state--prompt,
+html[data-analytics-consent="granted"] .analytics-settings__state--granted,
+html[data-analytics-consent="denied"] .analytics-settings__state--denied {
+  display: block;
 }
 
 .multitool__menu-toggle {
@@ -1887,8 +1920,9 @@ html[data-theme="dark"] .theme-toggle__icon--light {
   }
 
   .multitool__service {
-    width: 210px;
-    grid-template-columns: repeat(3, 70px);
+    width: 100%;
+    grid-template-columns: repeat(4, 70px);
+    justify-content: end;
   }
 
   .multitool__menu-toggle {
@@ -1973,7 +2007,7 @@ html[data-theme="dark"] .theme-toggle__icon--light {
   }
 
   .multitool__primary {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: var(--split-grid);
   }
 
   .multitool__brand {
@@ -2019,12 +2053,7 @@ html[data-theme="dark"] .theme-toggle__icon--light {
     max-width: calc(100% - 16px);
   }
 
-  .multitool__footer {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
   .multitool__descriptor {
-    order: 2;
     display: block;
     font-size: min(.7rem, 3.25vw);
     letter-spacing: .045em;
@@ -2035,21 +2064,7 @@ html[data-theme="dark"] .theme-toggle__icon--light {
   }
 
   .multitool__legal {
-    order: 1;
     padding-inline: var(--floor-inline);
-  }
-
-  .multitool__privacy-actions {
-    display: flex;
-    width: 100%;
-    margin: 7px 0 -4px;
-  }
-
-  .multitool__privacy-actions a,
-  .multitool__privacy-actions button {
-    flex: 1 1 auto;
-    justify-content: flex-start;
-    padding-inline: 0 10px;
   }
 
   .privacy-consent__copy {
@@ -2058,6 +2073,10 @@ html[data-theme="dark"] .theme-toggle__icon--light {
 
   .privacy-consent__copy h2 {
     font-size: min(var(--type-ui), 6cqi);
+  }
+
+  .privacy-consent__heading a {
+    font-size: min(var(--type-caption), 4.6cqi);
   }
 
   .privacy-consent__copy p {
@@ -2096,16 +2115,18 @@ html[data-theme="dark"] .theme-toggle__icon--light {
   }
 
   .multitool__meta {
-    order: 3;
-  }
-
-  .multitool__service {
-    order: 4;
-  }
-
-  .multitool__meta,
-  .multitool__service {
     grid-column: 1;
+    min-height: 88px;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: repeat(2, 44px);
+  }
+
+  .multitool__service {
+    grid-column: 2;
+  }
+
+  .multitool__footer {
+    grid-template-columns: var(--split-grid);
   }
 
   /* Continuous typography keeps responding to the reader's base size until
@@ -2330,15 +2351,24 @@ html[data-theme="dark"] .theme-toggle__icon--light {
 
   .multitool__credit {
     display: grid;
-    min-height: 54px;
-    grid-template-columns: minmax(0, 1fr) 54px;
+    min-height: 44px;
+    grid-template-columns: minmax(0, 1fr) 44px;
     gap: 0;
     padding: 0;
-    font-size: .8125rem;
+    border-left: 0;
+    font-size: max(10px, min(.8125rem, 3.6cqi));
+    line-height: 1.05;
+  }
+
+  .multitool__privacy-link {
+    min-height: 44px;
+    padding: 8px 10px;
+    border-bottom: var(--tool-rule);
+    font-size: max(10px, min(.8125rem, 3.6cqi));
   }
 
   .multitool__credit > span:first-child {
-    padding-inline: var(--floor-inline);
+    padding-inline: 10px;
   }
 
   .multitool__credit-arrow {
@@ -2349,15 +2379,26 @@ html[data-theme="dark"] .theme-toggle__icon--light {
 
   .multitool__service {
     width: 100%;
-    min-height: 54px;
-    grid-template-columns: repeat(3, minmax(54px, 1fr));
-    border-left: 0;
+    min-height: 88px;
+    grid-template-columns: repeat(2, minmax(44px, 1fr));
+    grid-template-rows: repeat(2, 44px);
+    border-left: var(--tool-rule);
   }
 
   .multitool__menu-toggle,
+  .analytics-settings,
   .motion-toggle,
   .theme-toggle {
-    min-height: 54px;
+    min-height: 44px;
+  }
+
+  .theme-toggle,
+  .multitool__menu-toggle {
+    border-top: var(--tool-rule);
+  }
+
+  .theme-toggle {
+    border-left: 0;
   }
 
   .text-block--profile > .text-block__scroll > h2 {
@@ -2476,6 +2517,7 @@ html[data-qa-contrast="more"] :is(.multitool__booking, .multitool__contacts, .mu
 @media print {
   .stage,
   .multitool__menu-toggle,
+  .analytics-settings,
   .motion-toggle,
   .theme-toggle {
     display: none;
