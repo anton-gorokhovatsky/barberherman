@@ -389,7 +389,7 @@ function animateMenuDrawer(open, { animate = true, startHeight = null } = {}) {
 function placeMenuToggle(open) {
   if (!multitoolMenuToggle || !multitoolPrimary || !multitoolService) return;
 
-  if (open) multitoolService.prepend(multitoolMenuToggle);
+  if (open) multitoolService.append(multitoolMenuToggle);
   else multitoolPrimary.append(multitoolMenuToggle);
 }
 

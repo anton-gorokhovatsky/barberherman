@@ -1627,8 +1627,7 @@ html[data-theme="dark"] .theme-toggle__icon--light {
   .text-block {
     order: 2;
     width: min(100%, 680px);
-    --panel-available-height: calc(100svh - max(12px, var(--safe-top)) - max(12px, var(--safe-bottom)));
-    max-height: var(--panel-available-height);
+    max-height: none;
     margin: 0 auto;
     scroll-margin-top: max(12px, var(--safe-top));
     transform: none !important;
@@ -1639,9 +1638,12 @@ html[data-theme="dark"] .theme-toggle__icon--light {
   }
 
   .text-block__scroll {
-    max-height: calc(var(--panel-available-height) - 54px);
-    overflow-x: hidden;
-    overflow-y: auto;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .text-block__fade {
+    display: none;
   }
 
   .text-block__index {
@@ -1665,13 +1667,26 @@ html[data-theme="dark"] .theme-toggle__icon--light {
     display: none;
   }
 
+  html[data-menu-open="false"] .multitool {
+    --compact-floor: clamp(54px, 14vw, 58px);
+    --compact-control: clamp(52px, 13.5vw, 56px);
+    margin-top: auto;
+  }
+
   html[data-menu-open="false"] .multitool__primary {
-    grid-template-columns: minmax(0, 1fr) 58px;
+    min-height: var(--compact-floor);
+    grid-template-columns: minmax(0, 1fr) var(--compact-control);
+  }
+
+  html[data-menu-open="false"] .multitool__booking {
+    min-height: var(--compact-floor);
+    font-size: min(clamp(1.0625rem, calc(.85rem + 1.5vw), 1.25rem), 5.6cqi);
+    font-weight: 650;
   }
 
   html[data-menu-open="false"] .multitool__primary > .multitool__menu-toggle {
-    min-width: 58px;
-    min-height: var(--primary-floor);
+    min-width: var(--compact-control);
+    min-height: var(--compact-floor);
     border-left: var(--tool-rule);
   }
 
@@ -1689,7 +1704,7 @@ html[data-theme="dark"] .theme-toggle__icon--light {
 
 @media (max-width: 600px) {
   .multitool {
-    --primary-floor: 72px;
+    --primary-floor: clamp(58px, 15.5vw, 64px);
   }
 
   .multitool__primary {
@@ -1708,11 +1723,11 @@ html[data-theme="dark"] .theme-toggle__icon--light {
   }
 
   .brand-lockup {
-    transform: translateY(4px);
+    transform: translateY(1px);
   }
 
   .multitool__booking > span {
-    transform: translateY(.04em);
+    transform: none;
   }
 
   .brand-lockup__word {
