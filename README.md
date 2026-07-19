@@ -24,11 +24,13 @@ python3 -m http.server 8080
 
 ### Realtime-посетители
 
-Счётчик работает через Firebase Anonymous Authentication и Realtime Database REST API. Одной активной сессией считается одна вкладка браузера, подтверждающая присутствие каждые 25 секунд. Запись считается активной 75 секунд; протухшие записи безопасно удаляются после трёх минут. Личные данные и cookies для этого не собираются; короткоживущая анонимная авторизация хранится только в `sessionStorage`.
+Счётчик работает через Firebase Anonymous Authentication и Realtime Database REST API. Одним активным посетителем считается один профиль браузера: его вкладки используют общую анонимную сессию из `localStorage` и подтверждают присутствие каждые 25 секунд. Запись считается активной 75 секунд; если новое значение не подтверждено за 90 секунд, интерфейс скрывает счётчик. Протухшие записи безопасно удаляются после трёх минут.
+
+Счётчик не определяет конкретного человека: разные браузеры, профили и устройства считаются отдельно. Имя, телефон, почта и cookies для этого не используются; в браузере хранится только технический анонимный идентификатор Firebase и токен ограниченной правилами базы сессии.
 
 Для включения:
 
-1. Создать Firebase-проект, включить провайдер Anonymous в Authentication, добавить `barberherman.ru` в Authorized domains и создать Realtime Database в locked mode.
+1. Создать Firebase-проект, включить провайдер Anonymous в Authentication, добавить `barberherman.ru` в Authorized domains и создать Realtime Database в locked mode. Если в конфигурации Authentication доступна автоматическая очистка анонимных пользователей старше 30 дней, включить её.
 2. Связать локальный каталог с проектом через Firebase CLI и опубликовать `firebase.database.rules.json` командой `firebase deploy --only database`.
 3. Добавить к корневому `<html>` в `index.html` атрибуты `data-presence-endpoint="https://PROJECT-default-rtdb.REGION.firebasedatabase.app/presence"` и `data-presence-api-key="WEB_API_KEY"`.
 

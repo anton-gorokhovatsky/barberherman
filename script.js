@@ -56,14 +56,17 @@ const visualQALogoView = queryParams.get('qa-logo-view');
 const visualQATickerPhase = queryParams.get('ticker-phase');
 const visualQAFocus = queryParams.get('qa-focus');
 const visualQASafeArea = queryParams.get('qa-safe-area');
+const visualQAPresence = queryParams.get('qa-presence');
 const visualQAOnline = Number.parseInt(queryParams.get('qa-online') || '', 10);
 const visualQAWeatherTemperature = Number.parseFloat(queryParams.get('qa-weather-temperature') || '');
 const visualQAWeatherCode = Number.parseInt(queryParams.get('qa-weather-code') || '', 10);
 const metrikaCounterId = 110837561;
 const presenceEndpoint = (root.dataset.presenceEndpoint || '').replace(/\/+$/, '').replace(/\.json$/, '');
 const presenceApiKey = root.dataset.presenceApiKey || '';
-const presenceAuthStorageKey = 'barberherman-presence-auth';
+const presenceAuthStorageKey = 'barberherman-presence-auth-v2';
+const legacyPresenceAuthStorageKey = 'barberherman-presence-auth';
 const presenceActiveWindow = 75_000;
+const presenceDisplayFreshWindow = 90_000;
 const presenceStaleWindow = 180_000;
 const presenceCleanupInterval = 300_000;
 const weatherCacheKey = 'barberherman-moscow-weather';
@@ -87,6 +90,7 @@ let presenceTimer = 0;
 let presenceAuth = null;
 let presenceSyncing = false;
 let presenceCleanupAt = 0;
+let presenceLastConfirmedAt = 0;
 let menuOpen = true;
 let menuDrawerAnimation = null;
 const panelAnimations = new Map();
@@ -567,9 +571,20 @@ function visitorUnit(count) {
 function renderOnlineCount(count) {
   if (!onlineCountLabel || !onlineUnitLabel || !Number.isFinite(count)) return;
   const safeCount = Math.max(0, Math.round(count));
+  presenceLastConfirmedAt = Date.now();
   root.dataset.presenceAvailable = 'true';
   onlineCountLabel.textContent = String(safeCount);
   onlineUnitLabel.textContent = visitorUnit(safeCount);
+}
+
+function hideStalePresence() {
+  if (!presenceLastConfirmedAt) return;
+  if (Date.now() - presenceLastConfirmedAt <= presenceDisplayFreshWindow) return;
+
+  presenceLastConfirmedAt = 0;
+  root.dataset.presenceAvailable = 'false';
+  if (onlineCountLabel) onlineCountLabel.textContent = '—';
+  if (onlineUnitLabel) onlineUnitLabel.textContent = ' посетителей';
 }
 
 function normalizePresenceAuth(payload) {
@@ -591,7 +606,7 @@ function normalizePresenceAuth(payload) {
 function loadPresenceAuth() {
   if (presenceAuth) return presenceAuth;
   try {
-    const stored = JSON.parse(sessionStorage.getItem(presenceAuthStorageKey) || 'null');
+    const stored = JSON.parse(localStorage.getItem(presenceAuthStorageKey) || 'null');
     if (
       typeof stored?.uid === 'string'
       && typeof stored?.idToken === 'string'
@@ -599,7 +614,12 @@ function loadPresenceAuth() {
       && Number.isFinite(Number(stored?.expiresAt))
     ) presenceAuth = { ...stored, expiresAt: Number(stored.expiresAt) };
   } catch {
-    // Presence can continue in memory when session storage is unavailable.
+    // Presence can continue in memory when local storage is unavailable.
+  }
+  try {
+    sessionStorage.removeItem(legacyPresenceAuthStorageKey);
+  } catch {
+    // An old per-tab session can expire without affecting the shared session.
   }
   return presenceAuth;
 }
@@ -607,18 +627,18 @@ function loadPresenceAuth() {
 function storePresenceAuth(auth) {
   presenceAuth = auth;
   try {
-    sessionStorage.setItem(presenceAuthStorageKey, JSON.stringify(auth));
+    localStorage.setItem(presenceAuthStorageKey, JSON.stringify(auth));
   } catch {
-    // Presence can continue in memory when session storage is unavailable.
+    // Presence can continue in memory when local storage is unavailable.
   }
 }
 
 function clearPresenceAuth() {
   presenceAuth = null;
   try {
-    sessionStorage.removeItem(presenceAuthStorageKey);
+    localStorage.removeItem(presenceAuthStorageKey);
   } catch {
-    // Nothing else is required when session storage is unavailable.
+    // Nothing else is required when local storage is unavailable.
   }
 }
 
@@ -664,7 +684,7 @@ async function refreshPresenceAuth(auth) {
   return nextAuth;
 }
 
-async function ensurePresenceAuth() {
+async function resolvePresenceAuth() {
   const auth = loadPresenceAuth();
   if (auth?.expiresAt > Date.now() + 120_000) return auth;
 
@@ -676,6 +696,13 @@ async function ensurePresenceAuth() {
     }
   }
   return createPresenceAuth();
+}
+
+async function ensurePresenceAuth() {
+  if (navigator.locks?.request) {
+    return navigator.locks.request('barberherman-presence-auth', resolvePresenceAuth);
+  }
+  return resolvePresenceAuth();
 }
 
 function presenceUrl(path, auth, query = {}) {
@@ -756,25 +783,24 @@ async function syncPresence() {
 
 function disconnectPresence() {
   window.clearInterval(presenceTimer);
-  const auth = loadPresenceAuth();
-  if (!presenceEndpoint || !auth?.uid || !auth?.idToken) return;
-  fetch(presenceUrl(`/${encodeURIComponent(auth.uid)}`, auth), {
-    method: 'DELETE',
-    cache: 'no-store',
-    keepalive: true,
-    credentials: 'omit',
-  }).catch(() => {});
 }
 
 function startPresence() {
   if (Number.isFinite(visualQAOnline)) {
     renderOnlineCount(visualQAOnline);
+    if (visualQAPresence === 'stale') {
+      presenceLastConfirmedAt = Date.now() - presenceDisplayFreshWindow - 1;
+      hideStalePresence();
+    }
     return;
   }
   if (!presenceEndpoint || !presenceApiKey) return;
   syncPresence();
   window.clearInterval(presenceTimer);
-  presenceTimer = window.setInterval(syncPresence, 25_000);
+  presenceTimer = window.setInterval(() => {
+    hideStalePresence();
+    syncPresence();
+  }, 25_000);
 }
 
 function weatherLabel(code) {
