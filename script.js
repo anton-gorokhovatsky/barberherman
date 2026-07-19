@@ -25,6 +25,10 @@ const onlineUnitLabel = document.querySelector('[data-online-unit]');
 const weatherTemperatureLabel = document.querySelector('[data-weather-temperature]');
 const weatherStatusLabel = document.querySelector('[data-weather-status]');
 const weatherLink = document.querySelector('.multitool__weather');
+const privacyConsent = document.getElementById('privacy-consent');
+const privacySettingsButtons = [...document.querySelectorAll('[data-privacy-settings]')];
+const privacySettingsLabel = document.querySelector('[data-privacy-settings-label]');
+const analyticsChoiceButtons = [...document.querySelectorAll('[data-analytics-choice]')];
 const contentPanels = {
   profile: document.getElementById('profile-panel'),
   practice: document.getElementById('practice-panel'),
@@ -57,10 +61,14 @@ const visualQATickerPhase = queryParams.get('ticker-phase');
 const visualQAFocus = queryParams.get('qa-focus');
 const visualQASafeArea = queryParams.get('qa-safe-area');
 const visualQAPresence = queryParams.get('qa-presence');
+const visualQAAnalytics = queryParams.get('qa-analytics');
 const visualQAOnline = Number.parseInt(queryParams.get('qa-online') || '', 10);
 const visualQAWeatherTemperature = Number.parseFloat(queryParams.get('qa-weather-temperature') || '');
 const visualQAWeatherCode = Number.parseInt(queryParams.get('qa-weather-code') || '', 10);
 const metrikaCounterId = 110837561;
+const metrikaDisableKey = `disableYaCounter${metrikaCounterId}`;
+const metrikaScriptId = 'yandex-metrika-script';
+const analyticsConsentStorageKey = 'barberherman-analytics-consent';
 const presenceEndpoint = (root.dataset.presenceEndpoint || '').replace(/\/+$/, '').replace(/\.json$/, '');
 const presenceApiKey = root.dataset.presenceApiKey || '';
 const presenceAuthStorageKey = 'barberherman-presence-auth-v2';
@@ -91,13 +99,140 @@ let presenceAuth = null;
 let presenceSyncing = false;
 let presenceCleanupAt = 0;
 let presenceLastConfirmedAt = 0;
+let analyticsConsent = 'prompt';
+let metrikaInitialized = false;
+let privacyConsentTimer = 0;
+let privacySettingsReturnTarget = null;
 let menuOpen = true;
 let menuDrawerAnimation = null;
 const panelAnimations = new Map();
 
+window[metrikaDisableKey] = true;
+
 function reachMetrikaGoal(goal, params = {}) {
-  if (!goal || typeof window.ym !== 'function') return;
+  if (!goal || analyticsConsent !== 'granted' || !metrikaInitialized || typeof window.ym !== 'function') return;
   window.ym(metrikaCounterId, 'reachGoal', goal, params);
+}
+
+function normalizeAnalyticsConsent(value) {
+  return value === 'granted' || value === 'denied' ? value : 'prompt';
+}
+
+function loadAnalyticsConsent() {
+  if (['granted', 'denied', 'prompt'].includes(visualQAAnalytics)) {
+    return visualQAAnalytics;
+  }
+  try {
+    return normalizeAnalyticsConsent(localStorage.getItem(analyticsConsentStorageKey));
+  } catch {
+    return 'prompt';
+  }
+}
+
+function storeAnalyticsConsent(value) {
+  if (['granted', 'denied', 'prompt'].includes(visualQAAnalytics)) return;
+  try {
+    localStorage.setItem(analyticsConsentStorageKey, value);
+  } catch {
+    // The current choice still applies when storage is unavailable.
+  }
+}
+
+function ensureMetrikaFunction() {
+  if (typeof window.ym === 'function') return;
+  window.ym = function metrikaQueue() {
+    (window.ym.a = window.ym.a || []).push(arguments);
+  };
+  window.ym.l = Date.now();
+}
+
+function startMetrika() {
+  if (metrikaInitialized) return;
+
+  window[metrikaDisableKey] = false;
+  ensureMetrikaFunction();
+
+  if (!document.getElementById(metrikaScriptId)) {
+    const script = document.createElement('script');
+    script.id = metrikaScriptId;
+    script.async = true;
+    script.src = 'https://mc.yandex.ru/metrika/tag.js';
+    document.head.append(script);
+  }
+
+  window.ym(metrikaCounterId, 'init', {
+    ssr: true,
+    webvisor: true,
+    clickmap: true,
+    accurateTrackBounce: true,
+    trackLinks: true,
+  });
+  metrikaInitialized = true;
+}
+
+function stopMetrika() {
+  window[metrikaDisableKey] = true;
+  if (metrikaInitialized && typeof window.ym === 'function') {
+    window.ym(metrikaCounterId, 'destruct');
+  }
+  metrikaInitialized = false;
+}
+
+function syncAnalyticsControls() {
+  root.dataset.analyticsConsent = analyticsConsent;
+  analyticsChoiceButtons.forEach((button) => {
+    button.setAttribute('aria-pressed', String(button.dataset.analyticsChoice === analyticsConsent));
+  });
+  if (privacySettingsLabel) {
+    privacySettingsLabel.textContent = analyticsConsent === 'granted'
+      ? 'Статистика включена'
+      : analyticsConsent === 'denied'
+        ? 'Статистика выключена'
+        : 'Настроить статистику';
+  }
+}
+
+function hidePrivacyConsent({ returnFocus = false } = {}) {
+  if (!privacyConsent || privacyConsent.hidden) return;
+
+  window.clearTimeout(privacyConsentTimer);
+  privacyConsent.classList.remove('is-visible');
+  privacySettingsButtons.forEach((button) => button.setAttribute('aria-expanded', 'false'));
+
+  const finish = () => {
+    if (!privacyConsent.classList.contains('is-visible')) privacyConsent.hidden = true;
+    if (returnFocus && privacySettingsReturnTarget instanceof HTMLElement) {
+      privacySettingsReturnTarget.focus({ preventScroll: true });
+    }
+    privacySettingsReturnTarget = null;
+  };
+
+  if (prefersReducedMotion()) finish();
+  else privacyConsentTimer = window.setTimeout(finish, 220);
+}
+
+function showPrivacyConsent({ rememberFocus = false } = {}) {
+  if (!privacyConsent) return;
+
+  window.clearTimeout(privacyConsentTimer);
+  if (rememberFocus && document.activeElement instanceof HTMLElement) {
+    privacySettingsReturnTarget = document.activeElement;
+  }
+  privacyConsent.hidden = false;
+  privacySettingsButtons.forEach((button) => button.setAttribute('aria-expanded', 'true'));
+  requestAnimationFrame(() => privacyConsent.classList.add('is-visible'));
+}
+
+function applyAnalyticsConsent(value, { persist = false, dismiss = false } = {}) {
+  analyticsConsent = normalizeAnalyticsConsent(value);
+  if (persist && analyticsConsent !== 'prompt') storeAnalyticsConsent(analyticsConsent);
+
+  if (analyticsConsent === 'granted') startMetrika();
+  else stopMetrika();
+
+  syncAnalyticsControls();
+  if (dismiss) hidePrivacyConsent({ returnFocus: Boolean(privacySettingsReturnTarget) });
+  else if (analyticsConsent === 'prompt') showPrivacyConsent();
 }
 
 if (['125', '150', '200'].includes(visualQATextScale)) root.dataset.qaText = visualQATextScale;
@@ -1395,6 +1530,7 @@ applyTheme(['light', 'dark'].includes(visualQATheme) ? visualQATheme : root.data
 applyLogoView(visualQALogoView || initialLogoView);
 applyMotionPreference();
 applyTransparencyPreference();
+applyAnalyticsConsent(loadAnalyticsConsent());
 loadWeather();
 startPresence();
 lockVideoPhaseForVisualQA();
@@ -1408,6 +1544,16 @@ enableMultitoolDragging();
 
 if (visualQAFocus === 'skip') {
   requestAnimationFrame(() => document.querySelector('.skip-link')?.focus());
+}
+
+if (window.location.hash === '#privacy-settings') {
+  showPrivacyConsent();
+  requestAnimationFrame(() => {
+    const currentChoice = analyticsChoiceButtons.find(
+      (choice) => choice.dataset.analyticsChoice === analyticsConsent
+    );
+    (currentChoice || analyticsChoiceButtons[0])?.focus({ preventScroll: true });
+  });
 }
 
 requestAnimationFrame(() => root.classList.add('theme-ready'));
@@ -1431,6 +1577,30 @@ motionToggle?.addEventListener('click', () => {
 
 multitoolMenuToggle?.addEventListener('click', () => {
   setMenuOpen(!menuOpen);
+});
+
+privacySettingsButtons.forEach((button) => {
+  button.addEventListener('click', () => {
+    if (!privacyConsent?.hidden && privacyConsent.classList.contains('is-visible')) {
+      hidePrivacyConsent({ returnFocus: true });
+      return;
+    }
+    showPrivacyConsent({ rememberFocus: true });
+    requestAnimationFrame(() => {
+      const currentChoice = analyticsChoiceButtons.find(
+        (choice) => choice.dataset.analyticsChoice === analyticsConsent
+      );
+      (currentChoice || analyticsChoiceButtons[0])?.focus({ preventScroll: true });
+    });
+  });
+});
+
+analyticsChoiceButtons.forEach((button) => {
+  button.addEventListener('click', () => {
+    const choice = normalizeAnalyticsConsent(button.dataset.analyticsChoice);
+    applyAnalyticsConsent(choice, { persist: true, dismiss: true });
+    showMultitoolStatus(choice === 'granted' ? 'Статистика включена' : 'Статистика выключена');
+  });
 });
 
 logoViewButtons.forEach((button) => {
@@ -1491,6 +1661,13 @@ textScrollSurfaces.forEach((scrollSurface) => {
 
 document.addEventListener('keydown', (event) => {
   if (event.key !== 'Escape') return;
+
+  if (privacyConsent && !privacyConsent.hidden) {
+    hidePrivacyConsent({ returnFocus: true });
+    event.preventDefault();
+    return;
+  }
+
   if (mobileQuery.matches && !menuOpen) return;
 
   const recentPanel = mostRecentPanelName ? contentPanels[mostRecentPanelName] : null;

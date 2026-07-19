@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ru" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="description" content="Техническое уведомление о приватности и статистике сайта barberherman.ru.">
+  <meta name="robots" content="index,follow">
+  <meta name="color-scheme" content="light dark">
+  <meta id="theme-color" name="theme-color" content="#f7f7f5">
+  <title>Конфиденциальность | HERMAN &amp; CO</title>
+  <link rel="canonical" href="https://barberherman.ru/privacy.html">
+  <link rel="icon" href="assets/favicon.png" type="image/png">
+  <link rel="preload" href="assets/type/golos-text/GolosText-Cyrillic.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/type/golos-text/GolosText-Latin.woff2" as="font" type="font/woff2" crossorigin>
+  <script>
+    (() => {
+      const params = new URLSearchParams(location.search);
+      const qaTheme = params.get('qa-theme');
+      let theme = 'light';
+      try {
+        const saved = localStorage.getItem('barberherman-theme');
+        theme = qaTheme === 'light' || qaTheme === 'dark'
+          ? qaTheme
+          : saved === 'light' || saved === 'dark'
+          ? saved
+          : matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      } catch {
+        theme = qaTheme === 'light' || qaTheme === 'dark'
+          ? qaTheme
+          : matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+      document.documentElement.dataset.theme = theme;
+      if (['125', '150', '200'].includes(params.get('qa-text'))) {
+        document.documentElement.dataset.qaText = params.get('qa-text');
+      }
+      if (params.get('qa-contrast') === 'more') document.documentElement.dataset.qaContrast = 'more';
+      if (params.get('qa-safe-area') === 'iphone') document.documentElement.dataset.qaSafeArea = 'iphone';
+      document.documentElement.dataset.systemReducedTransparency = String(
+        params.get('qa-system-transparency') === 'reduce'
+          || matchMedia('(prefers-reduced-transparency: reduce)').matches
+      );
+      document.documentElement.style.colorScheme = theme;
+      document.getElementById('theme-color').content = theme === 'dark' ? '#09090b' : '#f7f7f5';
+    })();
+  </script>
+  <link rel="stylesheet" href="styles.css?v=20260719-7">
+</head>
+<body>
+  <a class="skip-link" href="#content">К основному содержанию</a>
+  <div class="stage" aria-hidden="true"><div class="stage-overlay"></div></div>
+
+  <main class="privacy-site" id="content" tabindex="-1">
+    <article class="privacy-document glass-surface glass-surface--expanded">
+      <header class="privacy-document__header">
+        <span class="privacy-document__brand" aria-label="Herman and Co">Herman&nbsp;&amp;Co</span>
+        <a class="privacy-document__back" href="index.html">На главную</a>
+      </header>
+
+      <div class="privacy-document__body">
+        <h1>Конфиденциальность</h1>
+        <p class="privacy-document__updated">Техническое уведомление · обновлено 19 июля 2026 года</p>
+        <p>Это уведомление описывает, какие технические данные использует сайт <strong>barberherman.ru</strong>. Ответственный за сайт&nbsp;— Герман Винокуров; связаться можно через <a href="https://t.me/hermanlifetime" target="_blank" rel="noopener">Telegram</a>.</p>
+
+        <h2>Необходимая работа сайта</h2>
+        <p>В браузере сохраняются выбранная тема, режим движения, вид логотипов и&nbsp;решение о&nbsp;статистике. Эти настройки нужны только для сохранения вашего интерфейса и&nbsp;не&nbsp;используются для рекламы.</p>
+
+        <h2>Счётчик посетителей</h2>
+        <p>Для честного числа активных посетителей сайт использует анонимную авторизацию Firebase и&nbsp;Realtime Database. В&nbsp;браузере хранится технический идентификатор и&nbsp;токен анонимной сессии; в&nbsp;базе&nbsp;— время последней активности. Имя, телефон и&nbsp;электронная почта не&nbsp;запрашиваются.</p>
+        <p>Один профиль браузера считается одним активным подключением, даже если открыто несколько вкладок. Активность подтверждается примерно раз в&nbsp;25 секунд; запись перестаёт считаться активной через 75 секунд и&nbsp;удаляется как устаревшая примерно через три минуты. Разные устройства и&nbsp;профили браузера могут считаться отдельно.</p>
+
+        <h2>Погода</h2>
+        <p>Для показа погоды Москвы браузер обращается к&nbsp;Open-Meteo. Как при любом сетевом запросе, сервису технически доступен IP-адрес соединения. Координаты устройства сайт не&nbsp;запрашивает.</p>
+
+        <h2>Необязательная статистика</h2>
+        <p>Яндекс Метрика, включая Вебвизор, загружается только после выбора «Разрешить статистику». На&nbsp;сайте нет форм и&nbsp;полей ввода. При выборе «Только необходимое» скрипт Метрики не&nbsp;загружается. Решение хранится в&nbsp;браузере, пока вы&nbsp;не&nbsp;измените его или не&nbsp;очистите данные сайта.</p>
+        <a class="privacy-document__settings" href="index.html#privacy-settings">Изменить настройку статистики</a>
+
+        <h2>Внешние ссылки</h2>
+        <p>Переходы в&nbsp;Яндекс Карты, Telegram, Instagram, YClients и&nbsp;на сайты упомянутых изданий и&nbsp;партнёров регулируются правилами соответствующих сервисов. Сайт не&nbsp;получает содержимое ваших аккаунтов в&nbsp;этих сервисах.</p>
+
+        <h2>Удаление локальных данных</h2>
+        <p>Вы можете удалить сохранённые настройки и&nbsp;анонимную сессию средствами браузера, очистив данные сайта barberherman.ru. После следующего посещения необходимые технические данные будут созданы заново.</p>
+      </div>
+    </article>
+  </main>
+</body>
+</html>

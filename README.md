@@ -35,3 +35,9 @@ python3 -m http.server 8080
 3. Добавить к корневому `<html>` в `index.html` атрибуты `data-presence-endpoint="https://PROJECT-default-rtdb.REGION.firebasedatabase.app/presence"` и `data-presence-api-key="WEB_API_KEY"`.
 
 Web API key Firebase публичен по дизайну; доступ ограничивают Anonymous Authentication и правила базы. Интерфейс показывает счётчик только после первого успешного запроса и не подставляет число при ошибке.
+
+## Приватность и статистика
+
+Яндекс Метрика и Вебвизор подключаются только после явного выбора «Разрешить статистику». До выбора или после отказа скрипт `mc.yandex.ru/metrika/tag.js` не загружается; на странице нет резервного отслеживающего пикселя. Решение сохраняется локально под ключом `barberherman-analytics-consent`, его можно изменить через ссылку «Настроить статистику» в нижней части меню или на странице `privacy.html`.
+
+Для детерминированной проверки доступны `?qa-analytics=prompt`, `?qa-analytics=denied` и `?qa-analytics=granted`. QA-параметр не перезаписывает сохранённый пользовательский выбор.
