@@ -1739,7 +1739,6 @@ html[data-theme="dark"] .logo-uomo img {
   letter-spacing: .055em;
   text-transform: uppercase;
   white-space: nowrap;
-  isolation: isolate;
 }
 
 .multitool__descriptor-viewport {
