@@ -63,6 +63,10 @@ test('reflow, common axes, focus and accessibility remain intact', async ({ page
       .filter(visible)
       .map((element) => ({ label: element.getAttribute('aria-label') || element.textContent.trim(), ...rect(element) }));
     const service = document.querySelector('.multitool__service');
+    const brand = document.querySelector('.multitool__brand');
+    const booking = document.querySelector('.multitool__booking');
+    const profile = document.querySelector('[data-panel="profile"]');
+    const practice = document.querySelector('[data-panel="practice"]');
     return {
       innerWidth,
       scrollWidth: document.documentElement.scrollWidth,
@@ -75,6 +79,15 @@ test('reflow, common axes, focus and accessibility remain intact', async ({ page
       serviceButtons: [...service.children].filter(visible).map(rect),
       socialJustification: [...document.querySelectorAll('.multitool__icon-link')]
         .map((element) => getComputedStyle(element).justifyContent),
+      primarySplit: {
+        brandRight: rect(brand).right,
+        bookingLeft: rect(booking).x,
+        profileRight: rect(profile).right,
+        practiceLeft: rect(practice).x,
+        brandBorderRight: Number.parseFloat(getComputedStyle(brand).borderRightWidth),
+        profileBorderRight: Number.parseFloat(getComputedStyle(profile).borderRightWidth),
+        practiceBorderLeft: Number.parseFloat(getComputedStyle(practice).borderLeftWidth),
+      },
     };
   });
 
@@ -82,6 +95,12 @@ test('reflow, common axes, focus and accessibility remain intact', async ({ page
   expect(audit.firstInteractive).toContain('skip-link');
   expect(audit.contact.height).toBeLessThanOrEqual(73);
   expect(audit.controls.filter(({ width, height }) => width < 44 || height < 44)).toEqual([]);
+  expect(Math.abs(audit.primarySplit.brandRight - audit.primarySplit.bookingLeft)).toBeLessThanOrEqual(.01);
+  expect(Math.abs(audit.primarySplit.brandRight - audit.primarySplit.profileRight)).toBeLessThanOrEqual(.01);
+  expect(Math.abs(audit.primarySplit.brandRight - audit.primarySplit.practiceLeft)).toBeLessThanOrEqual(.01);
+  expect(audit.primarySplit.brandBorderRight).toBeGreaterThan(0);
+  expect(audit.primarySplit.profileBorderRight).toBe(audit.primarySplit.brandBorderRight);
+  expect(audit.primarySplit.practiceBorderLeft).toBe(0);
 
   if (audit.innerWidth <= 900) {
     for (const floor of [audit.privacy, audit.credit, audit.service]) {

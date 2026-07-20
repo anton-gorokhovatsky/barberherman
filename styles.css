@@ -1082,8 +1082,9 @@ html[data-qa-text] .multitool__section-label {
   transform: translateY(3.5px);
 }
 
-.multitool__sections button:nth-child(even) {
-  border-left: var(--tool-rule);
+.multitool__sections button:nth-child(1),
+.multitool__sections button:nth-child(3) {
+  border-right: var(--tool-rule);
 }
 
 .multitool__sections button:nth-child(n + 3) {
