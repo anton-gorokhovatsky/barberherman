@@ -36,6 +36,12 @@ const contentPanels = {
   partners: document.getElementById('partners-panel'),
   gallery: document.getElementById('gallery-panel'),
 };
+const galleryTrack = document.querySelector('.gallery-stage__track');
+const gallerySlides = [...document.querySelectorAll('[data-gallery-slide]')];
+const galleryCount = document.querySelector('[data-gallery-count]');
+const galleryCountA11y = document.querySelector('[data-gallery-count-a11y]');
+const galleryPrevious = document.querySelector('.gallery-stage__step--previous');
+const galleryNext = document.querySelector('.gallery-stage__step--next');
 const stageVideos = [...document.querySelectorAll('.stage-video')];
 const mobileQuery = window.matchMedia('(max-width: 900px)');
 const colorSchemeQuery = window.matchMedia('(prefers-color-scheme: dark)');
@@ -81,6 +87,7 @@ const presenceCleanupInterval = 300_000;
 const weatherCacheKey = 'barberherman-moscow-weather';
 
 root.dataset.presenceAvailable = String(Number.isFinite(visualQAOnline));
+root.dataset.galleryOpen = 'false';
 
 let hasSavedTheme = false;
 let hasSavedReducedMotion = false;
@@ -106,6 +113,9 @@ let privacyConsentTimer = 0;
 let privacySettingsReturnTarget = null;
 let menuOpen = true;
 let menuDrawerAnimation = null;
+let galleryIndex = 0;
+let galleryScrollFrame = 0;
+let galleryScrollTimer = 0;
 const panelAnimations = new Map();
 
 window[metrikaDisableKey] = true;
@@ -419,19 +429,31 @@ function animatePanelVisibility(panel, visible, { animate = true } = {}) {
     setPanelOffset(panel, offset.x, offset.y);
   }
 
-  const isFlowPanel = mobileQuery.matches || Boolean(panel.closest('.multitool__drawer'));
+  const isGalleryStage = panel.classList.contains('gallery-stage');
+  const isFlowPanel = !isGalleryStage && (mobileQuery.matches || Boolean(panel.closest('.multitool__drawer')));
   const entering = visible;
-  const duration = panelMotionDuration(
+  const baseDuration = panelMotionDuration(
     entering ? '--motion-panel-enter' : '--motion-panel-exit',
     entering ? 360 : 240,
   );
+  const duration = isGalleryStage && entering ? Math.round(baseDuration * 1.18) : baseDuration;
   const easing = panelMotionEasing(
     entering ? '--ease-panel-enter' : '--ease-panel-exit',
     entering ? 'cubic-bezier(.16, 1, .3, 1)' : 'cubic-bezier(.4, 0, .8, .2)',
   );
   let keyframes;
 
-  if (isFlowPanel) {
+  if (isGalleryStage) {
+    keyframes = entering
+      ? [
+          { opacity: 0, scale: '.978', translate: '0 18px' },
+          { opacity: 1, scale: '1', translate: '0 0' },
+        ]
+      : [
+          { opacity: 1, scale: '1', translate: '0 0' },
+          { opacity: 0, scale: '.992', translate: '0 10px' },
+        ];
+  } else if (isFlowPanel) {
     const panelHeight = panel.getBoundingClientRect().height;
     panel.style.overflow = 'hidden';
     keyframes = entering
@@ -542,10 +564,10 @@ function placeMenuToggle(open) {
   else multitoolPrimary.append(multitoolMenuToggle);
 }
 
-function setMenuOpen(open, { animate = true } = {}) {
+function setMenuOpen(open, { animate = true, force = false, focusToggle = true } = {}) {
   if (!multitool || !multitoolMenuToggle || !multitoolDrawer) return;
 
-  const nextOpen = mobileQuery.matches ? Boolean(open) : true;
+  const nextOpen = force ? Boolean(open) : mobileQuery.matches ? Boolean(open) : true;
   const stateIsApplied = menuOpen === nextOpen && root.dataset.menuOpen === String(nextOpen);
   if (stateIsApplied) return;
 
@@ -573,7 +595,7 @@ function setMenuOpen(open, { animate = true } = {}) {
   animateMenuDrawer(nextOpen, { animate, startHeight: closingHeight });
   syncStageVideos();
 
-  if (!nextOpen) {
+  if (!nextOpen && focusToggle) {
     requestAnimationFrame(() => {
       window.scrollTo({
         top: 0,
@@ -581,7 +603,7 @@ function setMenuOpen(open, { animate = true } = {}) {
       });
       multitoolMenuToggle.focus({ preventScroll: true });
     });
-  } else if (toggleHadFocus && multitoolBooking) {
+  } else if (nextOpen && toggleHadFocus && multitoolBooking) {
     requestAnimationFrame(() => multitoolBooking.focus({ preventScroll: true }));
   }
 }
@@ -589,7 +611,115 @@ function setMenuOpen(open, { animate = true } = {}) {
 function syncContentPresence() {
   const hasVisibleText = menuOpen && ['profile', 'practice'].some(panelIsOpen);
   showcase?.classList.toggle('has-content', hasVisibleText);
-  root.dataset.contentOpen = String(hasVisibleText);
+  root.dataset.contentOpen = String(hasVisibleText || root.dataset.galleryOpen === 'true');
+}
+
+function setGalleryPresentation(visible, { animate = true } = {}) {
+  root.dataset.galleryOpen = String(visible);
+  setMenuOpen(!visible, { animate, force: true, focusToggle: false });
+  syncContentPresence();
+
+  if (visible) {
+    const targetIndex = galleryIndex;
+    requestAnimationFrame(() => scrollGalleryTo(targetIndex, { behavior: 'auto' }));
+  }
+}
+
+function normalizedGalleryIndex(index) {
+  return Math.min(Math.max(0, index), Math.max(0, gallerySlides.length - 1));
+}
+
+function syncGalleryState(index) {
+  if (!gallerySlides.length) return;
+
+  galleryIndex = normalizedGalleryIndex(index);
+  const visualCount = `${String(galleryIndex + 1).padStart(2, '0')} / ${String(gallerySlides.length).padStart(2, '0')}`;
+
+  gallerySlides.forEach((slide, slideIndex) => {
+    slide.classList.toggle('is-current', slideIndex === galleryIndex);
+    if (slideIndex === galleryIndex) slide.setAttribute('aria-current', 'true');
+    else slide.removeAttribute('aria-current');
+  });
+  if (galleryCount) galleryCount.textContent = visualCount;
+  if (galleryCountA11y) galleryCountA11y.textContent = `Изображение ${galleryIndex + 1} из ${gallerySlides.length}`;
+  if (galleryPrevious) galleryPrevious.disabled = galleryIndex === 0;
+  if (galleryNext) galleryNext.disabled = galleryIndex === gallerySlides.length - 1;
+}
+
+function scrollGalleryTo(index, { behavior = prefersReducedMotion() ? 'auto' : 'smooth' } = {}) {
+  if (!galleryTrack || !gallerySlides.length) return;
+
+  const nextIndex = normalizedGalleryIndex(index);
+  syncGalleryState(nextIndex);
+  galleryTrack.scrollTo({ left: nextIndex * galleryTrack.clientWidth, behavior });
+}
+
+function syncGalleryFromScroll() {
+  galleryScrollFrame = 0;
+  if (!galleryTrack?.clientWidth) return;
+  syncGalleryState(Math.round(galleryTrack.scrollLeft / galleryTrack.clientWidth));
+}
+
+function enableGalleryDragging() {
+  if (!galleryTrack || gallerySlides.length < 2) return;
+
+  let dragState = null;
+
+  galleryTrack.addEventListener('pointerdown', (event) => {
+    if (!finePointerQuery.matches || event.button !== 0) return;
+
+    event.preventDefault();
+    dragState = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startScroll: galleryTrack.scrollLeft,
+      lastX: event.clientX,
+      lastTime: performance.now(),
+      velocity: 0,
+      active: false,
+    };
+    galleryTrack.setPointerCapture?.(event.pointerId);
+  });
+
+  galleryTrack.addEventListener('pointermove', (event) => {
+    if (!dragState || event.pointerId !== dragState.pointerId) return;
+
+    const deltaX = event.clientX - dragState.startX;
+    if (!dragState.active && Math.abs(deltaX) < 5) return;
+    if (!dragState.active) {
+      dragState.active = true;
+      galleryTrack.classList.add('is-dragging');
+    }
+
+    const now = performance.now();
+    const elapsed = Math.max(1, now - dragState.lastTime);
+    const instantaneousVelocity = (dragState.lastX - event.clientX) / elapsed;
+    dragState.velocity = dragState.velocity * .68 + instantaneousVelocity * .32;
+    dragState.lastX = event.clientX;
+    dragState.lastTime = now;
+    galleryTrack.scrollLeft = dragState.startScroll - deltaX;
+    event.preventDefault();
+  });
+
+  const finishDrag = (event) => {
+    if (!dragState || event.pointerId !== dragState.pointerId) return;
+
+    const wasActive = dragState.active;
+    const projectedScroll = galleryTrack.scrollLeft + dragState.velocity * 170;
+    const nextIndex = galleryTrack.clientWidth
+      ? Math.round(projectedScroll / galleryTrack.clientWidth)
+      : galleryIndex;
+
+    galleryTrack.classList.remove('is-dragging');
+    if (galleryTrack.hasPointerCapture?.(event.pointerId)) {
+      galleryTrack.releasePointerCapture(event.pointerId);
+    }
+    dragState = null;
+    if (wasActive) scrollGalleryTo(nextIndex);
+  };
+
+  galleryTrack.addEventListener('pointerup', finishDrag);
+  galleryTrack.addEventListener('pointercancel', finishDrag);
 }
 
 function setPanelState(name, visible, { returnFocus = false, animate = true } = {}) {
@@ -601,8 +731,19 @@ function setPanelState(name, visible, { returnFocus = false, animate = true } = 
   const wasVisible = panelIsOpen(name);
   if (wasVisible === visible) return;
 
+  if (name === 'gallery' && visible) {
+    Object.keys(contentPanels).forEach((otherName) => {
+      if (otherName !== 'gallery' && panelIsOpen(otherName)) {
+        setPanelState(otherName, false, { animate });
+      }
+    });
+  } else if (name !== 'gallery' && visible && panelIsOpen('gallery')) {
+    setPanelState('gallery', false, { animate });
+  }
+
   button.setAttribute('aria-pressed', String(visible));
   button.setAttribute('aria-expanded', String(visible));
+  if (name === 'gallery') setGalleryPresentation(visible, { animate });
   animatePanelVisibility(panel, visible, { animate });
   if (visible) {
     mostRecentPanelName = name;
@@ -662,17 +803,22 @@ function revealPanel(name) {
     || title?.textContent?.trim()
     || name;
   if (moduleStatus) moduleStatus.textContent = `Открыт раздел «${label}»`;
-  showMultitoolStatus(`Открыт раздел «${label}»`, { duration: 1100 });
+  if (name !== 'gallery') {
+    showMultitoolStatus(`Открыт раздел «${label}»`, { duration: 1100 });
+  }
 
   requestAnimationFrame(() => {
     const isInlinePanel = Boolean(panel.closest('.multitool__drawer'));
-    if ((mobileQuery.matches || isInlinePanel) && panel.matches('[tabindex]')) {
+    const isGalleryStage = panel.classList.contains('gallery-stage');
+    if ((mobileQuery.matches || isInlinePanel || isGalleryStage) && panel.matches('[tabindex]')) {
       panel.focus({ preventScroll: true });
     }
 
     const behavior = prefersReducedMotion() ? 'auto' : 'smooth';
 
-    if (mobileQuery.matches) {
+    if (isGalleryStage) {
+      window.scrollTo({ top: 0, behavior: 'auto' });
+    } else if (mobileQuery.matches) {
       panel.scrollIntoView({ block: 'start', behavior });
     } else if (isInlinePanel && multitoolDrawer) {
       multitoolDrawer.scrollTo({ top: panel.offsetTop, behavior });
@@ -1144,7 +1290,7 @@ async function focusVisualQASection() {
   const selectorBySection = {
     media: '.multitool__catalog[aria-labelledby="media-title"]',
     partners: '.multitool__catalog[aria-labelledby="partners-title"]',
-    gallery: '.multitool__gallery',
+    gallery: '.gallery-stage',
     profile: '.text-block--profile',
     practice: '.text-block--practice',
   };
@@ -1591,8 +1737,15 @@ applyAnalyticsConsent(loadAnalyticsConsent());
 loadWeather();
 startPresence();
 lockVideoPhaseForVisualQA();
+syncGalleryState(0);
+enableGalleryDragging();
 applyVisualQAContentState();
-setMenuOpen(visualQAMenu !== 'compact', { animate: false });
+const galleryStartsOpen = panelIsOpen('gallery');
+setMenuOpen(galleryStartsOpen ? false : visualQAMenu !== 'compact', {
+  animate: false,
+  force: galleryStartsOpen,
+  focusToggle: false,
+});
 focusVisualQASection();
 syncStageVideos();
 syncMultitoolDragAvailability();
@@ -1634,8 +1787,37 @@ motionToggle?.addEventListener('click', () => {
 });
 
 multitoolMenuToggle?.addEventListener('click', () => {
+  if (panelIsOpen('gallery')) {
+    setPanelState('gallery', false);
+    return;
+  }
   setMenuOpen(!menuOpen);
 });
+
+galleryPrevious?.addEventListener('click', () => scrollGalleryTo(galleryIndex - 1));
+galleryNext?.addEventListener('click', () => scrollGalleryTo(galleryIndex + 1));
+
+galleryTrack?.addEventListener('keydown', (event) => {
+  const destinations = {
+    ArrowLeft: galleryIndex - 1,
+    ArrowRight: galleryIndex + 1,
+    Home: 0,
+    End: gallerySlides.length - 1,
+  };
+  if (!(event.key in destinations)) return;
+
+  scrollGalleryTo(destinations[event.key]);
+  event.preventDefault();
+});
+
+galleryTrack?.addEventListener('scroll', () => {
+  if (root.dataset.galleryOpen !== 'true') return;
+  if (!galleryScrollFrame) galleryScrollFrame = requestAnimationFrame(syncGalleryFromScroll);
+  window.clearTimeout(galleryScrollTimer);
+  galleryScrollTimer = window.setTimeout(() => {
+    syncGalleryFromScroll();
+  }, 140);
+}, { passive: true });
 
 privacySettingsButtons.forEach((button) => {
   button.addEventListener('click', () => {
@@ -1726,7 +1908,7 @@ document.addEventListener('keydown', (event) => {
     return;
   }
 
-  if (mobileQuery.matches && !menuOpen) return;
+  if (mobileQuery.matches && !menuOpen && !panelIsOpen('gallery')) return;
 
   const recentPanel = mostRecentPanelName ? contentPanels[mostRecentPanelName] : null;
   const fallbackName = Object.keys(contentPanels).filter(panelIsOpen).at(-1);
@@ -1743,7 +1925,11 @@ document.addEventListener('keydown', (event) => {
 
 mobileQuery.addEventListener('change', () => {
   settleAllPanelAnimations();
-  if (!mobileQuery.matches) setMenuOpen(true, { animate: false });
+  if (panelIsOpen('gallery')) {
+    setMenuOpen(false, { animate: false, force: true, focusToggle: false });
+  } else if (!mobileQuery.matches) {
+    setMenuOpen(true, { animate: false });
+  }
   syncStageVideos();
   syncMultitoolDragAvailability();
   syncPanelDragAvailability();
@@ -1771,6 +1957,7 @@ dataConnection?.addEventListener?.('change', syncStageVideos);
 finePointerQuery.addEventListener('change', syncMultitoolDragAvailability);
 window.addEventListener('resize', () => requestAnimationFrame(() => {
   clampCurrentMultitoolPosition();
+  if (panelIsOpen('gallery')) scrollGalleryTo(galleryIndex, { behavior: 'auto' });
   textScrollSurfaces.forEach(syncTextScrollFade);
   draggablePanels.forEach((panel) => {
     if (panel.hidden) return;

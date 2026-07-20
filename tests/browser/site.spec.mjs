@@ -203,6 +203,64 @@ test('modules announce, focus and retain the intended responsive state', async (
   }
 });
 
+test('gallery is a complete scene with keyboard navigation and a compact return control', async ({ page }) => {
+  await openReady(page);
+
+  const galleryButton = page.locator('[data-panel="gallery"]');
+  const gallery = page.locator('#gallery-panel');
+  const track = gallery.getByRole('region', { name: 'Фотографии из личного архива', exact: true });
+  const count = gallery.locator('[data-gallery-count]');
+
+  await galleryButton.click();
+  await expect(galleryButton).toHaveAttribute('aria-expanded', 'true');
+  await expect(gallery).toBeVisible();
+  await expect(gallery).toBeFocused();
+  await expect(page.locator('html')).toHaveAttribute('data-gallery-open', 'true');
+  await expect(page.locator('html')).toHaveAttribute('data-menu-open', 'false');
+  await expect(page.locator('#multitool-drawer')).toBeHidden();
+  await expect(page.getByRole('link', { name: 'Записаться', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Развернуть меню', exact: true })).toBeVisible();
+  await expect(count).toHaveText('01 / 02');
+  await expect(gallery.getByRole('button', { name: 'Предыдущая фотография', exact: true })).toBeDisabled();
+
+  const geometry = await gallery.evaluate((element) => {
+    const title = element.querySelector('.gallery-stage__header h2');
+    const photo = element.querySelector('.gallery-stage__slide.is-current .gallery-stage__image-wrap');
+    const titleBox = title.getBoundingClientRect();
+    const photoBox = photo.getBoundingClientRect();
+    return {
+      titleAxis: titleBox.left + Number.parseFloat(getComputedStyle(title).paddingLeft),
+      photoLeft: photoBox.left,
+    };
+  });
+  expect(geometry.photoLeft).toBeGreaterThan(geometry.titleAxis);
+  expect(geometry.photoLeft - geometry.titleAxis).toBeLessThanOrEqual(14);
+
+  await track.focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(count).toHaveText('02 / 02');
+  await expect(gallery.getByRole('button', { name: 'Следующая фотография', exact: true })).toBeDisabled();
+  await page.keyboard.press('Home');
+  await expect(count).toHaveText('01 / 02');
+
+  const imageMotion = await gallery.locator('.gallery-stage__slide.is-current .gallery-stage__image')
+    .evaluate((element) => getComputedStyle(element).animationName);
+  expect(imageMotion).toBe('none');
+
+  await page.getByRole('button', { name: 'Развернуть меню', exact: true }).click();
+  await expect(gallery).toBeHidden();
+  await expect(page.locator('html')).toHaveAttribute('data-gallery-open', 'false');
+  await expect(page.locator('html')).toHaveAttribute('data-menu-open', 'true');
+
+  await galleryButton.click();
+  await expect(gallery).toBeVisible();
+  await gallery.getByRole('button', { name: 'Закрыть раздел «Галерея»', exact: true }).click();
+  await expect(gallery).toBeHidden();
+  await expect(page.locator('html')).toHaveAttribute('data-gallery-open', 'false');
+  await expect(page.locator('html')).toHaveAttribute('data-menu-open', 'true');
+  await expect(galleryButton).toBeFocused();
+});
+
 test('menu and reading-pane keyboard dragging match the responsive contract', async ({ page }) => {
   await openReady(page);
   const desktop = (await page.viewportSize()).width > 900;

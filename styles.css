@@ -76,7 +76,7 @@
   --type-h1: clamp(3rem, calc(2.571rem + 2.143vw), 4.5rem);
   --layout-gutter: clamp(14px, 1.8vw, 28px);
   --object-gap: clamp(12px, 1.4vw, 22px);
-  --photo-radius: clamp(68px, 11vw, 180px);
+  --photo-radius: clamp(36px, 8vw, 88px);
   --motion-fast: 140ms;
   --motion-medium: 220ms;
   --motion-panel-enter: 360ms;
@@ -1305,8 +1305,7 @@ html[data-presence-available="false"] .multitool__weather {
   border-bottom: var(--tool-rule);
 }
 
-.multitool__module-bar h2,
-.multitool__gallery-header h2 {
+.multitool__module-bar h2 {
   align-self: center;
   margin: 0;
   padding: 14px 20px;
@@ -1490,47 +1489,217 @@ html[data-theme="dark"] .logo-uomo img {
   content: url("assets/logos-dark/uomo.png");
 }
 
-.multitool__gallery,
 .multitool__footer {
   border-top: var(--tool-rule);
 }
 
-.multitool__gallery-header {
+.gallery-stage {
+  --gallery-copy-inline: clamp(16px, 2vw, 24px);
+  --gallery-photo-inset: clamp(20px, 3vw, 32px);
+  position: relative;
+  z-index: 4;
+  display: grid;
+  width: min(calc(100vw - (2 * var(--layout-gutter)) - var(--safe-left) - var(--safe-right)), 1120px);
+  height: min(760px, calc(100svh - (2 * var(--layout-gutter)) - 80px - var(--safe-top) - var(--safe-bottom)));
+  min-height: min(560px, calc(100svh - (2 * var(--layout-gutter)) - 80px - var(--safe-top) - var(--safe-bottom)));
+  max-height: calc(100svh - (2 * var(--layout-gutter)) - 80px - var(--safe-top) - var(--safe-bottom));
+  grid-area: stack;
+  grid-template-rows: 58px minmax(0, 1fr) 54px;
+  align-self: start;
+  justify-self: center;
+  transform-origin: center center;
+}
+
+.gallery-stage:focus {
+  outline: none;
+}
+
+.gallery-stage__header {
   display: grid;
   min-height: 58px;
-  grid-template-columns: minmax(0, 1fr) auto 54px;
+  grid-template-columns: minmax(0, 1fr) 54px;
   align-items: center;
-  gap: 0;
   border-bottom: var(--tool-rule);
 }
 
-.multitool__gallery-count {
-  padding: 0 14px;
-  color: color-mix(in srgb, currentColor, transparent 38%);
-  font: 500 var(--type-caption)/1 var(--font);
-  letter-spacing: .06em;
+.gallery-stage__header h2 {
+  margin: 0;
+  padding: 14px var(--gallery-copy-inline);
+  font: 700 var(--type-ui)/1 var(--font);
+  letter-spacing: .07em;
+  text-transform: uppercase;
 }
 
-.multitool__gallery-track {
+.gallery-stage__close,
+.gallery-stage__step {
   display: grid;
-  grid-auto-columns: 100%;
-  grid-auto-flow: column;
-  gap: 0;
+  min-width: 54px;
+  min-height: 54px;
+  place-items: center;
   padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.gallery-stage__close {
+  align-self: stretch;
+  border-left: var(--tool-rule);
+}
+
+.gallery-stage__close svg,
+.gallery-stage__step svg {
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.6;
+  vector-effect: non-scaling-stroke;
+}
+
+.gallery-stage__track {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  min-height: 0;
   overflow-x: auto;
+  overflow-y: hidden;
+  cursor: grab;
   scroll-snap-type: x mandatory;
+  scroll-snap-stop: always;
+  overscroll-behavior-x: contain;
+  touch-action: pan-y pinch-zoom;
+  user-select: none;
+  -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
 }
 
-.multitool__gallery-track::-webkit-scrollbar {
+.gallery-stage__track::-webkit-scrollbar {
   display: none;
 }
 
-.multitool__gallery-slide {
+.gallery-stage__track.is-dragging {
+  cursor: grabbing;
+  scroll-snap-type: none;
+}
+
+.gallery-stage__slide {
+  position: relative;
+  display: grid;
+  flex: 0 0 100%;
   min-width: 0;
+  min-height: 0;
+  place-items: stretch;
   margin: 0;
-  overflow: hidden;
   scroll-snap-align: center;
+}
+
+.gallery-stage__image-wrap {
+  min-width: 0;
+  min-height: 0;
+  margin: var(--gallery-photo-inset);
+  overflow: hidden;
+  border-radius: var(--photo-radius);
+  background: color-mix(in srgb, var(--tool-solid), transparent 86%);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tool-line), transparent 46%);
+  isolation: isolate;
+}
+
+.gallery-stage__image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  transform: scale(1.012);
+  transform-origin: center;
+  will-change: transform;
+}
+
+.gallery-stage__slide.is-current .gallery-stage__image {
+  animation: gallery-photo-breathe 10s cubic-bezier(.45, 0, .55, 1) infinite;
+}
+
+.gallery-stage__track.is-dragging .gallery-stage__image {
+  animation: none;
+  transform: scale(1.035);
+}
+
+@keyframes gallery-photo-breathe {
+  0%, 100% { transform: scale(1.012); }
+  50% { transform: scale(1.032); }
+}
+
+.gallery-stage__footer {
+  display: grid;
+  min-width: 0;
+  min-height: 54px;
+  align-items: stretch;
+  border-top: var(--tool-rule);
+}
+
+.gallery-stage__navigation {
+  display: grid;
+  width: 100%;
+  grid-template-columns: minmax(54px, 1fr) auto minmax(54px, 1fr);
+}
+
+.gallery-stage__step + .gallery-stage__count,
+.gallery-stage__count + .gallery-stage__step {
+  border-left: var(--tool-rule);
+}
+
+.gallery-stage__step:disabled {
+  color: color-mix(in srgb, currentColor, transparent 72%);
+  cursor: default;
+}
+
+.gallery-stage__count {
+  display: grid;
+  min-width: 74px;
+  place-items: center;
+  margin: 0;
+  padding: 0 12px;
+  color: color-mix(in srgb, currentColor, transparent 38%);
+  font: 500 var(--type-caption)/1 var(--font);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .06em;
+}
+
+html[data-gallery-open="true"] .multitool {
+  --compact-floor: 58px;
+  --compact-control: 58px;
+  z-index: 6;
+  align-self: end;
+  justify-self: center;
+  max-height: none;
+}
+
+html[data-gallery-open="true"] .multitool__brand {
+  display: none;
+}
+
+html[data-gallery-open="true"] .multitool__primary {
+  min-height: var(--compact-floor);
+  grid-template-columns: minmax(0, 1fr) var(--compact-control);
+  border-bottom: 0;
+}
+
+html[data-gallery-open="true"] .multitool__booking {
+  min-height: var(--compact-floor);
+  font-size: min(clamp(1.0625rem, calc(.85rem + 1.5vw), 1.25rem), 5.6cqi);
+  font-weight: 620;
+}
+
+html[data-gallery-open="true"] .multitool__primary > .multitool__menu-toggle {
+  display: flex;
+  min-width: var(--compact-control);
+  min-height: var(--compact-floor);
+  border-left: var(--tool-rule);
 }
 
 .multitool__footer {
@@ -1620,15 +1789,6 @@ html[data-ticker-phase="middle"] .multitool__descriptor-track {
 
 html[data-ticker-phase="seam"] .multitool__descriptor-track {
   transform: translateX(-49.98%);
-}
-
-.multitool__portrait {
-  display: block;
-  width: 100%;
-  height: auto;
-  aspect-ratio: 16 / 9;
-  object-fit: cover;
-  object-position: 50% 25%;
 }
 
 .multitool__meta {
@@ -2033,9 +2193,85 @@ html[data-theme="dark"] .theme-toggle__icon--light {
     overscroll-behavior: auto;
   }
 
-  .multitool__catalog,
-  .multitool__gallery {
+  .multitool__catalog {
     scroll-margin-top: max(12px, var(--safe-top));
+  }
+
+  html[data-gallery-open="true"] .showcase {
+    align-items: stretch;
+    justify-content: center;
+    justify-content: safe center;
+    gap: 12px;
+    padding:
+      max(8px, var(--safe-top))
+      max(8px, var(--safe-right))
+      max(8px, var(--safe-bottom))
+      max(8px, var(--safe-left));
+  }
+
+  html[data-gallery-open="true"] .gallery-stage {
+    order: 1;
+  }
+
+  html[data-gallery-open="true"] .multitool {
+    order: 2;
+    width: min(100%, 680px);
+    margin-top: 0;
+  }
+
+  .gallery-stage {
+    --gallery-copy-inline: 14px;
+    --gallery-photo-inset: 18px;
+    width: min(100%, 680px);
+    height: auto;
+    min-height: 0;
+    max-height: calc(100svh - max(8px, var(--safe-top)) - max(8px, var(--safe-bottom)) - 70px);
+    grid-template-rows: 52px auto 50px;
+    align-self: start;
+    margin: 0 auto;
+  }
+
+  .gallery-stage__track {
+    aspect-ratio: 4 / 5;
+    max-height: calc(100svh - max(8px, var(--safe-top)) - max(8px, var(--safe-bottom)) - 172px);
+  }
+
+  .gallery-stage__header {
+    min-height: 52px;
+    grid-template-columns: minmax(0, 1fr) 52px;
+  }
+
+  .gallery-stage__close,
+  .gallery-stage__step {
+    min-width: 50px;
+    min-height: 50px;
+  }
+
+  .gallery-stage__image-wrap {
+    width: min(calc(100% - (2 * var(--gallery-photo-inset))), 42svh);
+    aspect-ratio: 4 / 5;
+    margin: auto;
+  }
+
+  .gallery-stage__slide:first-child .gallery-stage__image {
+    object-position: 50% 48%;
+  }
+
+  .gallery-stage__slide:nth-child(2) .gallery-stage__image {
+    object-position: 43% 50%;
+  }
+
+  .gallery-stage__footer {
+    min-height: 50px;
+  }
+
+  .gallery-stage__navigation {
+    grid-template-columns: minmax(50px, 1fr) auto minmax(50px, 1fr);
+  }
+
+  .gallery-stage__count {
+    min-width: 60px;
+    padding-inline: 8px;
   }
 }
 
@@ -2468,23 +2704,12 @@ html[data-theme="dark"] .theme-toggle__icon--light {
   .logo-cosmotheca { --logo-w: 100px; }
   .logo-amazingred { --logo-w: 95px; }
 
-  .multitool__gallery-header {
-    min-height: 52px;
-    padding-inline: 13px;
+  .gallery-stage__header h2 {
+    font-size: min(var(--type-ui), 5.2vw);
   }
 
-  .multitool__gallery-header h2 {
-    font-size: min(var(--type-ui), 7.2vw);
-  }
-
-  .multitool__gallery-count {
-    padding-inline: 8px;
-    font-size: min(var(--type-caption), 5.5vw);
-  }
-
-  .multitool__gallery-track {
-    gap: 0;
-    padding: 0;
+  .gallery-stage__count {
+    font-size: min(var(--type-caption), 3.55vw);
   }
 
   .multitool__credit {
@@ -2589,10 +2814,20 @@ html[data-reduce-motion="true"] .multitool__descriptor-track {
   transform: none;
 }
 
+html[data-reduce-motion="true"] .gallery-stage__slide.is-current .gallery-stage__image {
+  animation: none !important;
+  transform: none !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .multitool__descriptor-track {
     animation: none;
     transform: none;
+  }
+
+  .gallery-stage__slide.is-current .gallery-stage__image {
+    animation: none !important;
+    transform: none !important;
   }
 }
 
@@ -2608,7 +2843,7 @@ html[data-theme="dark"][data-qa-contrast="more"] .stage-overlay {
   background: rgba(0, 0, 0, .88);
 }
 
-html[data-qa-contrast="more"] .multitool {
+html[data-qa-contrast="more"] :is(.multitool, .gallery-stage) {
   border-width: 2px;
   background: color-mix(in srgb, var(--page), transparent 4%);
   backdrop-filter: none;
@@ -2644,6 +2879,7 @@ html[data-qa-contrast="more"] :is(.multitool__booking, .multitool__contacts, .mu
   }
 
   .multitool,
+  .gallery-stage,
   .text-block {
     border-width: 2px;
   }

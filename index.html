@@ -73,8 +73,8 @@
       ]
     }
   </script>
-  <link rel="stylesheet" href="styles.css?v=20260720-2">
-  <script src="script.js?v=20260720-1" defer></script>
+  <link rel="stylesheet" href="styles.css?v=20260720-3">
+  <script src="script.js?v=20260720-2" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#content">К основному содержанию</a>
@@ -107,22 +107,6 @@
             <button type="button" data-panel="partners" aria-label="Партнёрства" aria-controls="partners-panel" aria-pressed="false" aria-expanded="false"><span class="multitool__section-index">04</span><span class="multitool__section-label">Партнёрства</span></button>
             <button type="button" data-panel="gallery" aria-label="Галерея" aria-controls="gallery-panel" aria-pressed="false" aria-expanded="false"><span class="multitool__section-label">Галерея</span></button>
           </div>
-
-          <section class="multitool__gallery" id="gallery-panel" aria-labelledby="gallery-title" tabindex="-1" hidden>
-            <header class="multitool__gallery-header">
-              <h2 id="gallery-title">Личный архив</h2>
-              <span class="multitool__gallery-count"><span aria-hidden="true">01 / 01</span><span class="sr-only">Изображение 1 из 1</span></span>
-              <button class="multitool__module-close" type="button" data-close-panel="gallery" aria-label="Закрыть раздел «Галерея»" title="Закрыть раздел «Галерея»">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg>
-              </button>
-            </header>
-            <div class="multitool__gallery-track" aria-live="polite">
-              <figure class="multitool__gallery-slide" data-gallery-slide>
-                <img class="multitool__portrait" src="assets/herman-childhood-original.jpeg?v=20260717-1" width="720" height="1280" alt="Герман Винокуров в детстве">
-                <figcaption class="sr-only">Фотография из личного архива Германа Винокурова</figcaption>
-              </figure>
-            </div>
-          </section>
 
           <section class="multitool__catalog" id="media-panel" aria-labelledby="media-title" data-catalog="media" tabindex="-1" hidden>
           <header class="multitool__module-bar">
@@ -257,6 +241,40 @@
         </div>
         <p class="multitool__status" role="status" aria-live="polite" aria-atomic="true" hidden></p>
       </nav>
+
+      <section class="gallery-stage glass-surface glass-surface--expanded" id="gallery-panel" aria-labelledby="gallery-title" tabindex="-1" hidden>
+        <header class="gallery-stage__header">
+          <h2 id="gallery-title">Личный архив</h2>
+          <button class="gallery-stage__close" type="button" data-close-panel="gallery" aria-label="Закрыть раздел «Галерея»" title="Закрыть раздел «Галерея»">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg>
+          </button>
+        </header>
+        <div class="gallery-stage__track" role="region" aria-label="Фотографии из личного архива" tabindex="0">
+          <figure class="gallery-stage__slide" data-gallery-slide role="group" aria-roledescription="слайд" aria-label="1 из 2">
+            <div class="gallery-stage__image-wrap">
+              <img class="gallery-stage__image" src="assets/profile.jpg?v=20260720-1" width="1200" height="685" alt="Герман Винокуров в детстве" draggable="false">
+            </div>
+            <figcaption class="sr-only">Герман Винокуров · Детство</figcaption>
+          </figure>
+          <figure class="gallery-stage__slide" data-gallery-slide role="group" aria-roledescription="слайд" aria-label="2 из 2">
+            <div class="gallery-stage__image-wrap">
+              <img class="gallery-stage__image" src="assets/portrait.jpg?v=20260720-1" width="1000" height="583" alt="Портрет Германа Винокурова" draggable="false">
+            </div>
+            <figcaption class="sr-only">Герман Винокуров · Портрет</figcaption>
+          </figure>
+        </div>
+        <footer class="gallery-stage__footer">
+          <div class="gallery-stage__navigation">
+            <button class="gallery-stage__step gallery-stage__step--previous" type="button" aria-label="Предыдущая фотография" title="Предыдущая фотография">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14.5 6-6 6 6 6"></path></svg>
+            </button>
+            <p class="gallery-stage__count" aria-live="polite" aria-atomic="true"><span aria-hidden="true" data-gallery-count>01 / 02</span><span class="sr-only" data-gallery-count-a11y>Изображение 1 из 2</span></p>
+            <button class="gallery-stage__step gallery-stage__step--next" type="button" aria-label="Следующая фотография" title="Следующая фотография">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9.5 6 6 6-6 6"></path></svg>
+            </button>
+          </div>
+        </footer>
+      </section>
 
       <article class="text-block text-block--profile glass-surface glass-surface--expanded" id="profile-panel" aria-labelledby="profile-title" tabindex="-1" hidden>
         <header class="text-block__bar">
