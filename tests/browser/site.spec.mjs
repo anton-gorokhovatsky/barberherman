@@ -203,38 +203,80 @@ test('modules announce, focus and retain the intended responsive state', async (
   }
 });
 
-test('gallery is a complete scene with keyboard navigation and a compact return control', async ({ page }) => {
+test('list-view logos share one row rhythm and one visible left axis', async ({ page }) => {
+  await openReady(page, `/?${baseQuery}&qa-logo-view=list&qa-section=media`);
+
+  const auditPanel = async (selector) => page.locator(selector).evaluate((panel) => (
+    [...panel.querySelectorAll('.logo')].map((cell) => {
+      const cellBox = cell.getBoundingClientRect();
+      const imageBox = cell.querySelector('img').getBoundingClientRect();
+      return {
+        rowHeight: cellBox.height,
+        imageLeft: imageBox.left - cellBox.left,
+        imageWidth: imageBox.width,
+        imageHeight: imageBox.height,
+      };
+    })
+  ));
+
+  const assertSharedSystem = (metrics) => {
+    expect(new Set(metrics.map(({ rowHeight }) => Math.round(rowHeight))).size).toBe(1);
+    expect(Math.max(...metrics.map(({ imageLeft }) => imageLeft)) - Math.min(...metrics.map(({ imageLeft }) => imageLeft))).toBeLessThanOrEqual(.5);
+    expect(Math.max(...metrics.map(({ imageWidth }) => imageWidth))).toBeLessThanOrEqual(164.5);
+    expect(Math.max(...metrics.map(({ imageHeight }) => imageHeight))).toBeLessThanOrEqual(52.5);
+  };
+
+  assertSharedSystem(await auditPanel('#media-panel'));
+  await page.getByRole('button', { name: 'Партнёрства', exact: true }).click();
+  assertSharedSystem(await auditPanel('#partners-panel'));
+});
+
+test('gallery is a peer content panel with edge-to-edge imagery and keyboard navigation', async ({ page }) => {
   await openReady(page);
 
   const galleryButton = page.locator('[data-panel="gallery"]');
   const gallery = page.locator('#gallery-panel');
   const track = gallery.getByRole('region', { name: 'Фотографии из личного архива', exact: true });
   const count = gallery.locator('[data-gallery-count]');
+  const isMobile = (await page.viewportSize()).width <= 900;
+
+  if (!isMobile) {
+    await page.getByRole('button', { name: 'Профиль', exact: true }).click();
+    await page.getByRole('button', { name: 'Экспертиза', exact: true }).click();
+  }
 
   await galleryButton.click();
   await expect(galleryButton).toHaveAttribute('aria-expanded', 'true');
   await expect(gallery).toBeVisible();
-  await expect(gallery).toBeFocused();
   await expect(page.locator('html')).toHaveAttribute('data-gallery-open', 'true');
-  await expect(page.locator('html')).toHaveAttribute('data-menu-open', 'false');
-  await expect(page.locator('#multitool-drawer')).toBeHidden();
-  await expect(page.getByRole('link', { name: 'Записаться', exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Развернуть меню', exact: true })).toBeVisible();
+  await expect(page.locator('html')).toHaveAttribute('data-menu-open', 'true');
+  await expect(page.locator('#multitool-drawer')).toBeVisible();
   await expect(count).toHaveText('01 / 02');
   await expect(gallery.getByRole('button', { name: 'Предыдущая фотография', exact: true })).toBeDisabled();
 
+  if (isMobile) await expect(gallery).toBeFocused();
+
   const geometry = await gallery.evaluate((element) => {
-    const title = element.querySelector('.gallery-stage__header h2');
+    const track = element.querySelector('.gallery-stage__track');
     const photo = element.querySelector('.gallery-stage__slide.is-current .gallery-stage__image-wrap');
-    const titleBox = title.getBoundingClientRect();
+    const panelBox = element.getBoundingClientRect();
+    const trackBox = track.getBoundingClientRect();
     const photoBox = photo.getBoundingClientRect();
     return {
-      titleAxis: titleBox.left + Number.parseFloat(getComputedStyle(title).paddingLeft),
+      panelLeft: panelBox.left,
+      panelRight: panelBox.right,
+      trackLeft: trackBox.left,
+      trackRight: trackBox.right,
       photoLeft: photoBox.left,
+      photoRight: photoBox.right,
+      radius: getComputedStyle(photo).borderRadius,
     };
   });
-  expect(geometry.photoLeft).toBeGreaterThan(geometry.titleAxis);
-  expect(geometry.photoLeft - geometry.titleAxis).toBeLessThanOrEqual(14);
+  expect(Math.abs(geometry.photoLeft - geometry.trackLeft)).toBeLessThanOrEqual(.5);
+  expect(Math.abs(geometry.photoRight - geometry.trackRight)).toBeLessThanOrEqual(.5);
+  expect(geometry.trackLeft - geometry.panelLeft).toBeLessThanOrEqual(2);
+  expect(geometry.panelRight - geometry.trackRight).toBeLessThanOrEqual(2);
+  expect(geometry.radius).toBe('0px');
 
   await track.focus();
   await page.keyboard.press('ArrowRight');
@@ -247,13 +289,12 @@ test('gallery is a complete scene with keyboard navigation and a compact return 
     .evaluate((element) => getComputedStyle(element).animationName);
   expect(imageMotion).toBe('none');
 
-  await page.getByRole('button', { name: 'Развернуть меню', exact: true }).click();
-  await expect(gallery).toBeHidden();
-  await expect(page.locator('html')).toHaveAttribute('data-gallery-open', 'false');
-  await expect(page.locator('html')).toHaveAttribute('data-menu-open', 'true');
+  if (!isMobile) {
+    await expect(page.locator('#profile-panel')).toBeVisible();
+    await expect(page.locator('#practice-panel')).toBeVisible();
+    await expect(gallery).toBeVisible();
+  }
 
-  await galleryButton.click();
-  await expect(gallery).toBeVisible();
   await gallery.getByRole('button', { name: 'Закрыть раздел «Галерея»', exact: true }).click();
   await expect(gallery).toBeHidden();
   await expect(page.locator('html')).toHaveAttribute('data-gallery-open', 'false');
@@ -261,7 +302,7 @@ test('gallery is a complete scene with keyboard navigation and a compact return 
   await expect(galleryButton).toBeFocused();
 });
 
-test('menu and reading-pane keyboard dragging match the responsive contract', async ({ page }) => {
+test('menu and content-panel keyboard dragging match the responsive contract', async ({ page }) => {
   await openReady(page);
   const desktop = (await page.viewportSize()).width > 900;
   const menuHandle = page.locator('.multitool__drag-handle');
@@ -270,6 +311,8 @@ test('menu and reading-pane keyboard dragging match the responsive contract', as
     await expect(menuHandle).toBeDisabled();
     await page.getByRole('button', { name: 'Профиль', exact: true }).click();
     await expect(page.locator('.text-block--profile .text-block__drag-handle')).toBeDisabled();
+    await page.getByRole('button', { name: 'Галерея', exact: true }).click();
+    await expect(page.locator('.gallery-stage__drag-handle')).toBeDisabled();
     return;
   }
 
@@ -287,6 +330,15 @@ test('menu and reading-pane keyboard dragging match the responsive contract', as
   await expect(panel).toHaveAttribute('data-drag-y', /-\d+/);
   await page.keyboard.press('Home');
   await expect(panel).toHaveAttribute('data-drag-y', '0');
+
+  await page.getByRole('button', { name: 'Галерея', exact: true }).click();
+  const gallery = page.locator('#gallery-panel');
+  const galleryHandle = gallery.locator('.gallery-stage__drag-handle');
+  await galleryHandle.focus();
+  await page.keyboard.press('ArrowDown');
+  await expect(gallery).toHaveAttribute('data-drag-y', /\d+/);
+  await page.keyboard.press('Home');
+  await expect(gallery).toHaveAttribute('data-drag-y', '0');
 });
 
 test('pointer dragging has elastic boundary feedback and settles inside the safe area', async ({ page }) => {
@@ -305,13 +357,11 @@ test('pointer dragging has elastic boundary feedback and settles inside the safe
 
   const active = await menu.evaluate((element) => {
     const rect = element.getBoundingClientRect();
-    return {
-      left: rect.left,
-      border: getComputedStyle(element).borderColor,
-    };
+    return { left: rect.left };
   });
   expect(active.left).toBeLessThan(8);
-  expect(active.border).not.toBe(restingBorder);
+  await expect.poll(async () => menu.evaluate((element) => getComputedStyle(element).borderColor))
+    .not.toBe(restingBorder);
 
   await page.mouse.up();
   await expect(menu).not.toHaveClass(/is-dragging/);
@@ -334,6 +384,20 @@ test('pointer dragging has elastic boundary feedback and settles inside the safe
     const settled = await panel.boundingBox();
     return settled.x + settled.width;
   }).toBeLessThanOrEqual((await page.viewportSize()).width - 7.5);
+
+  await page.getByRole('button', { name: 'Галерея', exact: true }).click();
+  const gallery = page.locator('#gallery-panel');
+  const galleryHandleBox = await gallery.locator('.gallery-stage__drag-handle').boundingBox();
+  expect(galleryHandleBox).not.toBeNull();
+
+  await page.mouse.move(galleryHandleBox.x + 80, galleryHandleBox.y + galleryHandleBox.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(galleryHandleBox.x + 128, galleryHandleBox.y + 48, { steps: 6 });
+  await expect(gallery).toHaveClass(/is-dragging/);
+  await page.mouse.up();
+  await expect(gallery).not.toHaveClass(/is-dragging/);
+  await expect(gallery).toHaveAttribute('data-drag-x', /\d+/);
+  await expect(gallery).toHaveAttribute('data-drag-y', /\d+/);
 });
 
 test('privacy page keeps the same accessibility baseline', async ({ page, browserName }) => {

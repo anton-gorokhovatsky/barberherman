@@ -73,8 +73,8 @@
       ]
     }
   </script>
-  <link rel="stylesheet" href="styles.css?v=20260720-3">
-  <script src="script.js?v=20260720-2" defer></script>
+  <link rel="stylesheet" href="styles.css?v=20260720-4">
+  <script src="script.js?v=20260720-3" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#content">К основному содержанию</a>
@@ -244,7 +244,8 @@
 
       <section class="gallery-stage glass-surface glass-surface--expanded" id="gallery-panel" aria-labelledby="gallery-title" tabindex="-1" hidden>
         <header class="gallery-stage__header">
-          <h2 id="gallery-title">Личный архив</h2>
+          <h2 class="sr-only" id="gallery-title">Личный архив</h2>
+          <button class="gallery-stage__title gallery-stage__drag-handle" type="button" aria-label="Переместить панель «Галерея». Используйте стрелки, чтобы перемещать её, и клавишу Home, чтобы вернуть на место.">Личный архив</button>
           <button class="gallery-stage__close" type="button" data-close-panel="gallery" aria-label="Закрыть раздел «Галерея»" title="Закрыть раздел «Галерея»">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg>
           </button>

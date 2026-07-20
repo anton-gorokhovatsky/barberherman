@@ -76,7 +76,6 @@
   --type-h1: clamp(3rem, calc(2.571rem + 2.143vw), 4.5rem);
   --layout-gutter: clamp(14px, 1.8vw, 28px);
   --object-gap: clamp(12px, 1.4vw, 22px);
-  --photo-radius: clamp(36px, 8vw, 88px);
   --motion-fast: 140ms;
   --motion-medium: 220ms;
   --motion-panel-enter: 360ms;
@@ -903,7 +902,8 @@ html[data-content-open="true"] .stage-overlay {
 }
 
 .multitool.is-dragging::before,
-.text-block.is-dragging::before {
+.text-block.is-dragging::before,
+.gallery-stage.is-dragging::before {
   background:
     radial-gradient(circle 72px at var(--glass-x, 50%) var(--glass-y, 50%), color-mix(in srgb, var(--tool-highlight), transparent 78%), transparent 74%),
     radial-gradient(ellipse 70% 8% at var(--glass-x, 26%) 0%, color-mix(in srgb, var(--tool-highlight), transparent 52%), transparent 78%),
@@ -1397,24 +1397,40 @@ html[data-presence-available="false"] .multitool__weather {
 
 html[data-logo-view="list"] .logo-grid {
   grid-template-columns: minmax(0, 1fr);
-  grid-auto-rows: 62px;
+  grid-auto-rows: 64px;
   gap: 0;
 }
 
 html[data-logo-view="list"] .logo {
+  --logo-list-w: 120px;
+  --logo-list-h: 36px;
   justify-items: start;
-  padding: 10px 24px;
+  padding: 0 24px;
   border-top: var(--tool-rule);
 }
 
 html[data-logo-view="list"] .logo img {
-  max-width: min(58%, calc(var(--logo-w, 78px) * 1.48));
-  max-height: calc(var(--logo-h, 29px) * 1.48);
+  max-width: min(58%, var(--logo-list-w));
+  max-height: var(--logo-list-h);
+  transform: none;
 }
 
-html[data-logo-view="list"] .logo-m24 {
-  --logo-shift-y: -4px;
-}
+/* The list is one optical system: every mark starts on the same axis, while
+   three bounded silhouettes keep wide, horizontal and compact marks comparable. */
+html[data-logo-view="list"] :is(.logo-timeout, .logo-village) { --logo-list-w: 100px; --logo-list-h: 38px; }
+html[data-logo-view="list"] :is(.logo-maxim, .logo-elleman) { --logo-list-w: 128px; --logo-list-h: 30px; }
+html[data-logo-view="list"] .logo-esquire { --logo-list-w: 110px; --logo-list-h: 37px; }
+html[data-logo-view="list"] .logo-allure { --logo-list-w: 104px; --logo-list-h: 32px; }
+html[data-logo-view="list"] .logo-interview { --logo-list-w: 100px; --logo-list-h: 36px; }
+html[data-logo-view="list"] .logo-playboy { --logo-list-w: 52px; --logo-list-h: 52px; }
+html[data-logo-view="list"] .logo-uomo { --logo-list-w: 96px; --logo-list-h: 38px; }
+html[data-logo-view="list"] .logo-m24 { --logo-list-w: 50px; --logo-list-h: 50px; }
+
+html[data-logo-view="list"] :is(.logo-cosmotheca, .logo-amazingred) { --logo-list-w: 164px; --logo-list-h: 30px; }
+html[data-logo-view="list"] .logo-rutv { --logo-list-w: 96px; --logo-list-h: 44px; }
+html[data-logo-view="list"] .logo-keune { --logo-list-w: 124px; --logo-list-h: 36px; }
+html[data-logo-view="list"] .logo-hiker { --logo-list-w: 112px; --logo-list-h: 36px; }
+html[data-logo-view="list"] .logo-autoradio { --logo-list-w: 70px; --logo-list-h: 50px; }
 
 html[data-logo-view="poster"] .logo-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1494,20 +1510,25 @@ html[data-theme="dark"] .logo-uomo img {
 }
 
 .gallery-stage {
+  --panel-available-height: calc(100svh - (2 * var(--layout-gutter)));
   --gallery-copy-inline: clamp(16px, 2vw, 24px);
-  --gallery-photo-inset: clamp(20px, 3vw, 32px);
   position: relative;
-  z-index: 4;
+  z-index: 3;
   display: grid;
-  width: min(calc(100vw - (2 * var(--layout-gutter)) - var(--safe-left) - var(--safe-right)), 1120px);
-  height: min(760px, calc(100svh - (2 * var(--layout-gutter)) - 80px - var(--safe-top) - var(--safe-bottom)));
-  min-height: min(560px, calc(100svh - (2 * var(--layout-gutter)) - 80px - var(--safe-top) - var(--safe-bottom)));
-  max-height: calc(100svh - (2 * var(--layout-gutter)) - 80px - var(--safe-top) - var(--safe-bottom));
+  width: clamp(560px, 60vw, 760px);
+  min-width: 0;
+  max-height: var(--panel-available-height);
   grid-area: stack;
-  grid-template-rows: 58px minmax(0, 1fr) 54px;
+  grid-template-rows: 54px auto 54px;
   align-self: start;
   justify-self: center;
+  transform: translate3d(var(--drag-x, 0), var(--drag-y, 0), 0);
   transform-origin: center center;
+  transition:
+    transform var(--motion-drag-settle) var(--ease-drag-settle),
+    border-color var(--motion-fast) linear,
+    box-shadow var(--motion-fast) var(--ease-out);
+  will-change: transform;
 }
 
 .gallery-stage:focus {
@@ -1516,18 +1537,30 @@ html[data-theme="dark"] .logo-uomo img {
 
 .gallery-stage__header {
   display: grid;
-  min-height: 58px;
+  min-height: 54px;
   grid-template-columns: minmax(0, 1fr) 54px;
   align-items: center;
   border-bottom: var(--tool-rule);
 }
 
-.gallery-stage__header h2 {
+.gallery-stage__title {
+  display: flex;
+  width: 100%;
+  min-height: 54px;
+  align-items: center;
   margin: 0;
   padding: 14px var(--gallery-copy-inline);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
   font: 700 var(--type-ui)/1 var(--font);
   letter-spacing: .07em;
+  text-align: left;
   text-transform: uppercase;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
 }
 
 .gallery-stage__close,
@@ -1566,6 +1599,8 @@ html[data-theme="dark"] .logo-uomo img {
   display: flex;
   min-width: 0;
   min-height: 0;
+  max-height: calc(var(--panel-available-height) - 108px);
+  aspect-ratio: 12 / 7;
   overflow-x: auto;
   overflow-y: hidden;
   cursor: grab;
@@ -1599,13 +1634,14 @@ html[data-theme="dark"] .logo-uomo img {
 }
 
 .gallery-stage__image-wrap {
+  width: 100%;
+  height: 100%;
   min-width: 0;
   min-height: 0;
-  margin: var(--gallery-photo-inset);
+  margin: 0;
   overflow: hidden;
-  border-radius: var(--photo-radius);
+  border-radius: 0;
   background: color-mix(in srgb, var(--tool-solid), transparent 86%);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tool-line), transparent 46%);
   isolation: isolate;
 }
 
@@ -1627,6 +1663,19 @@ html[data-theme="dark"] .logo-uomo img {
 .gallery-stage__track.is-dragging .gallery-stage__image {
   animation: none;
   transform: scale(1.035);
+}
+
+.gallery-stage.is-dragging,
+.gallery-stage.is-dragging .gallery-stage__title {
+  cursor: grabbing;
+}
+
+.gallery-stage.is-dragging {
+  border-color: var(--tool-border-drag);
+  box-shadow: var(--tool-shadow-drag);
+  transition:
+    border-color var(--motion-fast) linear,
+    box-shadow var(--motion-fast) var(--ease-out);
 }
 
 @keyframes gallery-photo-breathe {
@@ -1668,38 +1717,6 @@ html[data-theme="dark"] .logo-uomo img {
   font: 500 var(--type-caption)/1 var(--font);
   font-variant-numeric: tabular-nums;
   letter-spacing: .06em;
-}
-
-html[data-gallery-open="true"] .multitool {
-  --compact-floor: 58px;
-  --compact-control: 58px;
-  z-index: 6;
-  align-self: end;
-  justify-self: center;
-  max-height: none;
-}
-
-html[data-gallery-open="true"] .multitool__brand {
-  display: none;
-}
-
-html[data-gallery-open="true"] .multitool__primary {
-  min-height: var(--compact-floor);
-  grid-template-columns: minmax(0, 1fr) var(--compact-control);
-  border-bottom: 0;
-}
-
-html[data-gallery-open="true"] .multitool__booking {
-  min-height: var(--compact-floor);
-  font-size: min(clamp(1.0625rem, calc(.85rem + 1.5vw), 1.25rem), 5.6cqi);
-  font-weight: 620;
-}
-
-html[data-gallery-open="true"] .multitool__primary > .multitool__menu-toggle {
-  display: flex;
-  min-width: var(--compact-control);
-  min-height: var(--compact-floor);
-  border-left: var(--tool-rule);
 }
 
 .multitool__footer {
@@ -2024,6 +2041,7 @@ html[data-theme="dark"] .theme-toggle__icon--light {
 
   .multitool a:hover,
   .multitool button:hover,
+  .gallery-stage button:hover,
   .privacy-consent button:hover,
   .privacy-document__back:hover,
   .privacy-document__settings:hover {
@@ -2037,7 +2055,8 @@ html[data-theme="dark"] .theme-toggle__icon--light {
 
 .multitool a:active,
 .multitool button:active,
-.text-block button:active {
+.text-block button:active,
+.gallery-stage button:active {
   background: color-mix(in srgb, var(--tool-hover), currentColor 5%);
   box-shadow: inset 0 1px 0 color-mix(in srgb, currentColor, transparent 78%);
 }
@@ -2129,6 +2148,13 @@ html[data-theme="dark"] .theme-toggle__icon--light {
     transform: none !important;
   }
 
+  .gallery-stage {
+    order: 2;
+    scroll-margin-top: max(12px, var(--safe-top));
+    transform: none !important;
+    transition: none;
+  }
+
   .text-block--practice {
     order: 3;
   }
@@ -2197,35 +2223,12 @@ html[data-theme="dark"] .theme-toggle__icon--light {
     scroll-margin-top: max(12px, var(--safe-top));
   }
 
-  html[data-gallery-open="true"] .showcase {
-    align-items: stretch;
-    justify-content: center;
-    justify-content: safe center;
-    gap: 12px;
-    padding:
-      max(8px, var(--safe-top))
-      max(8px, var(--safe-right))
-      max(8px, var(--safe-bottom))
-      max(8px, var(--safe-left));
-  }
-
-  html[data-gallery-open="true"] .gallery-stage {
-    order: 1;
-  }
-
-  html[data-gallery-open="true"] .multitool {
-    order: 2;
-    width: min(100%, 680px);
-    margin-top: 0;
-  }
-
   .gallery-stage {
     --gallery-copy-inline: 14px;
-    --gallery-photo-inset: 18px;
     width: min(100%, 680px);
     height: auto;
     min-height: 0;
-    max-height: calc(100svh - max(8px, var(--safe-top)) - max(8px, var(--safe-bottom)) - 70px);
+    max-height: none;
     grid-template-rows: 52px auto 50px;
     align-self: start;
     margin: 0 auto;
@@ -2248,9 +2251,10 @@ html[data-theme="dark"] .theme-toggle__icon--light {
   }
 
   .gallery-stage__image-wrap {
-    width: min(calc(100% - (2 * var(--gallery-photo-inset))), 42svh);
-    aspect-ratio: 4 / 5;
-    margin: auto;
+    width: 100%;
+    height: 100%;
+    aspect-ratio: auto;
+    margin: 0;
   }
 
   .gallery-stage__slide:first-child .gallery-stage__image {
@@ -2704,7 +2708,7 @@ html[data-theme="dark"] .theme-toggle__icon--light {
   .logo-cosmotheca { --logo-w: 100px; }
   .logo-amazingred { --logo-w: 95px; }
 
-  .gallery-stage__header h2 {
+  .gallery-stage__title {
     font-size: min(var(--type-ui), 5.2vw);
   }
 

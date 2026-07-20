@@ -17,7 +17,7 @@ const sectionButtons = [...document.querySelectorAll('[data-panel]')];
 const panelCloseButtons = [...document.querySelectorAll('[data-close-panel]')];
 const showcase = document.querySelector('.showcase');
 const glassSurfaces = [...document.querySelectorAll('.glass-surface')];
-const draggablePanels = [...document.querySelectorAll('.text-block')];
+const draggablePanels = [...document.querySelectorAll('.text-block, .gallery-stage')];
 const textScrollSurfaces = [...document.querySelectorAll('.text-block__scroll')];
 const logoImages = [...document.querySelectorAll('.logo img')];
 const onlineCountLabel = document.querySelector('[data-online-count]');
@@ -424,36 +424,25 @@ function animatePanelVisibility(panel, visible, { animate = true } = {}) {
     return;
   }
 
-  if (visible && panel.classList.contains('text-block') && !mobileQuery.matches) {
+  if (visible && panel.matches('.text-block, .gallery-stage') && !mobileQuery.matches) {
     const offset = panelOffset(panel);
     setPanelOffset(panel, offset.x, offset.y);
   }
 
-  const isGalleryStage = panel.classList.contains('gallery-stage');
-  const isFlowPanel = !isGalleryStage && (mobileQuery.matches || Boolean(panel.closest('.multitool__drawer')));
+  const isFlowPanel = mobileQuery.matches || Boolean(panel.closest('.multitool__drawer'));
   const entering = visible;
   const baseDuration = panelMotionDuration(
     entering ? '--motion-panel-enter' : '--motion-panel-exit',
     entering ? 360 : 240,
   );
-  const duration = isGalleryStage && entering ? Math.round(baseDuration * 1.18) : baseDuration;
+  const duration = baseDuration;
   const easing = panelMotionEasing(
     entering ? '--ease-panel-enter' : '--ease-panel-exit',
     entering ? 'cubic-bezier(.16, 1, .3, 1)' : 'cubic-bezier(.4, 0, .8, .2)',
   );
   let keyframes;
 
-  if (isGalleryStage) {
-    keyframes = entering
-      ? [
-          { opacity: 0, scale: '.978', translate: '0 18px' },
-          { opacity: 1, scale: '1', translate: '0 0' },
-        ]
-      : [
-          { opacity: 1, scale: '1', translate: '0 0' },
-          { opacity: 0, scale: '.992', translate: '0 10px' },
-        ];
-  } else if (isFlowPanel) {
+  if (isFlowPanel) {
     const panelHeight = panel.getBoundingClientRect().height;
     panel.style.overflow = 'hidden';
     keyframes = entering
@@ -466,7 +455,11 @@ function animatePanelVisibility(panel, visible, { animate = true } = {}) {
           { height: '0px', opacity: 0, translate: '0 -8px' },
         ];
   } else {
-    const direction = panel.classList.contains('text-block--profile') ? -18 : 18;
+    const direction = panel.classList.contains('text-block--profile')
+      ? -18
+      : panel.classList.contains('text-block--practice')
+        ? 18
+        : 0;
     keyframes = entering
       ? [
           { opacity: 0, scale: '.985', translate: `${direction}px 10px` },
@@ -588,7 +581,7 @@ function setMenuOpen(open, { animate = true, force = false, focusToggle = true }
   }
   placeMenuToggle(nextOpen);
 
-  ['profile', 'practice'].forEach((name) => {
+  ['profile', 'practice', 'gallery'].forEach((name) => {
     if (panelIsOpen(name)) animatePanelVisibility(contentPanels[name], nextOpen, { animate });
   });
   syncContentPresence();
@@ -609,14 +602,13 @@ function setMenuOpen(open, { animate = true, force = false, focusToggle = true }
 }
 
 function syncContentPresence() {
-  const hasVisibleText = menuOpen && ['profile', 'practice'].some(panelIsOpen);
-  showcase?.classList.toggle('has-content', hasVisibleText);
-  root.dataset.contentOpen = String(hasVisibleText || root.dataset.galleryOpen === 'true');
+  const hasVisibleContent = menuOpen && ['profile', 'practice', 'gallery'].some(panelIsOpen);
+  showcase?.classList.toggle('has-content', hasVisibleContent);
+  root.dataset.contentOpen = String(hasVisibleContent);
 }
 
-function setGalleryPresentation(visible, { animate = true } = {}) {
+function setGalleryPresentation(visible) {
   root.dataset.galleryOpen = String(visible);
-  setMenuOpen(!visible, { animate, force: true, focusToggle: false });
   syncContentPresence();
 
   if (visible) {
@@ -731,19 +723,9 @@ function setPanelState(name, visible, { returnFocus = false, animate = true } = 
   const wasVisible = panelIsOpen(name);
   if (wasVisible === visible) return;
 
-  if (name === 'gallery' && visible) {
-    Object.keys(contentPanels).forEach((otherName) => {
-      if (otherName !== 'gallery' && panelIsOpen(otherName)) {
-        setPanelState(otherName, false, { animate });
-      }
-    });
-  } else if (name !== 'gallery' && visible && panelIsOpen('gallery')) {
-    setPanelState('gallery', false, { animate });
-  }
-
   button.setAttribute('aria-pressed', String(visible));
   button.setAttribute('aria-expanded', String(visible));
-  if (name === 'gallery') setGalleryPresentation(visible, { animate });
+  if (name === 'gallery') setGalleryPresentation(visible);
   animatePanelVisibility(panel, visible, { animate });
   if (visible) {
     mostRecentPanelName = name;
@@ -755,7 +737,7 @@ function setPanelState(name, visible, { returnFocus = false, animate = true } = 
       }
     }
     prepareLogoImages(panel);
-    if (panel.classList.contains('text-block')) bringPanelForward(panel);
+    if (panel.matches('.text-block, .gallery-stage')) bringPanelForward(panel);
   }
   syncContentPresence();
   requestAnimationFrame(() => {
@@ -803,22 +785,17 @@ function revealPanel(name) {
     || title?.textContent?.trim()
     || name;
   if (moduleStatus) moduleStatus.textContent = `Открыт раздел «${label}»`;
-  if (name !== 'gallery') {
-    showMultitoolStatus(`Открыт раздел «${label}»`, { duration: 1100 });
-  }
+  showMultitoolStatus(`Открыт раздел «${label}»`, { duration: 1100 });
 
   requestAnimationFrame(() => {
     const isInlinePanel = Boolean(panel.closest('.multitool__drawer'));
-    const isGalleryStage = panel.classList.contains('gallery-stage');
-    if ((mobileQuery.matches || isInlinePanel || isGalleryStage) && panel.matches('[tabindex]')) {
+    if ((mobileQuery.matches || isInlinePanel) && panel.matches('[tabindex]')) {
       panel.focus({ preventScroll: true });
     }
 
     const behavior = prefersReducedMotion() ? 'auto' : 'smooth';
 
-    if (isGalleryStage) {
-      window.scrollTo({ top: 0, behavior: 'auto' });
-    } else if (mobileQuery.matches) {
+    if (mobileQuery.matches) {
       panel.scrollIntoView({ block: 'start', behavior });
     } else if (isInlinePanel && multitoolDrawer) {
       multitoolDrawer.scrollTo({ top: panel.offsetTop, behavior });
@@ -843,7 +820,7 @@ function applyVisualQADragState() {
     ? contentPanels[visualQADrag]
     : null;
   const surface = visualQADrag === 'menu' ? multitool : requestedPanel;
-  if (!surface || surface.hidden || !surface.matches('.multitool, .text-block')) return;
+  if (!surface || surface.hidden || !surface.matches('.multitool, .text-block, .gallery-stage')) return;
 
   surface.style.setProperty('--glass-x', '42%');
   surface.style.setProperty('--glass-y', '18%');
@@ -1415,18 +1392,22 @@ function bringPanelForward(panel) {
 
 function resetPanelPosition(panel) {
   panel.style.removeProperty('--panel-available-height');
-  setPanelOffset(panel, 0, 0);
+  panel.dataset.dragX = '0';
+  panel.dataset.dragY = '0';
+  panel.style.setProperty('--drag-x', '0px');
+  panel.style.setProperty('--drag-y', '0px');
 }
 
 function enablePanelDragging(panel) {
-  const handle = panel.querySelector('.text-block__drag-handle');
+  const handle = panel.querySelector('.text-block__drag-handle, .gallery-stage__drag-handle');
   if (!handle) return;
 
   let dragState = null;
 
   panel.addEventListener('pointerdown', (event) => {
     if (mobileQuery.matches || event.button !== 0) return;
-    if (event.target.closest('a, button:not(.text-block__drag-handle), input, select, textarea, [contenteditable="true"]')) return;
+    if (event.target.closest('.gallery-stage__track')) return;
+    if (event.target.closest('a, button:not(.text-block__drag-handle):not(.gallery-stage__drag-handle), input, select, textarea, [contenteditable="true"]')) return;
 
     const scrollSurface = event.target.closest('.text-block__scroll');
     if (scrollSurface && event.clientX > scrollSurface.getBoundingClientRect().right - 18) return;
@@ -1597,7 +1578,7 @@ function syncPanelDragAvailability() {
   const isAvailable = !mobileQuery.matches;
 
   draggablePanels.forEach((panel) => {
-    const handle = panel.querySelector('.text-block__drag-handle');
+    const handle = panel.querySelector('.text-block__drag-handle, .gallery-stage__drag-handle');
     if (!handle) return;
 
     handle.disabled = !isAvailable;
@@ -1740,10 +1721,8 @@ lockVideoPhaseForVisualQA();
 syncGalleryState(0);
 enableGalleryDragging();
 applyVisualQAContentState();
-const galleryStartsOpen = panelIsOpen('gallery');
-setMenuOpen(galleryStartsOpen ? false : visualQAMenu !== 'compact', {
+setMenuOpen(visualQAMenu !== 'compact', {
   animate: false,
-  force: galleryStartsOpen,
   focusToggle: false,
 });
 focusVisualQASection();
@@ -1787,10 +1766,6 @@ motionToggle?.addEventListener('click', () => {
 });
 
 multitoolMenuToggle?.addEventListener('click', () => {
-  if (panelIsOpen('gallery')) {
-    setPanelState('gallery', false);
-    return;
-  }
   setMenuOpen(!menuOpen);
 });
 
@@ -1908,7 +1883,7 @@ document.addEventListener('keydown', (event) => {
     return;
   }
 
-  if (mobileQuery.matches && !menuOpen && !panelIsOpen('gallery')) return;
+  if (mobileQuery.matches && !menuOpen) return;
 
   const recentPanel = mostRecentPanelName ? contentPanels[mostRecentPanelName] : null;
   const fallbackName = Object.keys(contentPanels).filter(panelIsOpen).at(-1);
@@ -1925,9 +1900,7 @@ document.addEventListener('keydown', (event) => {
 
 mobileQuery.addEventListener('change', () => {
   settleAllPanelAnimations();
-  if (panelIsOpen('gallery')) {
-    setMenuOpen(false, { animate: false, force: true, focusToggle: false });
-  } else if (!mobileQuery.matches) {
+  if (!mobileQuery.matches) {
     setMenuOpen(true, { animate: false });
   }
   syncStageVideos();
