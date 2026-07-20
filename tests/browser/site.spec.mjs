@@ -212,6 +212,53 @@ test('menu and reading-pane keyboard dragging match the responsive contract', as
   await expect(panel).toHaveAttribute('data-drag-y', '0');
 });
 
+test('pointer dragging has elastic boundary feedback and settles inside the safe area', async ({ page }) => {
+  await openReady(page, '/?qa-theme=light&qa-motion=full&qa-analytics=denied&qa-online=1&qa-weather-temperature=20&qa-weather-code=0');
+  if ((await page.viewportSize()).width <= 900) return;
+
+  const menu = page.locator('.multitool');
+  const box = await menu.boundingBox();
+  expect(box).not.toBeNull();
+  const restingBorder = await menu.evaluate((element) => getComputedStyle(element).borderColor);
+
+  await page.mouse.move(box.x + 48, box.y + 32);
+  await page.mouse.down();
+  await page.mouse.move(-80, box.y + 32, { steps: 8 });
+  await expect(menu).toHaveClass(/is-dragging/);
+
+  const active = await menu.evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    return {
+      left: rect.left,
+      border: getComputedStyle(element).borderColor,
+    };
+  });
+  expect(active.left).toBeLessThan(8);
+  expect(active.border).not.toBe(restingBorder);
+
+  await page.mouse.up();
+  await expect(menu).not.toHaveClass(/is-dragging/);
+  await expect.poll(async () => (await menu.boundingBox()).x).toBeGreaterThanOrEqual(7.5);
+
+  await page.getByRole('button', { name: 'Профиль', exact: true }).click();
+  const panel = page.locator('#profile-panel');
+  const panelBox = await panel.boundingBox();
+  expect(panelBox).not.toBeNull();
+
+  await page.mouse.move(panelBox.x + 90, panelBox.y + 120);
+  await page.mouse.down();
+  await page.mouse.move((await page.viewportSize()).width + 80, panelBox.y + 120, { steps: 8 });
+  await expect(panel).toHaveClass(/is-dragging/);
+  expect((await panel.boundingBox()).x + panelBox.width).toBeGreaterThan((await page.viewportSize()).width - 8);
+
+  await page.mouse.up();
+  await expect(panel).not.toHaveClass(/is-dragging/);
+  await expect.poll(async () => {
+    const settled = await panel.boundingBox();
+    return settled.x + settled.width;
+  }).toBeLessThanOrEqual((await page.viewportSize()).width - 7.5);
+});
+
 test('privacy page keeps the same accessibility baseline', async ({ page, browserName }) => {
   await openReady(page, '/privacy.html?qa-theme=dark&qa-motion=reduce');
   await expect(page.locator('h1')).toHaveText('Конфиденциальность');

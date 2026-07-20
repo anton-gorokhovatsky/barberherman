@@ -81,9 +81,17 @@
   --motion-medium: 220ms;
   --motion-panel-enter: 360ms;
   --motion-panel-exit: 240ms;
+  --motion-drag-settle: 280ms;
   --ease-out: cubic-bezier(.2, .8, .2, 1);
   --ease-panel-enter: cubic-bezier(.16, 1, .3, 1);
   --ease-panel-exit: cubic-bezier(.4, 0, .8, .2);
+  --ease-drag-settle: cubic-bezier(.22, 1, .36, 1);
+  --tool-border-drag: rgba(255, 255, 255, .58);
+  --tool-shadow-drag:
+    inset 0 1px 0 rgba(255, 255, 255, .54),
+    inset 0 -1px 0 rgba(18, 24, 37, .1),
+    0 30px 88px rgba(18, 24, 35, .22),
+    0 7px 20px rgba(18, 24, 35, .12);
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
@@ -135,6 +143,12 @@ html[data-theme="dark"] {
   --tool-soft: rgba(16, 17, 21, .86);
   --tool-soft-line: rgba(255, 255, 255, .4);
   --text-fade: color-mix(in srgb, var(--tool-background-open), var(--tool-solid) 36%);
+  --tool-border-drag: rgba(255, 255, 255, .38);
+  --tool-shadow-drag:
+    inset 0 1px 0 rgba(255, 255, 255, .3),
+    inset 0 -1px 0 rgba(0, 0, 0, .3),
+    0 32px 92px rgba(0, 0, 0, .46),
+    0 8px 22px rgba(0, 0, 0, .28);
 }
 
 * {
@@ -286,6 +300,10 @@ html[data-content-open="true"] .stage-overlay {
   max-height: var(--panel-available-height);
   align-self: start;
   transform: translate3d(var(--drag-x, 0), var(--drag-y, 0), 0);
+  transition:
+    transform var(--motion-drag-settle) var(--ease-drag-settle),
+    border-color var(--motion-fast) linear,
+    box-shadow var(--motion-fast) var(--ease-out);
   will-change: transform;
 }
 
@@ -409,6 +427,14 @@ html[data-content-open="true"] .stage-overlay {
 .text-block.is-dragging .text-block__index,
 .text-block.is-dragging {
   cursor: grabbing;
+}
+
+.text-block.is-dragging {
+  border-color: var(--tool-border-drag);
+  box-shadow: var(--tool-shadow-drag);
+  transition:
+    border-color var(--motion-fast) linear,
+    box-shadow var(--motion-fast) var(--ease-out);
 }
 
 .text-block h2,
@@ -855,18 +881,33 @@ html[data-content-open="true"] .stage-overlay {
   min-width: 0;
   max-height: calc(100svh - (2 * var(--layout-gutter)) - var(--safe-top) - var(--safe-bottom));
   transform: translate3d(var(--multitool-drag-x, 0), var(--multitool-drag-y, 0), 0);
-  transition: transform var(--motion-medium) var(--ease-out);
+  transition:
+    transform var(--motion-drag-settle) var(--ease-drag-settle),
+    border-color var(--motion-fast) linear,
+    box-shadow var(--motion-fast) var(--ease-out);
   will-change: transform;
 }
 
 .multitool.is-dragging {
+  border-color: var(--tool-border-drag);
+  box-shadow: var(--tool-shadow-drag);
   cursor: grabbing;
-  transition: none;
+  transition:
+    border-color var(--motion-fast) linear,
+    box-shadow var(--motion-fast) var(--ease-out);
   user-select: none;
 }
 
 .multitool.is-dragging * {
   cursor: grabbing !important;
+}
+
+.multitool.is-dragging::before,
+.text-block.is-dragging::before {
+  background:
+    radial-gradient(circle 72px at var(--glass-x, 50%) var(--glass-y, 50%), color-mix(in srgb, var(--tool-highlight), transparent 78%), transparent 74%),
+    radial-gradient(ellipse 70% 8% at var(--glass-x, 26%) 0%, color-mix(in srgb, var(--tool-highlight), transparent 52%), transparent 78%),
+    linear-gradient(135deg, var(--tool-tint-open), transparent 46%, color-mix(in srgb, var(--tool-reflection), transparent 62%));
 }
 
 .multitool__drawer {
@@ -2558,6 +2599,10 @@ html[data-qa-contrast="more"] .stage-overlay {
   background: rgba(247, 247, 245, .88);
 }
 
+html[data-qa-contrast="more"] {
+  --tool-border-drag: var(--tool-border);
+}
+
 html[data-theme="dark"][data-qa-contrast="more"] .stage-overlay {
   background: rgba(0, 0, 0, .88);
 }
@@ -2583,6 +2628,7 @@ html[data-qa-contrast="more"] :is(.multitool__booking, .multitool__contacts, .mu
   :root {
     --tool-line: rgba(10, 10, 11, .58);
     --tool-border: rgba(10, 10, 11, .72);
+    --tool-border-drag: var(--tool-border);
   }
 
   .multitool__sections:has(button[aria-pressed="true"]) button:not([aria-pressed="true"]) > span,

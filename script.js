@@ -58,6 +58,7 @@ const visualQASystemTransparency = queryParams.get('qa-system-transparency');
 const visualQAMotion = queryParams.get('qa-motion');
 const visualQALogoView = queryParams.get('qa-logo-view');
 const visualQATickerPhase = queryParams.get('ticker-phase');
+const visualQADrag = queryParams.get('qa-drag');
 const visualQAFocus = queryParams.get('qa-focus');
 const visualQASafeArea = queryParams.get('qa-safe-area');
 const visualQAPresence = queryParams.get('qa-presence');
@@ -689,6 +690,20 @@ function applyVisualQAContentState() {
   [...new Set(requestedPanels)].forEach((name) => setPanelState(name, true, { animate: false }));
 }
 
+function applyVisualQADragState() {
+  if (mobileQuery.matches) return;
+
+  const requestedPanel = visualQADrag && Object.hasOwn(contentPanels, visualQADrag)
+    ? contentPanels[visualQADrag]
+    : null;
+  const surface = visualQADrag === 'menu' ? multitool : requestedPanel;
+  if (!surface || surface.hidden || !surface.matches('.multitool, .text-block')) return;
+
+  surface.style.setProperty('--glass-x', '42%');
+  surface.style.setProperty('--glass-y', '18%');
+  surface.classList.add('is-dragging');
+}
+
 function prefersReducedMotion() {
   if (visualQAMotionOverride !== null) return visualQAMotionOverride;
   return reduceMotionQuery.matches || hasSavedReducedMotion;
@@ -1197,7 +1212,23 @@ function dragViewportInsets() {
   };
 }
 
-function setPanelOffset(panel, x, y) {
+const dragElasticLimit = 18;
+const dragElasticRange = 72;
+
+function clampDragAxis(value, min, max) {
+  return min > max ? min : Math.min(max, Math.max(min, value));
+}
+
+function resistDragAxis(value, min, max) {
+  const clamped = clampDragAxis(value, min, max);
+  const overflow = value - clamped;
+  if (!overflow) return clamped;
+
+  const resisted = dragElasticLimit * (1 - Math.exp(-Math.abs(overflow) / dragElasticRange));
+  return clamped + Math.sign(overflow) * resisted;
+}
+
+function setPanelOffset(panel, x, y, { elastic = false } = {}) {
   let nextX = x;
   let nextY = y;
 
@@ -1212,13 +1243,15 @@ function setPanelOffset(panel, x, y) {
     const minimumPanelHeight = Math.min(360, Math.max(260, window.innerHeight * .45));
     const minY = insets.top - baseTop;
     const maxY = window.innerHeight - insets.bottom - minimumPanelHeight - baseTop;
+    const constrainedX = minX <= maxX ? clampDragAxis(x, minX, maxX) : 0;
+    const constrainedY = minY <= maxY ? clampDragAxis(y, minY, maxY) : minY;
 
-    nextX = minX <= maxX ? Math.min(maxX, Math.max(minX, x)) : 0;
-    nextY = minY <= maxY ? Math.min(maxY, Math.max(minY, y)) : minY;
+    nextX = elastic && minX <= maxX ? resistDragAxis(x, minX, maxX) : constrainedX;
+    nextY = elastic && minY <= maxY ? resistDragAxis(y, minY, maxY) : constrainedY;
 
     const availableHeight = Math.max(
       minimumPanelHeight,
-      window.innerHeight - insets.bottom - (baseTop + nextY),
+      window.innerHeight - insets.bottom - (baseTop + constrainedY),
     );
     panel.style.setProperty('--panel-available-height', `${Math.floor(availableHeight)}px`);
   }
@@ -1282,6 +1315,7 @@ function enablePanelDragging(panel) {
       panel,
       dragState.offsetX + deltaX,
       dragState.offsetY + deltaY,
+      { elastic: true },
     );
     event.preventDefault();
   });
@@ -1289,15 +1323,19 @@ function enablePanelDragging(panel) {
   const finishDrag = (event) => {
     if (!dragState || event.pointerId !== dragState.pointerId) return;
 
+    const offset = panelOffset(panel);
     dragState = null;
     panel.classList.remove('is-dragging');
+    setPanelOffset(panel, offset.x, offset.y);
   };
 
   panel.addEventListener('pointerup', finishDrag);
   panel.addEventListener('pointercancel', finishDrag);
   panel.addEventListener('lostpointercapture', () => {
+    const offset = panelOffset(panel);
     dragState = null;
     panel.classList.remove('is-dragging');
+    setPanelOffset(panel, offset.x, offset.y);
   });
 
   handle.addEventListener('keydown', (event) => {
@@ -1361,18 +1399,22 @@ function clampMultitoolOffset(x, y) {
   const maxX = window.innerWidth - insets.right - baseLeft - rect.width;
   const minY = insets.top - baseTop;
   const maxY = window.innerHeight - insets.bottom - baseTop - rect.height;
-  const clampAxis = (value, min, max) => (min > max ? min : Math.min(max, Math.max(min, value)));
-
   return {
-    x: clampAxis(x, minX, maxX),
-    y: clampAxis(y, minY, maxY),
+    x: clampDragAxis(x, minX, maxX),
+    y: clampDragAxis(y, minY, maxY),
   };
 }
 
-function setMultitoolOffset(x, y) {
+function setMultitoolOffset(x, y, { elastic = false } = {}) {
   if (!multitool) return;
 
-  const next = clampMultitoolOffset(x, y);
+  const clamped = clampMultitoolOffset(x, y);
+  const next = elastic
+    ? {
+        x: resistDragAxis(x, clamped.x, clamped.x),
+        y: resistDragAxis(y, clamped.y, clamped.y),
+      }
+    : clamped;
   const roundedX = Math.round(next.x);
   const roundedY = Math.round(next.y);
   multitool.dataset.dragX = String(roundedX);
@@ -1471,7 +1513,11 @@ function enableMultitoolDragging() {
       multitool.classList.add('is-dragging');
     }
 
-    setMultitoolOffset(dragState.offsetX + deltaX, dragState.offsetY + deltaY);
+    setMultitoolOffset(
+      dragState.offsetX + deltaX,
+      dragState.offsetY + deltaY,
+      { elastic: true },
+    );
     event.preventDefault();
   });
 
@@ -1479,8 +1525,10 @@ function enableMultitoolDragging() {
     if (!dragState || event.pointerId !== dragState.pointerId) return;
 
     const moved = dragState.active;
+    const offset = multitoolOffset();
     dragState = null;
     multitool.classList.remove('is-dragging');
+    setMultitoolOffset(offset.x, offset.y);
     if (moved) {
       suppressNextClick = true;
       window.setTimeout(() => { suppressNextClick = false; }, 0);
@@ -1550,6 +1598,7 @@ syncStageVideos();
 syncMultitoolDragAvailability();
 syncPanelDragAvailability();
 enableMultitoolDragging();
+applyVisualQADragState();
 
 if (visualQAFocus === 'skip') {
   requestAnimationFrame(() => document.querySelector('.skip-link')?.focus());
