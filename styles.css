@@ -1864,7 +1864,7 @@ html[data-qa-contrast="more"] .multitool__descriptor-blur {
 }
 
 @keyframes descriptor-ticker {
-  to { transform: translateX(-50%); }
+  to { transform: translateX(-33.333333%); }
 }
 
 html[data-ticker-phase] .multitool__descriptor-track {
@@ -1876,11 +1876,11 @@ html[data-ticker-phase="start"] .multitool__descriptor-track {
 }
 
 html[data-ticker-phase="middle"] .multitool__descriptor-track {
-  transform: translateX(-25%);
+  transform: translateX(-16.666667%);
 }
 
 html[data-ticker-phase="seam"] .multitool__descriptor-track {
-  transform: translateX(-49.98%);
+  transform: translateX(-33.32%);
 }
 
 .multitool__meta {
