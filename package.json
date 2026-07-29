@@ -3,8 +3,9 @@
   "private": true,
   "packageManager": "pnpm@11.9.0",
   "scripts": {
+    "bump:cache": "node scripts/bump-cache-version.mjs",
     "test": "pnpm run test:static && pnpm run test:browser",
-    "test:static": "node --check script.js && node --test tests/static-audit.mjs",
+    "test:static": "node --check script.js && node --check scripts/bump-cache-version.mjs && node --test tests/static-audit.mjs",
     "test:browser": "playwright test"
   },
   "devDependencies": {

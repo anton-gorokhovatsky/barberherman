@@ -89,6 +89,27 @@ test('all repository-local asset references resolve', async () => {
   await Promise.all([...refs].map((ref) => access(path.join(root, ref))));
 });
 
+test('retired experiments and duplicate production assets stay removed', async () => {
+  const retiredFiles = [
+    'glass.js',
+    'assets/brand-logo.png',
+    'assets/herman-childhood-original.jpeg',
+    'assets/herman-childhood-squircle.png',
+    'assets/portrait-mobile.jpg',
+    'assets/logos-transparent/allure.png',
+    'assets/logos-transparent/keune.png',
+    'assets/logos-transparent/rutv.png',
+    'assets/media-logos-desktop.png',
+    'assets/media-logos-mobile.png',
+    'assets/partner-logos-desktop.png',
+    'assets/partner-logos-mobile.png',
+    'assets/fonts/bebas-neue-pro-400.woff2',
+    'assets/fonts/bebas-neue-pro-600.woff2',
+  ];
+
+  await Promise.all(retiredFiles.map((file) => assert.rejects(access(path.join(root, file)))));
+});
+
 test('crawler metadata exposes the canonical public pages and a useful 404', () => {
   assert.match(robots, /^User-agent: \*$/m);
   assert.match(robots, /^Allow: \/$/m);
