@@ -113,8 +113,8 @@ html[data-theme="dark"] {
   --line-strong: rgba(235, 241, 248, .5);
   --focus: #8fc2ff;
   --selection: rgba(143, 194, 255, .26);
-  --stage-overlay: transparent;
-  --stage-overlay-content: transparent;
+  --stage-overlay: rgba(2, 4, 7, .24);
+  --stage-overlay-content: rgba(2, 4, 7, .34);
   --copy-scrim: rgba(3, 5, 8, .72);
   --copy-shadow: 0 1px 20px rgba(0, 0, 0, .76);
   --tool-ink: #f6f8fb;
@@ -575,11 +575,29 @@ html[data-content-open="true"] .stage-overlay {
   font: 650 var(--type-caption)/1 var(--font);
   letter-spacing: -.01em;
   text-decoration: none;
+  transition:
+    background-color var(--motion-fast) linear,
+    border-color var(--motion-fast) linear,
+    box-shadow var(--motion-fast) var(--ease-out),
+    transform var(--motion-medium) var(--ease-out);
 }
 
 .music-panel__listen span[aria-hidden="true"] {
   font-size: 1.05em;
   line-height: 0;
+}
+
+.music-panel__listen:is(:hover, :focus-visible) {
+  border-color: color-mix(in srgb, var(--tool-border-open), currentColor 16%);
+  background: color-mix(in srgb, var(--tool-ink), transparent 84%);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, white, transparent 74%),
+    0 10px 28px color-mix(in srgb, var(--page), transparent 72%);
+  transform: translateY(-1px);
+}
+
+.music-panel__listen:active {
+  transform: translateY(0);
 }
 
 .music-panel__tracks {
