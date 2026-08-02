@@ -106,48 +106,48 @@ html[data-qa-safe-area="iphone"] {
 
 html[data-theme="dark"] {
   color-scheme: dark;
-  --page: #09090b;
-  --ink: #f5f5f7;
-  --ink-soft: rgba(245, 245, 247, .74);
-  --line: rgba(245, 245, 247, .3);
-  --line-strong: rgba(245, 245, 247, .58);
-  --focus: #7bb7ff;
-  --selection: rgba(123, 183, 255, .28);
+  --page: #05070a;
+  --ink: #f4f6f8;
+  --ink-soft: rgba(244, 246, 248, .72);
+  --line: rgba(221, 232, 244, .26);
+  --line-strong: rgba(235, 241, 248, .5);
+  --focus: #8fc2ff;
+  --selection: rgba(143, 194, 255, .26);
   --stage-overlay: transparent;
   --stage-overlay-content: transparent;
-  --copy-scrim: rgba(0, 0, 0, .68);
-  --copy-shadow: 0 1px 18px rgba(0, 0, 0, .72);
-  --tool-ink: #f8f8fa;
-  --tool-line: rgba(255, 255, 255, .16);
-  --tool-border: rgba(255, 255, 255, .22);
-  --tool-border-open: rgba(255, 255, 255, .3);
-  --tool-background: rgba(8, 10, 14, .32);
-  --tool-background-open: rgba(8, 10, 14, .38);
-  --tool-backdrop: blur(36px) saturate(112%) contrast(66%) brightness(84%);
-  --tool-backdrop-open: blur(44px) saturate(108%) contrast(62%) brightness(82%);
-  --tool-tint: rgba(5, 7, 11, .025);
-  --tool-tint-open: rgba(5, 7, 11, .055);
-  --tool-highlight: rgba(255, 255, 255, .34);
-  --tool-reflection: rgba(255, 255, 255, .06);
+  --copy-scrim: rgba(3, 5, 8, .72);
+  --copy-shadow: 0 1px 20px rgba(0, 0, 0, .76);
+  --tool-ink: #f6f8fb;
+  --tool-line: rgba(230, 238, 248, .145);
+  --tool-border: rgba(229, 238, 248, .24);
+  --tool-border-open: rgba(234, 242, 250, .33);
+  --tool-background: rgba(9, 12, 17, .43);
+  --tool-background-open: rgba(10, 13, 19, .5);
+  --tool-backdrop: blur(38px) saturate(122%) contrast(76%) brightness(76%);
+  --tool-backdrop-open: blur(46px) saturate(118%) contrast(72%) brightness(74%);
+  --tool-tint: rgba(132, 154, 184, .025);
+  --tool-tint-open: rgba(132, 154, 184, .045);
+  --tool-highlight: rgba(244, 248, 255, .3);
+  --tool-reflection: rgba(172, 194, 224, .07);
   --tool-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, .2),
-    inset 0 -1px 0 rgba(0, 0, 0, .24),
-    0 18px 58px rgba(0, 0, 0, .26);
+    inset 0 1px 0 rgba(245, 248, 255, .18),
+    inset 0 -1px 0 rgba(0, 0, 0, .36),
+    0 20px 64px rgba(0, 0, 0, .38);
   --tool-shadow-open:
-    inset 0 1px 0 rgba(255, 255, 255, .27),
-    inset 0 -1px 0 rgba(0, 0, 0, .3),
-    0 26px 78px rgba(0, 0, 0, .38);
-  --tool-hover: rgba(255, 255, 255, .09);
-  --tool-solid: rgba(14, 16, 21, .96);
-  --tool-soft: rgba(16, 17, 21, .86);
-  --tool-soft-line: rgba(255, 255, 255, .4);
+    inset 0 1px 0 rgba(248, 251, 255, .24),
+    inset 0 -1px 0 rgba(0, 0, 0, .42),
+    0 30px 90px rgba(0, 0, 0, .54);
+  --tool-hover: rgba(235, 242, 250, .1);
+  --tool-solid: rgba(8, 11, 16, .97);
+  --tool-soft: rgba(12, 15, 20, .88);
+  --tool-soft-line: rgba(232, 240, 248, .38);
   --text-fade: color-mix(in srgb, var(--tool-background-open), var(--tool-solid) 36%);
-  --tool-border-drag: rgba(255, 255, 255, .38);
+  --tool-border-drag: rgba(235, 243, 252, .42);
   --tool-shadow-drag:
-    inset 0 1px 0 rgba(255, 255, 255, .3),
-    inset 0 -1px 0 rgba(0, 0, 0, .3),
-    0 32px 92px rgba(0, 0, 0, .46),
-    0 8px 22px rgba(0, 0, 0, .28);
+    inset 0 1px 0 rgba(248, 251, 255, .3),
+    inset 0 -1px 0 rgba(0, 0, 0, .44),
+    0 34px 96px rgba(0, 0, 0, .58),
+    0 8px 24px rgba(0, 0, 0, .34);
 }
 
 * {
