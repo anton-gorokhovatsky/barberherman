@@ -536,7 +536,7 @@ html[data-content-open="true"] .stage-overlay {
   min-width: 0;
   grid-template-columns: minmax(150px, .72fr) minmax(0, 1fr);
   gap: clamp(16px, 5cqi, 24px);
-  align-items: end;
+  align-items: start;
 }
 
 .music-release__cover {
@@ -557,7 +557,16 @@ html[data-content-open="true"] .stage-overlay {
 .music-release__summary {
   display: grid;
   min-width: 0;
-  align-content: end;
+  align-content: start;
+}
+
+.music-panel__meta {
+  display: grid;
+  gap: 0;
+}
+
+.music-panel__meta-unit {
+  white-space: nowrap;
 }
 
 .music-panel__listen {
