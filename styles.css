@@ -508,16 +508,17 @@ html[data-content-open="true"] .stage-overlay {
 }
 
 .text-block--music h2 {
-  margin-bottom: clamp(16px, 3vh, 26px);
-  font-size: clamp(2.55rem, 10cqi, 3.85rem);
+  margin-bottom: clamp(14px, 2.4vh, 22px);
+  font-size: clamp(2.2rem, 8.2cqi, 3.25rem);
+  line-height: .92;
 }
 
 .text-block--music .text-block__lead {
   max-width: none;
   margin-bottom: 0;
   color: color-mix(in srgb, currentColor, transparent 12%);
-  font-size: clamp(1.05rem, 4.2cqi, 1.34rem) !important;
-  line-height: 1.1 !important;
+  font-size: clamp(.98rem, 3.45cqi, 1.14rem) !important;
+  line-height: 1.12 !important;
 }
 
 .music-panel__archive {
@@ -575,13 +576,13 @@ html[data-content-open="true"] .stage-overlay {
   align-items: center;
   gap: 10px;
   justify-self: start;
-  margin-top: clamp(14px, 2.4vh, 22px);
-  padding: 12px 18px 13px;
+  margin-top: clamp(13px, 2.1vh, 19px);
+  padding: 11px 17px 12px;
   border: var(--tool-rule);
   border-radius: 999px;
   background: color-mix(in srgb, var(--tool-ink), transparent 88%);
   color: inherit;
-  font: 650 var(--type-caption)/1 var(--font);
+  font: 650 clamp(.78rem, 2.55cqi, .9rem)/1 var(--font);
   letter-spacing: -.01em;
   text-decoration: none;
   transition:
