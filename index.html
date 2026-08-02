@@ -73,8 +73,8 @@
       ]
     }
   </script>
-  <link rel="stylesheet" href="styles.css?v=202608021013">
-  <script src="script.js?v=202608021013" defer></script>
+  <link rel="stylesheet" href="styles.css?v=202608021043">
+  <script src="script.js?v=202608021043" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#content">К основному содержанию</a>
@@ -105,7 +105,10 @@
             <button type="button" data-panel="practice" aria-label="Экспертиза" aria-controls="practice-panel" aria-pressed="false" aria-expanded="false"><span class="multitool__section-index">02</span><span class="multitool__section-label">Экспертиза</span></button>
             <button type="button" data-panel="media" aria-label="Медиа" aria-controls="media-panel" aria-pressed="false" aria-expanded="false"><span class="multitool__section-index">03</span><span class="multitool__section-label">Медиа</span></button>
             <button type="button" data-panel="partners" aria-label="Партнёрства" aria-controls="partners-panel" aria-pressed="false" aria-expanded="false"><span class="multitool__section-index">04</span><span class="multitool__section-label">Партнёрства</span></button>
-            <button type="button" data-panel="gallery" aria-label="Галерея" aria-controls="gallery-panel" aria-pressed="false" aria-expanded="false"><span class="multitool__section-label">Галерея</span></button>
+            <div class="multitool__editorial-row">
+              <button type="button" data-panel="gallery" aria-label="Галерея" aria-controls="gallery-panel" aria-pressed="false" aria-expanded="false"><span class="multitool__section-label">Галерея</span></button>
+              <button type="button" data-panel="music" aria-label="Музыка" aria-controls="music-panel" aria-pressed="false" aria-expanded="false"><span class="multitool__section-label">Музыка</span></button>
+            </div>
           </div>
 
           <section class="multitool__catalog" id="media-panel" aria-labelledby="media-title" data-catalog="media" tabindex="-1" hidden>
@@ -219,14 +222,6 @@
               </a>
             </div>
             <div class="multitool__service">
-              <button type="button" data-panel="music" class="multitool__playlist-toggle" aria-label="Открыть музыкальную подборку Германа" aria-controls="music-panel" aria-pressed="false" aria-expanded="false" title="Музыка">
-                <span class="sr-only">Музыка Германа</span>
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M6 16.5V7.25l11.5-2.5v9.25"></path>
-                  <circle cx="6" cy="17" r="2.35"></circle>
-                  <circle cx="17.5" cy="14.5" r="2.35"></circle>
-                </svg>
-              </button>
               <button class="analytics-settings" id="privacy-settings" type="button" data-privacy-settings aria-label="Настроить статистику" aria-controls="privacy-consent" aria-expanded="false" title="Настроить статистику">
                 <span class="sr-only" data-privacy-settings-label>Статистика</span>
                 <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -372,30 +367,41 @@
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg>
           </button>
         </header>
-        <div class="text-block__scroll music-panel__scroll" role="region" aria-label="Музыкальная подборка Германа" tabindex="0">
-          <p class="music-panel__eyebrow">Август 2026</p>
-          <h2 id="music-title">Подборка</h2>
-          <p class="text-block__lead">Герман Винокуров&nbsp;· 14 треков · 1&nbsp;ч 21&nbsp;мин</p>
-          <ol class="music-panel__tracks" aria-label="Треки плейлиста" tabindex="0">
-            <li><span lang="en">Medicina (Mixed)</span><span lang="en">Ohme</span></li>
-            <li><span lang="en">Sabah</span><span lang="en">Shunus</span></li>
-            <li><span lang="en">Hypatia</span><span lang="en">Shunus</span></li>
-            <li><span lang="en">Almagest</span><span lang="en">Shunus</span></li>
-            <li><span lang="en">Boogie Street</span><span lang="en">Leonard Cohen</span></li>
-            <li><span lang="en">Nasty Boy</span><span lang="en">Trabant</span></li>
-            <li><span lang="en">Fatnis Island (feat. Menna Hussein)</span><span lang="en">Pandhora</span></li>
-            <li><span lang="en">Kalkutta</span><span lang="en">okuma</span></li>
-            <li><span lang="en">When the Sun Goes Down</span><span lang="en">Shunus</span></li>
-            <li><span lang="en">Famous Blue Raincoat</span><span lang="en">Leonard Cohen</span></li>
-            <li><span lang="en">Rest Your Eyes</span><span lang="en">Study Music</span></li>
-            <li><span lang="en">On Melancholy Hill</span><span lang="en">Gorillaz</span></li>
-            <li><span lang="en">Ashes</span><span lang="en">Rapossa</span></li>
-            <li><span lang="en">My Rock-n-Roll</span><span lang="en">Rapossa</span></li>
-          </ol>
-          <a class="music-panel__listen" href="https://music.apple.com/ru/playlist/playlist-www-hermanco-ru/pl.u-55D6P1KCXDDoD8" target="_blank" rel="noopener" data-metrika-goal="playlist_click" data-metrika-label="Apple Music">
-            <span aria-hidden="true">♪</span>
-            <span>Слушать в&nbsp;<span lang="en">Apple Music</span></span>
-          </a>
+        <div class="text-block__scroll music-panel__scroll" role="region" aria-label="Музыкальные подборки Германа" tabindex="0">
+          <div class="music-panel__archive" aria-label="Архив музыкальных подборок">
+            <article class="music-release" aria-labelledby="music-title">
+              <div class="music-release__head">
+                <figure class="music-release__cover">
+                  <img src="assets/music-august-2026.jpg?v=20260802-1" alt="Обложка плейлиста Германа Винокурова, август 2026" loading="lazy" decoding="async">
+                </figure>
+                <div class="music-release__summary">
+                  <p class="music-panel__eyebrow">Август 2026</p>
+                  <h2 id="music-title">Подборка</h2>
+                  <p class="text-block__lead">Герман Винокуров&nbsp;· 14 треков · 1&nbsp;ч 21&nbsp;мин</p>
+                  <a class="music-panel__listen" href="https://music.apple.com/ru/playlist/playlist-www-hermanco-ru/pl.u-55D6P1KCXDDoD8" target="_blank" rel="noopener" data-metrika-goal="playlist_click" data-metrika-label="Apple Music">
+                    <span aria-hidden="true">♪</span>
+                    <span>Слушать в&nbsp;<span lang="en">Apple Music</span></span>
+                  </a>
+                </div>
+              </div>
+              <ol class="music-panel__tracks" aria-label="Треки плейлиста за август 2026" tabindex="0">
+                <li><span lang="en">Medicina (Mixed)</span><span lang="en">Ohme</span></li>
+                <li><span lang="en">Sabah</span><span lang="en">Shunus</span></li>
+                <li><span lang="en">Hypatia</span><span lang="en">Shunus</span></li>
+                <li><span lang="en">Almagest</span><span lang="en">Shunus</span></li>
+                <li><span lang="en">Boogie Street</span><span lang="en">Leonard Cohen</span></li>
+                <li><span lang="en">Nasty Boy</span><span lang="en">Trabant</span></li>
+                <li><span lang="en">Fatnis Island (feat. Menna Hussein)</span><span lang="en">Pandhora</span></li>
+                <li><span lang="en">Kalkutta</span><span lang="en">okuma</span></li>
+                <li><span lang="en">When the Sun Goes Down</span><span lang="en">Shunus</span></li>
+                <li><span lang="en">Famous Blue Raincoat</span><span lang="en">Leonard Cohen</span></li>
+                <li><span lang="en">Rest Your Eyes</span><span lang="en">Study Music</span></li>
+                <li><span lang="en">On Melancholy Hill</span><span lang="en">Gorillaz</span></li>
+                <li><span lang="en">Ashes</span><span lang="en">Rapossa</span></li>
+                <li><span lang="en">My Rock-n-Roll</span><span lang="en">Rapossa</span></li>
+              </ol>
+            </article>
+          </div>
         </div>
         <div class="text-block__fade" aria-hidden="true"></div>
       </article>
