@@ -537,7 +537,7 @@ html[data-content-open="true"] .stage-overlay {
   min-width: 0;
   grid-template-columns: minmax(150px, .72fr) minmax(0, 1fr);
   gap: clamp(16px, 5cqi, 24px);
-  align-items: start;
+  align-items: stretch;
 }
 
 .music-release__cover {
@@ -558,7 +558,8 @@ html[data-content-open="true"] .stage-overlay {
 .music-release__summary {
   display: grid;
   min-width: 0;
-  align-content: start;
+  grid-template-rows: auto auto auto minmax(44px, 1fr);
+  align-content: stretch;
 }
 
 .music-panel__meta {
@@ -574,9 +575,10 @@ html[data-content-open="true"] .stage-overlay {
   display: inline-flex;
   min-height: 44px;
   align-items: center;
+  align-self: end;
   gap: 10px;
   justify-self: start;
-  margin-top: clamp(13px, 2.1vh, 19px);
+  margin-top: auto;
   padding: 11px 17px 12px;
   border: var(--tool-rule);
   border-radius: 999px;
@@ -614,6 +616,7 @@ html[data-content-open="true"] .stage-overlay {
   display: grid;
   max-height: clamp(210px, 34svh, 292px);
   margin: 0 !important;
+  padding-left: 0;
   padding-right: 6px;
   overflow-x: hidden;
   overflow-y: auto;
@@ -2552,7 +2555,8 @@ html[data-theme="dark"] .theme-toggle__icon--light {
   }
 
   .music-release__cover {
-    max-width: min(100%, 220px);
+    width: 100%;
+    max-width: 100%;
   }
 
   .privacy-document {
