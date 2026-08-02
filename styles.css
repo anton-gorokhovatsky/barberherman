@@ -2559,6 +2559,20 @@ html[data-theme="dark"] .theme-toggle__icon--light {
     max-width: 100%;
   }
 
+  .music-release__summary {
+    grid-template-rows: auto auto auto auto;
+  }
+
+  .music-panel__listen {
+    width: 100%;
+    min-height: 48px;
+    align-self: start;
+    justify-content: center;
+    margin-top: 14px;
+    padding-inline: 16px;
+    font-size: .9rem;
+  }
+
   .privacy-document {
     --document-inline: 16px;
   }
