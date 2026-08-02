@@ -1848,6 +1848,28 @@ sectionButtons.forEach((button) => {
   });
 });
 
+document.addEventListener('pointerdown', (event) => {
+  if (!multitool || mobileQuery.matches || event.button !== 0) return;
+  if (!(event.target instanceof Element) || event.target.closest('.multitool')) return;
+
+  const box = multitool.getBoundingClientRect();
+  const isInsideMenu = event.clientX >= box.left
+    && event.clientX <= box.right
+    && event.clientY >= box.top
+    && event.clientY <= box.bottom;
+  if (!isInsideMenu) return;
+
+  const underlyingButton = document.elementsFromPoint(event.clientX, event.clientY)
+    .find((element) => element instanceof Element && element.closest?.('.multitool [data-panel]'))
+    ?.closest('.multitool [data-panel]');
+
+  if (!underlyingButton || !(underlyingButton instanceof HTMLButtonElement)) return;
+
+  event.preventDefault();
+  event.stopPropagation();
+  underlyingButton.click();
+}, true);
+
 document.addEventListener('click', (event) => {
   const control = event.target instanceof Element
     ? event.target.closest('[data-metrika-goal]')

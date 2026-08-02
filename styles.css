@@ -1243,7 +1243,7 @@ html[data-qa-text] .multitool__section-label {
 .multitool__editorial-row {
   display: grid;
   grid-column: 1 / -1;
-  grid-template-columns: minmax(0, 2fr) minmax(132px, .72fr);
+  grid-template-columns: var(--split-grid);
   border-top: var(--tool-rule);
 }
 

@@ -67,6 +67,8 @@ test('reflow, common axes, focus and accessibility remain intact', async ({ page
     const booking = document.querySelector('.multitool__booking');
     const profile = document.querySelector('[data-panel="profile"]');
     const practice = document.querySelector('[data-panel="practice"]');
+    const gallery = document.querySelector('[data-panel="gallery"]');
+    const music = document.querySelector('[data-panel="music"]');
     return {
       innerWidth,
       scrollWidth: document.documentElement.scrollWidth,
@@ -84,8 +86,12 @@ test('reflow, common axes, focus and accessibility remain intact', async ({ page
         bookingLeft: rect(booking).x,
         profileRight: rect(profile).right,
         practiceLeft: rect(practice).x,
+        galleryRight: rect(gallery).right,
+        musicLeft: rect(music).x,
         brandBorderRight: Number.parseFloat(getComputedStyle(brand).borderRightWidth),
         profileBorderRight: Number.parseFloat(getComputedStyle(profile).borderRightWidth),
+        galleryBorderRight: Number.parseFloat(getComputedStyle(gallery).borderRightWidth),
+        musicBorderLeft: Number.parseFloat(getComputedStyle(music).borderLeftWidth),
         practiceBorderLeft: Number.parseFloat(getComputedStyle(practice).borderLeftWidth),
       },
     };
@@ -98,8 +104,11 @@ test('reflow, common axes, focus and accessibility remain intact', async ({ page
   expect(Math.abs(audit.primarySplit.brandRight - audit.primarySplit.bookingLeft)).toBeLessThanOrEqual(.01);
   expect(Math.abs(audit.primarySplit.brandRight - audit.primarySplit.profileRight)).toBeLessThanOrEqual(.01);
   expect(Math.abs(audit.primarySplit.brandRight - audit.primarySplit.practiceLeft)).toBeLessThanOrEqual(.01);
+  expect(Math.abs(audit.primarySplit.brandRight - audit.primarySplit.galleryRight)).toBeLessThanOrEqual(.01);
+  expect(Math.abs(audit.primarySplit.brandRight - audit.primarySplit.musicLeft)).toBeLessThanOrEqual(.01);
   expect(audit.primarySplit.brandBorderRight).toBeGreaterThan(0);
   expect(audit.primarySplit.profileBorderRight).toBe(audit.primarySplit.brandBorderRight);
+  expect(audit.primarySplit.galleryBorderRight + audit.primarySplit.musicBorderLeft).toBe(audit.primarySplit.brandBorderRight);
   expect(audit.primarySplit.practiceBorderLeft).toBe(0);
 
   if (audit.innerWidth <= 900) {
@@ -331,7 +340,13 @@ test('menu and content-panel keyboard dragging match the responsive contract', a
   await page.keyboard.press('Home');
   await expect(panel).toHaveAttribute('data-drag-y', '0');
 
-  await page.getByRole('button', { name: 'Галерея', exact: true }).click();
+  const galleryButton = page.getByRole('button', { name: 'Галерея', exact: true });
+  const galleryButtonBox = await galleryButton.boundingBox();
+  expect(galleryButtonBox).not.toBeNull();
+  await page.mouse.click(
+    galleryButtonBox.x + galleryButtonBox.width / 2,
+    galleryButtonBox.y + galleryButtonBox.height / 2,
+  );
   const gallery = page.locator('#gallery-panel');
   const galleryHandle = gallery.locator('.gallery-stage__drag-handle');
   await galleryHandle.focus();
