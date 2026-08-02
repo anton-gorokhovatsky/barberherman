@@ -1050,7 +1050,7 @@ html[data-content-open="true"] .stage-overlay {
   --booking-optical-shift: 0px;
   --secondary-floor: 72px;
   --module-floor: 96px;
-  --tertiary-floor: 76px;
+  --tertiary-floor: 64px;
   --utility-floor: 64px;
   --floor-inline: 19px;
   --split-grid: repeat(2, minmax(0, 1fr));
@@ -2573,6 +2573,14 @@ html[data-theme="dark"] .theme-toggle__icon--light {
     font-size: .9rem;
   }
 
+  .music-panel__tracks {
+    max-height: none;
+    padding-right: 0;
+    overflow: visible;
+    overscroll-behavior-y: auto;
+    scrollbar-width: auto;
+  }
+
   .privacy-document {
     --document-inline: 16px;
   }
@@ -2649,7 +2657,7 @@ html[data-theme="dark"] .theme-toggle__icon--light {
   .multitool {
     --secondary-floor: 72px;
     --module-floor: 102px;
-    --tertiary-floor: 82px;
+    --tertiary-floor: 68px;
     --floor-inline: 13px;
   }
 
@@ -2827,7 +2835,14 @@ html[data-theme="dark"] .theme-toggle__icon--light {
     grid-template-columns: var(--split-grid);
   }
 
+  .multitool__editorial-row button {
+    min-height: var(--tertiary-floor);
+    padding: 13px var(--floor-inline) 14px;
+  }
+
+  .multitool__editorial-row .multitool__section-label,
   .multitool__editorial-row button::after {
+    align-self: center;
     transform: none;
   }
 
