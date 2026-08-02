@@ -311,6 +311,82 @@ test('gallery is a peer content panel with edge-to-edge imagery and keyboard nav
   await expect(galleryButton).toBeFocused();
 });
 
+test('music entry stays compact and mobile track list uses one scroll flow', async ({ page }) => {
+  await openReady(page);
+
+  const viewport = await page.viewportSize();
+  const isMobile = viewport.width <= 900;
+  const auditBeforeOpen = await page.evaluate(() => {
+    const rect = (selector) => {
+      const box = document.querySelector(selector).getBoundingClientRect();
+      return {
+        x: box.x,
+        width: box.width,
+        height: box.height,
+      };
+    };
+    const pseudo = (selector) => {
+      const element = document.querySelector(selector);
+      const style = getComputedStyle(element, '::after');
+      return {
+        alignSelf: style.alignSelf,
+        transform: style.transform,
+      };
+    };
+    return {
+      profile: rect('[data-panel="profile"]'),
+      gallery: rect('[data-panel="gallery"]'),
+      music: rect('[data-panel="music"]'),
+      galleryPlus: pseudo('[data-panel="gallery"]'),
+      musicPlus: pseudo('[data-panel="music"]'),
+    };
+  });
+
+  expect(Math.abs(auditBeforeOpen.gallery.height - auditBeforeOpen.music.height)).toBeLessThanOrEqual(.5);
+  expect(auditBeforeOpen.gallery.height).toBeLessThan(auditBeforeOpen.profile.height);
+  expect(Math.abs(auditBeforeOpen.gallery.x + auditBeforeOpen.gallery.width - auditBeforeOpen.music.x)).toBeLessThanOrEqual(.5);
+  expect(auditBeforeOpen.galleryPlus.alignSelf).toBe('center');
+  expect(auditBeforeOpen.musicPlus.alignSelf).toBe('center');
+  expect(auditBeforeOpen.galleryPlus.transform).toBe('none');
+  expect(auditBeforeOpen.musicPlus.transform).toBe('none');
+
+  await page.getByRole('button', { name: 'Музыка', exact: true }).click();
+  await expect(page.locator('#music-panel')).toBeVisible();
+
+  if (isMobile) {
+    await expect(page.locator('#music-panel')).toBeFocused();
+    const scrollAudit = await page.evaluate(() => {
+      const panelScroll = document.querySelector('.text-block--music .text-block__scroll');
+      const tracks = document.querySelector('.music-panel__tracks');
+      const panelStyle = getComputedStyle(panelScroll);
+      const tracksStyle = getComputedStyle(tracks);
+      return {
+        panelOverflowY: panelStyle.overflowY,
+        panelMaxHeight: panelStyle.maxHeight,
+        panelClientHeight: panelScroll.clientHeight,
+        panelScrollHeight: panelScroll.scrollHeight,
+        tracksOverflowY: tracksStyle.overflowY,
+        tracksMaxHeight: tracksStyle.maxHeight,
+        tracksClientHeight: tracks.clientHeight,
+        tracksScrollHeight: tracks.scrollHeight,
+        trackCount: tracks.querySelectorAll('li').length,
+        documentCanScroll: document.documentElement.scrollHeight > window.innerHeight,
+        horizontalOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      };
+    });
+
+    expect(scrollAudit.panelOverflowY).toBe('visible');
+    expect(scrollAudit.panelMaxHeight).toBe('none');
+    expect(scrollAudit.panelClientHeight).toBe(scrollAudit.panelScrollHeight);
+    expect(scrollAudit.tracksOverflowY).toBe('visible');
+    expect(scrollAudit.tracksMaxHeight).toBe('none');
+    expect(scrollAudit.tracksClientHeight).toBe(scrollAudit.tracksScrollHeight);
+    expect(scrollAudit.trackCount).toBe(14);
+    expect(scrollAudit.documentCanScroll).toBe(true);
+    expect(scrollAudit.horizontalOverflow).toBeLessThanOrEqual(0);
+  }
+});
+
 test('menu and content-panel keyboard dragging match the responsive contract', async ({ page }) => {
   await openReady(page);
   const desktop = (await page.viewportSize()).width > 900;
