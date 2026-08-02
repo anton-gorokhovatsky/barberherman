@@ -35,6 +35,7 @@ const contentPanels = {
   media: document.getElementById('media-panel'),
   partners: document.getElementById('partners-panel'),
   gallery: document.getElementById('gallery-panel'),
+  music: document.getElementById('music-panel'),
 };
 const galleryTrack = document.querySelector('.gallery-stage__track');
 const gallerySlides = [...document.querySelectorAll('[data-gallery-slide]')];
@@ -581,7 +582,7 @@ function setMenuOpen(open, { animate = true, force = false, focusToggle = true }
   }
   placeMenuToggle(nextOpen);
 
-  ['profile', 'practice', 'gallery'].forEach((name) => {
+  ['profile', 'practice', 'gallery', 'music'].forEach((name) => {
     if (panelIsOpen(name)) animatePanelVisibility(contentPanels[name], nextOpen, { animate });
   });
   syncContentPresence();
@@ -602,7 +603,7 @@ function setMenuOpen(open, { animate = true, force = false, focusToggle = true }
 }
 
 function syncContentPresence() {
-  const hasVisibleContent = menuOpen && ['profile', 'practice', 'gallery'].some(panelIsOpen);
+  const hasVisibleContent = menuOpen && ['profile', 'practice', 'gallery', 'music'].some(panelIsOpen);
   showcase?.classList.toggle('has-content', hasVisibleContent);
   root.dataset.contentOpen = String(hasVisibleContent);
 }
@@ -1270,6 +1271,7 @@ async function focusVisualQASection() {
     gallery: '.gallery-stage',
     profile: '.text-block--profile',
     practice: '.text-block--practice',
+    music: '.text-block--music',
   };
   const selector = selectorBySection[visualQASection];
   const target = selector ? document.querySelector(selector) : null;

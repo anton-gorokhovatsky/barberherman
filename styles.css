@@ -318,6 +318,13 @@ html[data-content-open="true"] .stage-overlay {
   transform-origin: right center;
 }
 
+.text-block--music {
+  grid-area: stack;
+  justify-self: center;
+  width: clamp(360px, 36vw, 560px);
+  transform-origin: center center;
+}
+
 .text-block__bar {
   display: grid;
   min-height: 54px;
@@ -403,6 +410,7 @@ html[data-content-open="true"] .stage-overlay {
 .multitool__address,
 .multitool__icon-link,
 .logo-view-toggle button,
+.multitool__playlist-toggle,
 .multitool__menu-toggle,
 .analytics-settings,
 .motion-toggle,
@@ -490,6 +498,107 @@ html[data-content-open="true"] .stage-overlay {
   font-size: var(--type-lead) !important;
   line-height: 1.25 !important;
   font-weight: 640 !important;
+}
+
+.music-panel__eyebrow {
+  margin-bottom: 8px !important;
+  color: color-mix(in srgb, currentColor, transparent 42%);
+  font: 560 var(--type-caption)/1 var(--font) !important;
+  letter-spacing: .075em !important;
+  text-transform: uppercase;
+}
+
+.text-block--music h2 {
+  margin-bottom: clamp(16px, 3vh, 26px);
+  font-size: clamp(2.6rem, 15cqi, 4.2rem);
+}
+
+.text-block--music .text-block__lead {
+  max-width: none;
+  margin-bottom: 0;
+  color: color-mix(in srgb, currentColor, transparent 12%);
+  font-size: clamp(1.1rem, 6cqi, 1.45rem) !important;
+  line-height: 1.1 !important;
+}
+
+.music-panel__listen {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  padding: 12px 18px 13px;
+  border: var(--tool-rule);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--tool-ink), transparent 88%);
+  color: inherit;
+  font: 650 var(--type-caption)/1 var(--font);
+  letter-spacing: -.01em;
+  text-decoration: none;
+}
+
+.music-panel__listen span[aria-hidden="true"] {
+  font-size: 1.05em;
+  line-height: 0;
+}
+
+.music-panel__tracks {
+  display: grid;
+  max-height: clamp(252px, 42svh, 336px);
+  margin: clamp(20px, 3vh, 30px) 0 20px !important;
+  padding-right: 6px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  border-top: var(--tool-rule);
+  counter-reset: music-track;
+  list-style: none;
+  overscroll-behavior-y: contain;
+  scrollbar-color: var(--tool-line) transparent;
+  scrollbar-width: thin;
+}
+
+.music-panel__tracks:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -3px;
+}
+
+.music-panel__tracks li {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 2.4ch minmax(0, 1fr);
+  column-gap: 12px;
+  padding: 8px 0 9px;
+  border-bottom: var(--tool-rule);
+  counter-increment: music-track;
+  font-size: clamp(.84rem, 3.8cqi, .98rem);
+  line-height: 1.18;
+}
+
+.music-panel__tracks li::before {
+  content: counter(music-track, decimal-leading-zero);
+  color: color-mix(in srgb, currentColor, transparent 46%);
+  font: 560 .86em/1.18 var(--font);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .02em;
+}
+
+.music-panel__tracks span {
+  min-width: 0;
+}
+
+.music-panel__tracks span:first-child {
+  overflow: hidden;
+  font-weight: 650;
+  letter-spacing: -.018em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.music-panel__tracks span:last-child {
+  grid-column: 2;
+  color: color-mix(in srgb, currentColor, transparent 34%);
+  font-size: .92em;
+  letter-spacing: -.012em;
 }
 
 .facts {
@@ -1216,6 +1325,7 @@ html[data-presence-available="false"] .multitool__weather {
 
 .multitool__address,
 .multitool__icon-link,
+.multitool__playlist-toggle,
 .multitool__menu-toggle,
 .analytics-settings,
 .motion-toggle,
@@ -1259,12 +1369,15 @@ html[data-presence-available="false"] .multitool__weather {
 }
 
 .multitool__icon-link + .multitool__icon-link,
+.analytics-settings,
+.motion-toggle,
 .theme-toggle,
 .multitool__menu-toggle {
   border-left: var(--tool-rule);
 }
 
 .multitool__icon-link svg,
+.multitool__playlist-toggle svg,
 .multitool__menu-toggle svg,
 .analytics-settings svg,
 .motion-toggle svg,
@@ -1720,7 +1833,7 @@ html[data-theme="dark"] .logo-uomo img {
 }
 
 .multitool__footer {
-  --service-rail: calc(var(--utility-floor) + var(--utility-floor) + var(--utility-floor));
+  --service-rail: calc(var(--utility-floor) * 4);
   display: grid;
   grid-template-columns: minmax(0, 1fr) var(--service-rail);
   border-top: 0;
@@ -1866,10 +1979,34 @@ html[data-ticker-phase="seam"] .multitool__descriptor-track {
   grid-column: 2;
   grid-row: 3;
   min-height: var(--utility-floor);
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   justify-self: stretch;
   border-top: var(--tool-rule);
   border-left: var(--tool-rule);
+}
+
+.multitool__playlist-toggle {
+  position: relative;
+  min-width: 0;
+  min-height: var(--utility-floor);
+  padding: 0;
+  cursor: pointer;
+}
+
+.multitool__playlist-toggle svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.65;
+  vector-effect: non-scaling-stroke;
+}
+
+.multitool__playlist-toggle[aria-pressed="true"] {
+  background: var(--tool-hover);
+  box-shadow: inset 0 -1px 0 currentColor;
 }
 
 .analytics-settings {
@@ -2182,7 +2319,7 @@ html[data-theme="dark"] .theme-toggle__icon--light {
 
   .multitool__service {
     width: 100%;
-    grid-template-columns: repeat(4, 70px);
+    grid-template-columns: repeat(5, 70px);
     justify-content: end;
   }
 
@@ -2322,13 +2459,14 @@ html[data-theme="dark"] .theme-toggle__icon--light {
     grid-column: 1 / -1;
     grid-row: 5;
     min-height: 44px;
-    grid-template-columns: repeat(4, minmax(44px, 1fr));
+    grid-template-columns: repeat(5, minmax(44px, 1fr));
     grid-template-rows: 44px;
     justify-content: stretch;
     border-left: 0;
   }
 
   .multitool__menu-toggle,
+  .multitool__playlist-toggle,
   .analytics-settings,
   .motion-toggle,
   .theme-toggle {
@@ -2750,13 +2888,14 @@ html[data-theme="dark"] .theme-toggle__icon--light {
     width: 100%;
     grid-column: 1 / -1;
     min-height: 44px;
-    grid-template-columns: repeat(4, minmax(44px, 1fr));
+    grid-template-columns: repeat(5, minmax(44px, 1fr));
     grid-template-rows: 44px;
     justify-content: stretch;
     border-left: 0;
   }
 
   .multitool__menu-toggle,
+  .multitool__playlist-toggle,
   .analytics-settings,
   .motion-toggle,
   .theme-toggle {
@@ -2900,6 +3039,7 @@ html[data-qa-contrast="more"] :is(.multitool__booking, .multitool__contacts, .mu
 @media print {
   .stage,
   .multitool__menu-toggle,
+  .multitool__playlist-toggle,
   .analytics-settings,
   .motion-toggle,
   .theme-toggle {

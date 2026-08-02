@@ -54,7 +54,7 @@ test('mobile reading order and module control semantics stay aligned', () => {
   assert.ok(profilePosition < practicePosition);
 
   const panelButtons = [...index.matchAll(/<button type="button" data-panel="[^"]+"[^>]*>/g)].map((match) => match[0]);
-  assert.equal(panelButtons.length, 5);
+  assert.equal(panelButtons.length, 6);
   panelButtons.forEach((button) => {
     assert.match(button, /aria-label="[^"]+"/);
     assert.match(button, /aria-controls="[^"]+"/);
