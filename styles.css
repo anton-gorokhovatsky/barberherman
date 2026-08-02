@@ -2379,11 +2379,6 @@ html[data-theme="dark"] .theme-toggle__icon--light {
     grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr);
   }
 
-  .text-block--music .text-block__scroll {
-    max-height: calc(100svh - max(24px, var(--safe-top)) - max(64px, var(--safe-bottom)));
-    overflow-y: auto;
-  }
-
   .music-panel__tracks {
     max-height: clamp(220px, 36svh, 320px);
   }
