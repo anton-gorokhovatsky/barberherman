@@ -1282,18 +1282,28 @@ html[data-qa-text] .multitool__section-label {
   min-height: var(--tertiary-floor);
 }
 
+.multitool__editorial-row button:first-child {
+  border-right: var(--tool-rule);
+}
+
 .multitool__editorial-row button + button {
-  border-left: var(--tool-rule);
+  border-left: 0;
 }
 
 .multitool__editorial-row .multitool__section-label {
   grid-row: 1 / -1;
   align-self: center;
+  font-size: clamp(1.0625rem, calc(.95rem + 1cqi), 1.35rem);
+  font-weight: 620;
+  letter-spacing: -.018em;
 }
 
 .multitool__editorial-row button::after {
+  content: "›";
   grid-row: 1 / -1;
   align-self: center;
+  font-size: 1.55rem;
+  font-weight: 360;
   transform: none;
 }
 
