@@ -126,6 +126,31 @@ test('reflow, common axes, focus and accessibility remain intact', async ({ page
   await expectNoSeriousAxeViolations(page);
 });
 
+test('analytics compound icon keeps one quiet modifier in the shared optical slot', async ({ page }) => {
+  for (const consent of ['prompt', 'granted', 'denied']) {
+    await openReady(page, `/?${baseQuery.replace('qa-analytics=denied', `qa-analytics=${consent}`)}`);
+    const audit = await page.locator('.analytics-settings svg').evaluate((icon) => {
+      const visibleStates = [...icon.querySelectorAll('.analytics-settings__state')]
+        .filter((state) => getComputedStyle(state).display !== 'none');
+      const modifier = visibleStates[0];
+      const box = modifier?.getBBox();
+      const viewBox = icon.viewBox.baseVal;
+      return {
+        count: visibleStates.length,
+        centerX: box ? box.x + box.width / 2 : 0,
+        centerY: box ? box.y + box.height / 2 : 0,
+        areaRatio: box ? (box.width * box.height) / (viewBox.width * viewBox.height) : 1,
+        viewBox: { width: viewBox.width, height: viewBox.height },
+      };
+    });
+
+    expect(audit.count).toBe(1);
+    expect(audit.centerX).toBeGreaterThan(audit.viewBox.width / 2);
+    expect(audit.centerY).toBeLessThan(audit.viewBox.height / 2);
+    expect(audit.areaRatio).toBeLessThanOrEqual(.25);
+  }
+});
+
 test('200% text and reduced motion preserve content and controls', async ({ page }) => {
   await openReady(page, `/?${baseQuery}&qa-text=200&qa-safe-area=iphone`);
 
