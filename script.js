@@ -168,7 +168,7 @@ function startMetrika() {
     const script = document.createElement('script');
     script.id = metrikaScriptId;
     script.async = true;
-    script.src = 'https://mc.yandex.ru/metrika/tag.js';
+    script.src = `https://mc.yandex.ru/metrika/tag.js?id=${metrikaCounterId}`;
     document.head.append(script);
   }
 

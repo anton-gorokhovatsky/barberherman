@@ -127,6 +127,7 @@ test('reflow, common axes, focus and accessibility remain intact', async ({ page
 });
 
 test('analytics compound icon keeps one quiet modifier in the shared optical slot', async ({ page }) => {
+  await page.route('https://mc.yandex.ru/**', (route) => route.abort());
   for (const consent of ['prompt', 'granted', 'denied']) {
     await openReady(page, `/?${baseQuery.replace('qa-analytics=denied', `qa-analytics=${consent}`)}`);
     const audit = await page.locator('.analytics-settings svg').evaluate((icon) => {

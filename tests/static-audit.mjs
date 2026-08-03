@@ -35,6 +35,8 @@ test('analytics is absent from HTML and remains an explicit JavaScript opt-in', 
   }
   assert.match(script, /window\[metrikaDisableKey\] = true/);
   assert.match(script, /if \(analyticsConsent === 'granted'\) startMetrika\(\)/);
+  assert.match(script, /metrika\/tag\.js\?id=\$\{metrikaCounterId\}/);
+  assert.match(script, /ssr: true/);
   assert.match(index, /data-analytics-choice="denied"/);
   assert.match(index, /data-analytics-choice="granted"/);
   assert.match(index, /data-privacy-settings/);
