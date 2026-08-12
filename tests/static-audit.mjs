@@ -42,6 +42,25 @@ test('analytics is absent from HTML and remains an explicit JavaScript opt-in', 
   assert.match(index, /data-privacy-settings/);
 });
 
+test('profile and expertise share the final booking continuation', () => {
+  const bookingHref = 'https://b11133.yclients.com/company/30187/personal/menu?o=';
+  const panels = [
+    ['profile-panel', 'Профиль', 'Записаться после раздела «Профиль»'],
+    ['practice-panel', 'Экспертиза', 'Записаться после раздела «Экспертиза»'],
+  ];
+
+  for (const [panelId, label, accessibleName] of panels) {
+    const panel = index.split(`id="${panelId}"`)[1]?.split('</article>')[0] || '';
+    assert.match(panel, /class="text-block__continuation"/);
+    assert.match(panel, /class="text-block__booking"/);
+    assert.match(panel, new RegExp(`href="${bookingHref.replace(/[?]/g, '\\?')}"`));
+    assert.match(panel, /target="_blank" rel="noopener"/);
+    assert.match(panel, new RegExp(`aria-label="${accessibleName}"`));
+    assert.match(panel, /data-metrika-goal="booking_click"/);
+    assert.match(panel, new RegExp(`data-metrika-label="${label}"`));
+  }
+});
+
 test('the skip link is the first interactive control on every public HTML page', () => {
   assert.match(firstInteractiveMarkup(index), /class="skip-link"/);
   assert.match(firstInteractiveMarkup(privacy), /class="skip-link"/);
@@ -50,9 +69,17 @@ test('the skip link is the first interactive control on every public HTML page',
 
 test('mobile reading order and module control semantics stay aligned', () => {
   const navPosition = index.indexOf('<nav class="multitool');
+  const mediaPosition = index.indexOf('id="media-panel"');
+  const partnersPosition = index.indexOf('id="partners-panel"');
+  const editorialPosition = index.indexOf('class="multitool__editorial-row"');
+  const contactsPosition = index.indexOf('class="multitool__contacts"');
   const profilePosition = index.indexOf('id="profile-panel"');
   const practicePosition = index.indexOf('id="practice-panel"');
   assert.ok(navPosition >= 0 && navPosition < profilePosition);
+  assert.ok(navPosition < mediaPosition);
+  assert.ok(mediaPosition < partnersPosition);
+  assert.ok(partnersPosition < editorialPosition);
+  assert.ok(editorialPosition < contactsPosition);
   assert.ok(profilePosition < practicePosition);
 
   const panelButtons = [...index.matchAll(/<button type="button" data-panel="[^"]+"[^>]*>/g)].map((match) => match[0]);

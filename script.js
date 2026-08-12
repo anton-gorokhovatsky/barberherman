@@ -799,7 +799,12 @@ function revealPanel(name) {
     if (mobileQuery.matches) {
       panel.scrollIntoView({ block: 'start', behavior });
     } else if (isInlinePanel && multitoolDrawer) {
-      multitoolDrawer.scrollTo({ top: panel.offsetTop, behavior });
+      const drawerBox = multitoolDrawer.getBoundingClientRect();
+      const triggerBox = button?.getBoundingClientRect();
+      const top = triggerBox
+        ? multitoolDrawer.scrollTop + triggerBox.top - drawerBox.top
+        : panel.offsetTop;
+      multitoolDrawer.scrollTo({ top: Math.max(0, top), behavior });
     }
   });
 }
@@ -1291,7 +1296,12 @@ async function focusVisualQASection() {
     }
 
     if (target.closest('.multitool__drawer') && multitoolDrawer) {
-      multitoolDrawer.scrollTop = target.offsetTop;
+      const trigger = sectionButtons.find((button) => button.dataset.panel === visualQASection);
+      const drawerBox = multitoolDrawer.getBoundingClientRect();
+      const triggerBox = trigger?.getBoundingClientRect();
+      multitoolDrawer.scrollTop = triggerBox
+        ? Math.max(0, multitoolDrawer.scrollTop + triggerBox.top - drawerBox.top)
+        : target.offsetTop;
       return;
     }
 

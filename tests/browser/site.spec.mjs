@@ -238,6 +238,91 @@ test('modules announce, focus and retain the intended responsive state', async (
   }
 });
 
+test('profile and expertise end with one shared keyboard-reachable booking action', async ({ page }) => {
+  await openReady(page);
+
+  const panels = [
+    ['Профиль', '#profile-panel', 'Записаться после раздела «Профиль»'],
+    ['Экспертиза', '#practice-panel', 'Записаться после раздела «Экспертиза»'],
+  ];
+
+  for (const [buttonName, panelSelector, accessibleName] of panels) {
+    await page.getByRole('button', { name: buttonName, exact: true }).click();
+    const panel = page.locator(panelSelector);
+    const booking = panel.locator('.text-block__booking');
+    await booking.scrollIntoViewIfNeeded();
+
+    await expect(booking).toBeVisible();
+    await expect(booking).toHaveAccessibleName(accessibleName);
+    await expect(booking).toHaveAttribute('href', 'https://b11133.yclients.com/company/30187/personal/menu?o=');
+    await expect(booking).toHaveAttribute('target', '_blank');
+    await expect(booking).toHaveAttribute('data-metrika-goal', 'booking_click');
+
+    const box = await booking.boundingBox();
+    expect(box).not.toBeNull();
+    expect(box.height).toBeGreaterThanOrEqual(44);
+    expect(box.x).toBeGreaterThanOrEqual(-.5);
+    expect(box.x + box.width).toBeLessThanOrEqual((await page.viewportSize()).width + .5);
+
+    await booking.focus();
+    await expect(booking).toBeFocused();
+    await panel.getByRole('button', { name: new RegExp(`Закрыть (?:панель|раздел) «${buttonName}»`) }).click();
+    await expect(panel).toBeHidden();
+  }
+});
+
+test('media and partnership catalogs expand before the editorial floor', async ({ page }) => {
+  await openReady(page);
+
+  const modules = [
+    ['Медиа', '#media-panel', 'Закрыть раздел «Медиа»'],
+    ['Партнёрства', '#partners-panel', 'Закрыть раздел «Партнёрства»'],
+  ];
+
+  for (const [buttonName, panelSelector, closeName] of modules) {
+    const trigger = page.getByRole('button', { name: buttonName, exact: true });
+    const panel = page.locator(panelSelector);
+    const editorial = page.locator('.multitool__editorial-row');
+    await trigger.click();
+    await expect(panel).toBeVisible();
+    await page.waitForTimeout(50);
+
+    const order = await page.evaluate(({ panelSelector }) => {
+      const trigger = document.querySelector(`[data-panel="${panelSelector === '#media-panel' ? 'media' : 'partners'}"]`);
+      const panel = document.querySelector(panelSelector);
+      const editorial = document.querySelector('.multitool__editorial-row');
+      const drawer = document.querySelector('.multitool__drawer');
+      const triggerBox = trigger.getBoundingClientRect();
+      const panelBox = panel.getBoundingClientRect();
+      const editorialBox = editorial.getBoundingClientRect();
+      const drawerBox = drawer.getBoundingClientRect();
+      return {
+        isDesktop: innerWidth > 900,
+        drawerTop: drawerBox.top,
+        drawerBottom: drawerBox.bottom,
+        triggerTop: triggerBox.top,
+        triggerBottom: triggerBox.bottom,
+        panelTop: panelBox.top,
+        panelBottom: panelBox.bottom,
+        editorialTop: editorialBox.top,
+        panelPrecedesEditorial: Boolean(panel.compareDocumentPosition(editorial) & Node.DOCUMENT_POSITION_FOLLOWING),
+      };
+    }, { panelSelector });
+
+    expect(order.panelPrecedesEditorial).toBe(true);
+    expect(order.panelTop).toBeGreaterThanOrEqual(order.triggerBottom - .5);
+    expect(order.editorialTop).toBeGreaterThanOrEqual(order.panelBottom - .5);
+    if (order.isDesktop) {
+      expect(order.triggerTop).toBeGreaterThanOrEqual(order.drawerTop - .5);
+      expect(order.triggerBottom).toBeLessThanOrEqual(order.drawerBottom + .5);
+    }
+
+    await panel.getByRole('button', { name: closeName, exact: true }).click();
+    await expect(panel).toBeHidden();
+    await expect(editorial).toBeVisible();
+  }
+});
+
 test('list-view logos share one row rhythm and one visible left axis', async ({ page }) => {
   await openReady(page, `/?${baseQuery}&qa-logo-view=list&qa-section=media`);
 

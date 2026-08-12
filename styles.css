@@ -421,6 +421,7 @@ html[data-content-open="true"] .stage-overlay {
 .multitool__brand,
 .multitool__booking,
 .multitool__sections button,
+.multitool__editorial-row button,
 .multitool__address,
 .multitool__icon-link,
 .logo-view-toggle button,
@@ -747,6 +748,50 @@ html[data-content-open="true"] .stage-overlay {
   color: var(--ink-soft);
   font-weight: 500;
   line-height: 1.28;
+}
+
+.text-block__continuation {
+  margin: clamp(32px, 5vh, 52px) -12px 0;
+  border-top: var(--tool-rule);
+  border-bottom: var(--tool-rule);
+}
+
+.text-block__booking {
+  display: flex;
+  min-height: 64px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 14px 12px 15px;
+  background: transparent;
+  color: inherit;
+  font: 720 var(--type-lead)/1 var(--font);
+  letter-spacing: -.025em;
+  text-decoration: none;
+  transition:
+    background-color var(--motion-fast) linear,
+    box-shadow var(--motion-medium) var(--ease-out);
+}
+
+.text-block__booking svg {
+  width: var(--icon-size-default);
+  height: var(--icon-size-default);
+  flex: 0 0 auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: var(--icon-stroke-default);
+  vector-effect: non-scaling-stroke;
+}
+
+.text-block__booking:is(:hover, :focus-visible) {
+  background: var(--tool-hover);
+  box-shadow: inset 0 -1px 0 currentColor;
+}
+
+.text-block__booking:active {
+  background: color-mix(in srgb, var(--tool-hover), currentColor 5%);
 }
 
 .practice-group + .practice-group {
@@ -1245,7 +1290,7 @@ html[data-theme="light"] .multitool__brand > img {
   border-top: 0;
 }
 
-.multitool__sections button {
+:is(.multitool__sections, .multitool__editorial-row) button {
   display: grid;
   min-width: 0;
   min-height: var(--module-floor);
@@ -1262,8 +1307,8 @@ html[data-theme="light"] .multitool__brand > img {
   container-type: inline-size;
 }
 
-.multitool__sections button > span,
-.multitool__sections button::after {
+:is(.multitool__sections, .multitool__editorial-row) button > span,
+:is(.multitool__sections, .multitool__editorial-row) button::after {
   transition:
     filter 200ms var(--ease-out),
     opacity 200ms linear;
@@ -1297,7 +1342,7 @@ html[data-qa-text] .multitool__section-label {
   white-space: normal;
 }
 
-.multitool__sections button::after {
+:is(.multitool__sections, .multitool__editorial-row) button::after {
   content: "+";
   grid-column: 2;
   grid-row: 1;
@@ -1355,23 +1400,23 @@ html[data-qa-text] .multitool__section-label {
   transform: none;
 }
 
-.multitool__sections button[aria-pressed="true"] {
+.multitool__drawer [data-panel][aria-pressed="true"] {
   background: var(--tool-hover);
   font-weight: 700;
 }
 
-.multitool__sections button[aria-pressed="true"]::after {
+.multitool__drawer [data-panel][aria-pressed="true"]::after {
   content: "−";
 }
 
-.multitool__sections:has(button[aria-pressed="true"]) button:not([aria-pressed="true"]) > span,
-.multitool__sections:has(button[aria-pressed="true"]) button:not([aria-pressed="true"])::after {
+.multitool__drawer:has([data-panel][aria-pressed="true"]) [data-panel]:not([aria-pressed="true"]) > span,
+.multitool__drawer:has([data-panel][aria-pressed="true"]) [data-panel]:not([aria-pressed="true"])::after {
   filter: blur(clamp(.8px, .14vw, 1.7px));
   opacity: .72;
 }
 
-.multitool__sections:has(button[aria-pressed="true"]) button:not([aria-pressed="true"]):is(:hover, :focus-visible, :active) > span,
-.multitool__sections:has(button[aria-pressed="true"]) button:not([aria-pressed="true"]):is(:hover, :focus-visible, :active)::after {
+.multitool__drawer:has([data-panel][aria-pressed="true"]) [data-panel]:not([aria-pressed="true"]):is(:hover, :focus-visible, :active) > span,
+.multitool__drawer:has([data-panel][aria-pressed="true"]) [data-panel]:not([aria-pressed="true"]):is(:hover, :focus-visible, :active)::after {
   filter: none;
   opacity: 1;
 }
@@ -2864,13 +2909,13 @@ html[data-theme="dark"] .theme-toggle__icon--light {
     margin-right: .25em;
   }
 
-  .multitool__sections button {
+  :is(.multitool__sections, .multitool__editorial-row) button {
     min-height: var(--module-floor);
     padding: 15px var(--floor-inline) 16px;
   }
 
   .multitool__section-index,
-  .multitool__sections button::after {
+  :is(.multitool__sections, .multitool__editorial-row) button::after {
     align-self: start;
   }
 
@@ -2880,7 +2925,7 @@ html[data-theme="dark"] .theme-toggle__icon--light {
     font-size: min(1.42rem, calc(.72rem + 5.5cqi), 5.9vw);
   }
 
-  .multitool__sections button::after {
+  :is(.multitool__sections, .multitool__editorial-row) button::after {
     font-size: min(1.35rem, 6.4vw);
     transform: translateY(-4px);
   }
@@ -3158,8 +3203,8 @@ html[data-qa-contrast="more"] :is(.multitool, .gallery-stage) {
   -webkit-backdrop-filter: none;
 }
 
-html[data-qa-contrast="more"] .multitool__sections:has(button[aria-pressed="true"]) button:not([aria-pressed="true"]) > span,
-html[data-qa-contrast="more"] .multitool__sections:has(button[aria-pressed="true"]) button:not([aria-pressed="true"])::after {
+html[data-qa-contrast="more"] .multitool__drawer:has([data-panel][aria-pressed="true"]) [data-panel]:not([aria-pressed="true"]) > span,
+html[data-qa-contrast="more"] .multitool__drawer:has([data-panel][aria-pressed="true"]) [data-panel]:not([aria-pressed="true"])::after {
   filter: none;
   opacity: 1;
 }
@@ -3175,8 +3220,8 @@ html[data-qa-contrast="more"] :is(.multitool__booking, .multitool__contacts, .mu
     --tool-border-drag: var(--tool-border);
   }
 
-  .multitool__sections:has(button[aria-pressed="true"]) button:not([aria-pressed="true"]) > span,
-  .multitool__sections:has(button[aria-pressed="true"]) button:not([aria-pressed="true"])::after {
+  .multitool__drawer:has([data-panel][aria-pressed="true"]) [data-panel]:not([aria-pressed="true"]) > span,
+  .multitool__drawer:has([data-panel][aria-pressed="true"]) [data-panel]:not([aria-pressed="true"])::after {
     filter: none;
     opacity: 1;
   }
