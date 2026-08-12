@@ -544,13 +544,19 @@ html[data-content-open="true"] .stage-overlay {
 
 .music-panel__archive {
   display: grid;
-  gap: 18px;
+  gap: 0;
 }
 
 .music-release {
   display: grid;
   min-width: 0;
   gap: clamp(16px, 2.6vh, 24px);
+}
+
+.music-release + .music-release {
+  margin-top: clamp(28px, 4.5vh, 48px);
+  padding-top: clamp(28px, 4.5vh, 48px);
+  border-top: var(--tool-rule);
 }
 
 .music-release__head {
@@ -574,6 +580,24 @@ html[data-content-open="true"] .stage-overlay {
   border: var(--tool-rule);
   border-radius: 0;
   background: color-mix(in srgb, var(--tool-ink), transparent 90%);
+}
+
+.music-release__cover--placeholder {
+  display: grid;
+  width: 100%;
+  aspect-ratio: 1;
+  place-items: center;
+  border: var(--tool-rule);
+  background:
+    radial-gradient(circle at 34% 30%, color-mix(in srgb, currentColor, transparent 90%), transparent 34%),
+    color-mix(in srgb, var(--tool-ink), transparent 94%);
+  color: color-mix(in srgb, currentColor, transparent 18%);
+}
+
+.music-release__cover--placeholder::before {
+  content: "♪";
+  font: 400 clamp(4rem, 14cqi, 7.5rem)/1 var(--font);
+  transform: translateY(-.04em);
 }
 
 .music-release__summary {

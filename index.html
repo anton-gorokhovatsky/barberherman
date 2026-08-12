@@ -73,8 +73,8 @@
       ]
     }
   </script>
-  <link rel="stylesheet" href="styles.css?v=202608031645">
-  <script src="script.js?v=202608031645" defer></script>
+  <link rel="stylesheet" href="styles.css?v=202608121337">
+  <script src="script.js?v=202608121337" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#content">К основному содержанию</a>
@@ -360,23 +360,54 @@
         <div class="text-block__fade" aria-hidden="true"></div>
       </article>
 
-      <article class="text-block text-block--music glass-surface glass-surface--expanded" id="music-panel" aria-labelledby="music-title" tabindex="-1" hidden>
+      <article class="text-block text-block--music glass-surface glass-surface--expanded" id="music-panel" aria-labelledby="music-panel-title" tabindex="-1" hidden>
         <header class="text-block__bar">
-          <button class="text-block__index text-block__drag-handle" type="button" aria-label="Переместить панель «Музыка». Используйте стрелки, чтобы перемещать её, и клавишу Home, чтобы вернуть на место.">Музыка / Август 2026</button>
+          <button class="text-block__index text-block__drag-handle" id="music-panel-title" type="button" aria-label="Переместить панель «Музыка». Используйте стрелки, чтобы перемещать её, и клавишу Home, чтобы вернуть на место.">Музыка / Подборки</button>
           <button class="text-block__close" type="button" data-close-panel="music" aria-label="Закрыть панель «Музыка»" title="Закрыть панель «Музыка»">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg>
           </button>
         </header>
         <div class="text-block__scroll music-panel__scroll" role="region" aria-label="Музыкальные подборки Германа" tabindex="0">
           <div class="music-panel__archive" aria-label="Архив музыкальных подборок">
-            <article class="music-release" aria-labelledby="music-title">
+            <article class="music-release" aria-labelledby="music-vol-2-title">
+              <div class="music-release__head">
+                <figure class="music-release__cover music-release__cover--placeholder" role="img" aria-label="Стандартная обложка плейлиста Vol. 2 в Apple Music"></figure>
+                <div class="music-release__summary">
+                  <p class="music-panel__eyebrow">Подборка</p>
+                  <h2 id="music-vol-2-title"><span lang="en">Vol. 2</span></h2>
+                  <p class="text-block__lead music-panel__meta"><span class="music-panel__meta-unit">Герман Винокуров</span><span class="music-panel__meta-unit">14&nbsp;треков&nbsp;· 1&nbsp;ч&nbsp;28&nbsp;мин</span></p>
+                  <a class="music-panel__listen" href="https://music.apple.com/ru/playlist/www-hermanco-ru-vol-2/pl.u-yZyVPGAuZBBrBY" target="_blank" rel="noopener" data-metrika-goal="playlist_click" data-metrika-label="Apple Music Vol. 2">
+                    <span aria-hidden="true">♪</span>
+                    <span>Слушать в&nbsp;<span lang="en">Apple Music</span></span>
+                  </a>
+                </div>
+              </div>
+              <ol class="music-panel__tracks" aria-label="Треки плейлиста Vol. 2" tabindex="0">
+                <li><span lang="en">Let Them Not Weep</span><span lang="en">Be Svendsen</span></li>
+                <li><span lang="en">Fly</span><span lang="en">Monoplay</span></li>
+                <li><span lang="en">Le Fleur</span><span lang="en">Kermesse</span></li>
+                <li><span lang="en">Sireli</span><span lang="en">Viken Arman</span></li>
+                <li><span lang="en">En El Valle De La Sombra (Original)</span><span lang="en">Rodrigo Gallardo</span></li>
+                <li><span lang="en">Ouahe (Original)</span><span lang="en">Dandara</span></li>
+                <li><span lang="en">Jado</span><span lang="en">Geju</span></li>
+                <li><span lang="en">Save My Soul</span><span lang="en">Armen Miran</span></li>
+                <li><span lang="en">Haidi</span><span lang="en">Jacob Groening</span></li>
+                <li><span lang="en">Shift IV</span><span lang="en">Coss</span></li>
+                <li><span lang="en">Camomille</span><span lang="en">Kermesse</span></li>
+                <li><span lang="en">Circle (feat. Kamilla Kovacs)</span><span lang="en">Be Svendsen</span></li>
+                <li><span lang="en">Amber</span><span lang="en">Tom The Lion</span></li>
+                <li><span lang="en">Le Piroguier (Be Svendsen Remix)</span><span lang="en">Be Svendsen &amp; Henri Texier</span></li>
+              </ol>
+            </article>
+
+            <article class="music-release" aria-labelledby="music-august-title">
               <div class="music-release__head">
                 <figure class="music-release__cover">
                   <img src="assets/music-august-2026.jpg?v=20260802-1" alt="Обложка плейлиста Германа Винокурова, август 2026" loading="lazy" decoding="async">
                 </figure>
                 <div class="music-release__summary">
                   <p class="music-panel__eyebrow">Подборка</p>
-                  <h2 id="music-title">Август 2026</h2>
+                  <h2 id="music-august-title">Август 2026</h2>
                   <p class="text-block__lead music-panel__meta"><span class="music-panel__meta-unit">Герман Винокуров</span><span class="music-panel__meta-unit">14&nbsp;треков&nbsp;· 1&nbsp;ч&nbsp;21&nbsp;мин</span></p>
                   <a class="music-panel__listen" href="https://music.apple.com/ru/playlist/playlist-www-hermanco-ru/pl.u-55D6P1KCXDDoD8" target="_blank" rel="noopener" data-metrika-goal="playlist_click" data-metrika-label="Apple Music">
                     <span aria-hidden="true">♪</span>

@@ -383,19 +383,19 @@ test('music entry stays compact and mobile track list uses one scroll flow', asy
     await expect(page.locator('#music-panel')).toBeFocused();
     const scrollAudit = await page.evaluate(() => {
       const panelScroll = document.querySelector('.text-block--music .text-block__scroll');
-      const tracks = document.querySelector('.music-panel__tracks');
+      const trackLists = [...document.querySelectorAll('.music-panel__tracks')];
       const panelStyle = getComputedStyle(panelScroll);
-      const tracksStyle = getComputedStyle(tracks);
+      const trackStyles = trackLists.map((tracks) => getComputedStyle(tracks));
       return {
         panelOverflowY: panelStyle.overflowY,
         panelMaxHeight: panelStyle.maxHeight,
         panelClientHeight: panelScroll.clientHeight,
         panelScrollHeight: panelScroll.scrollHeight,
-        tracksOverflowY: tracksStyle.overflowY,
-        tracksMaxHeight: tracksStyle.maxHeight,
-        tracksClientHeight: tracks.clientHeight,
-        tracksScrollHeight: tracks.scrollHeight,
-        trackCount: tracks.querySelectorAll('li').length,
+        tracksOverflowY: trackStyles.map((style) => style.overflowY),
+        tracksMaxHeight: trackStyles.map((style) => style.maxHeight),
+        tracksClientHeights: trackLists.map((tracks) => tracks.clientHeight),
+        tracksScrollHeights: trackLists.map((tracks) => tracks.scrollHeight),
+        trackCount: trackLists.reduce((count, tracks) => count + tracks.querySelectorAll('li').length, 0),
         documentCanScroll: document.documentElement.scrollHeight > window.innerHeight,
         horizontalOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
       };
@@ -404,10 +404,10 @@ test('music entry stays compact and mobile track list uses one scroll flow', asy
     expect(scrollAudit.panelOverflowY).toBe('visible');
     expect(scrollAudit.panelMaxHeight).toBe('none');
     expect(scrollAudit.panelClientHeight).toBe(scrollAudit.panelScrollHeight);
-    expect(scrollAudit.tracksOverflowY).toBe('visible');
-    expect(scrollAudit.tracksMaxHeight).toBe('none');
-    expect(scrollAudit.tracksClientHeight).toBe(scrollAudit.tracksScrollHeight);
-    expect(scrollAudit.trackCount).toBe(14);
+    expect(scrollAudit.tracksOverflowY).toEqual(['visible', 'visible']);
+    expect(scrollAudit.tracksMaxHeight).toEqual(['none', 'none']);
+    expect(scrollAudit.tracksClientHeights).toEqual(scrollAudit.tracksScrollHeights);
+    expect(scrollAudit.trackCount).toBe(28);
     expect(scrollAudit.documentCanScroll).toBe(true);
     expect(scrollAudit.horizontalOverflow).toBeLessThanOrEqual(0);
   }
