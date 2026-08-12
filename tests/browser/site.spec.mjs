@@ -337,7 +337,7 @@ test('gallery is a peer content panel with edge-to-edge imagery and keyboard nav
   await expect(galleryButton).toBeFocused();
 });
 
-test('music entry stays compact and mobile track list uses one scroll flow', async ({ page }) => {
+test('editorial entries share the secondary floor and music uses one mobile scroll flow', async ({ page }) => {
   await openReady(page);
 
   const viewport = await page.viewportSize();
@@ -363,12 +363,16 @@ test('music entry stays compact and mobile track list uses one scroll flow', asy
       profile: rect('[data-panel="profile"]'),
       gallery: rect('[data-panel="gallery"]'),
       music: rect('[data-panel="music"]'),
+      address: rect('.multitool__address'),
+      weather: rect('.multitool__weather'),
       galleryPlus: pseudo('[data-panel="gallery"]'),
       musicPlus: pseudo('[data-panel="music"]'),
     };
   });
 
   expect(Math.abs(auditBeforeOpen.gallery.height - auditBeforeOpen.music.height)).toBeLessThanOrEqual(.5);
+  expect(Math.abs(auditBeforeOpen.gallery.height - auditBeforeOpen.address.height)).toBeLessThanOrEqual(.5);
+  expect(Math.abs(auditBeforeOpen.gallery.height - auditBeforeOpen.weather.height)).toBeLessThanOrEqual(1);
   expect(auditBeforeOpen.gallery.height).toBeLessThan(auditBeforeOpen.profile.height);
   expect(Math.abs(auditBeforeOpen.gallery.x + auditBeforeOpen.gallery.width - auditBeforeOpen.music.x)).toBeLessThanOrEqual(.5);
   expect(auditBeforeOpen.galleryPlus.alignSelf).toBe('center');

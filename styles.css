@@ -1099,7 +1099,6 @@ html[data-content-open="true"] .stage-overlay {
   --booking-optical-shift: 0px;
   --secondary-floor: 72px;
   --module-floor: 96px;
-  --tertiary-floor: 64px;
   --utility-floor: 64px;
   --floor-inline: 19px;
   --split-grid: repeat(2, minmax(0, 1fr));
@@ -1328,7 +1327,7 @@ html[data-qa-text] .multitool__section-label {
 }
 
 .multitool__editorial-row button {
-  min-height: var(--tertiary-floor);
+  min-height: var(--secondary-floor);
 }
 
 .multitool__editorial-row button:first-child {
@@ -1403,7 +1402,7 @@ html[data-qa-text] .multitool__section-label {
 
 .multitool__live {
   display: grid;
-  min-height: 68px;
+  min-height: var(--secondary-floor);
   grid-template-columns: var(--split-grid);
   border-top: var(--tool-rule);
 }
@@ -2713,7 +2712,6 @@ html[data-theme="dark"] .theme-toggle__icon--light {
   .multitool {
     --secondary-floor: 72px;
     --module-floor: 102px;
-    --tertiary-floor: 68px;
     --floor-inline: 13px;
   }
 
@@ -2843,7 +2841,7 @@ html[data-theme="dark"] .theme-toggle__icon--light {
   }
 
   .multitool__live {
-    min-height: 72px;
+    min-height: var(--secondary-floor);
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -2892,7 +2890,7 @@ html[data-theme="dark"] .theme-toggle__icon--light {
   }
 
   .multitool__editorial-row button {
-    min-height: var(--tertiary-floor);
+    min-height: var(--secondary-floor);
     padding: 13px var(--floor-inline) 14px;
   }
 
