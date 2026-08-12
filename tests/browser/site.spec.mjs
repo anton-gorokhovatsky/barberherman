@@ -502,6 +502,41 @@ test('editorial entries share the secondary floor and music uses one mobile scro
   }
 });
 
+test('Vol. 2 artwork keeps the authored crop and a clean fallback', async ({ page }) => {
+  await openReady(page, `/?${baseQuery}&qa-section=music`);
+
+  const cover = page.locator('.music-release__cover--placeholder');
+  const image = cover.locator('[data-music-cover]');
+  await expect(cover).toBeVisible();
+  await expect(cover).toHaveAttribute('data-cover-state', 'ready');
+  await expect(image).toBeVisible();
+  await expect(image).toHaveAttribute('src', 'assets/music-vol-2.jpg?v=20260812-1');
+  expect(await image.evaluate((element) => element.naturalWidth)).toBe(1080);
+  expect(await image.evaluate((element) => getComputedStyle(element).objectPosition)).toMatch(/^50% (?:0%|0px)$/);
+
+  const surface = await cover.evaluate((element) => {
+    const style = getComputedStyle(element);
+    const backgroundChannels = style.backgroundColor.match(/[\d.]+/g)?.map(Number) || [];
+    return {
+      backgroundImage: style.backgroundImage,
+      backgroundColor: style.backgroundColor,
+      backgroundAlpha: backgroundChannels.length === 4 ? backgroundChannels[3] : 1,
+      borderStyle: style.borderStyle,
+      borderWidth: Number.parseFloat(style.borderTopWidth),
+    };
+  });
+
+  expect(surface.backgroundImage).toBe('none');
+  expect(surface.backgroundColor).not.toBe('rgba(0, 0, 0, 0)');
+  expect(surface.backgroundAlpha).toBeGreaterThanOrEqual(.95);
+  expect(surface.borderStyle).toBe('solid');
+  expect(surface.borderWidth).toBeGreaterThan(0);
+
+  await image.evaluate((element) => element.dispatchEvent(new Event('error')));
+  await expect(image).toBeHidden();
+  await expect(cover).toHaveAttribute('data-cover-state', 'fallback');
+});
+
 test('menu and content-panel keyboard dragging match the responsive contract', async ({ page }) => {
   await openReady(page);
   const desktop = (await page.viewportSize()).width > 900;

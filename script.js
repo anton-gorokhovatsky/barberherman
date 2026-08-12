@@ -20,6 +20,7 @@ const glassSurfaces = [...document.querySelectorAll('.glass-surface')];
 const draggablePanels = [...document.querySelectorAll('.text-block, .gallery-stage')];
 const textScrollSurfaces = [...document.querySelectorAll('.text-block__scroll')];
 const logoImages = [...document.querySelectorAll('.logo img')];
+const musicCoverImages = [...document.querySelectorAll('[data-music-cover]')];
 const onlineCountLabel = document.querySelector('[data-online-count]');
 const onlineUnitLabel = document.querySelector('[data-online-unit]');
 const weatherTemperatureLabel = document.querySelector('[data-weather-temperature]');
@@ -341,6 +342,20 @@ function prepareLogoImages(panel = document) {
     image.loading = 'eager';
     syncLogoImage(image);
   });
+}
+
+function setMusicCoverState(image, state) {
+  const cover = image.closest('.music-release__cover--placeholder');
+  if (!cover) return;
+
+  const isReady = state === 'ready';
+  image.hidden = !isReady;
+  cover.dataset.coverState = isReady ? 'ready' : 'fallback';
+}
+
+function syncMusicCoverImage(image) {
+  if (!image.complete) return;
+  setMusicCoverState(image, image.naturalWidth > 0 ? 'ready' : 'fallback');
 }
 
 function syncTextScrollFade(scrollSurface) {
@@ -1902,6 +1917,11 @@ logoImages.forEach((image) => {
   image.addEventListener('load', () => syncLogoImage(image));
   image.addEventListener('error', () => syncLogoImage(image));
   syncLogoImage(image);
+});
+musicCoverImages.forEach((image) => {
+  image.addEventListener('load', () => setMusicCoverState(image, 'ready'));
+  image.addEventListener('error', () => setMusicCoverState(image, 'fallback'));
+  syncMusicCoverImage(image);
 });
 textScrollSurfaces.forEach((scrollSurface) => {
   scrollSurface.addEventListener('scroll', () => syncTextScrollFade(scrollSurface), { passive: true });
