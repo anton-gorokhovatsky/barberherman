@@ -25,7 +25,10 @@ async function openReady(page, path = `/?${baseQuery}`) {
       await expect(root).toHaveAttribute('data-presence-available', 'true');
     }
   }
-  await page.evaluate(() => document.fonts.ready);
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  });
 }
 
 async function focusSkipLink(page, browserName) {
