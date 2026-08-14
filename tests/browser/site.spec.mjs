@@ -115,6 +115,8 @@ test('reflow, common axes, focus and accessibility remain intact', async ({ page
       editorialGroup: {
         display: getComputedStyle(document.querySelector('.multitool__editorial-row')).display,
         gap: rect(music).x - rect(gallery).right,
+        galleryLeft: rect(gallery).x,
+        musicRight: rect(music).right,
         galleryBorderRight: Number.parseFloat(getComputedStyle(gallery).borderRightWidth),
         musicBorderLeft: Number.parseFloat(getComputedStyle(music).borderLeftWidth),
       },
@@ -152,8 +154,10 @@ test('reflow, common axes, focus and accessibility remain intact', async ({ page
   expect(audit.primarySplit.profileBorderRight).toBe(audit.primarySplit.brandBorderRight);
   expect(audit.primarySplit.practiceBorderLeft).toBe(0);
   expect(audit.editorialGroup.display).toBe('grid');
-  expect(audit.editorialGroup.gap).toBeGreaterThanOrEqual(15);
-  expect(audit.editorialGroup.galleryBorderRight).toBe(0);
+  expect(Math.abs(audit.editorialGroup.gap)).toBeLessThanOrEqual(.01);
+  expect(Math.abs(audit.editorialGroup.galleryLeft - audit.surfaces.main.x)).toBeLessThanOrEqual(1.1);
+  expect(Math.abs(audit.editorialGroup.musicRight - audit.surfaces.main.right)).toBeLessThanOrEqual(1.1);
+  expect(audit.editorialGroup.galleryBorderRight).toBeGreaterThan(0);
   expect(audit.editorialGroup.musicBorderLeft).toBe(0);
   expect(Math.abs(audit.contactSplit.addressRight - audit.contactSplit.telegramLeft)).toBeLessThanOrEqual(.01);
   expect(Math.abs(audit.contactSplit.telegramLeft - audit.contactSplit.weatherLeft)).toBeLessThanOrEqual(.01);
@@ -251,6 +255,13 @@ test('200% text and reduced motion preserve content and controls', async ({ page
       reducedMotion: document.documentElement.dataset.reduceMotion,
       badControls: visibleControls.filter(({ width, height }) => width < 44 || height < 44),
       outsideControls: visibleControls.filter(({ left, right }) => left < -.5 || right > innerWidth + .5),
+      clippedEditorialCopy: [...document.querySelectorAll('.multitool__editorial-copy')]
+        .map((element) => ({
+          widthDelta: element.scrollWidth - element.clientWidth,
+          heightDelta: element.scrollHeight - element.clientHeight,
+        }))
+        .filter(({ widthDelta, heightDelta }) => widthDelta > 1 || heightDelta > 3),
+      tickerAnimation: getComputedStyle(document.querySelector('.multitool__descriptor-track')).animationName,
       videos: [...document.querySelectorAll('.stage-video')].map((video) => ({
         display: getComputedStyle(video).display,
         src: video.getAttribute('src'),
@@ -264,6 +275,7 @@ test('200% text and reduced motion preserve content and controls', async ({ page
   expect(audit.scrollWidth).toBeLessThanOrEqual(audit.innerWidth);
   expect(audit.badControls).toEqual([]);
   expect(audit.outsideControls).toEqual([]);
+  expect(audit.clippedEditorialCopy).toEqual([]);
   const videosAreStopped = audit.videos.every(({ display, src, currentSrc, noSource, paused }) => (
     display === 'none'
     && src === null
@@ -271,6 +283,7 @@ test('200% text and reduced motion preserve content and controls', async ({ page
     && (paused || noSource)
   ));
   expect(audit.reducedMotion).toBe('true');
+  expect(audit.tickerAnimation).toBe('none');
   expect(videosAreStopped, JSON.stringify(audit, null, 2)).toBeTruthy();
 });
 
@@ -287,10 +300,117 @@ test('full motion selects one inline muted video and autoplay remains available'
   await expect(activeVideo).toHaveAttribute('poster', /assets\/hero(?:-mobile)?\.jpg/);
   await expect(activeVideo).toHaveAttribute('src', isMobile ? /hero-mobile\.mp4/ : /hero-desktop-v2\.mp4/);
   await expect(page.locator(inactiveSelector)).not.toHaveAttribute('src', /.+/);
+  await expect.poll(() => page.locator('.multitool__descriptor-track')
+    .evaluate((element) => getComputedStyle(element).animationName)).toBe('descriptor-ticker');
   await page.waitForFunction((selector) => {
     const video = document.querySelector(selector);
     return video && video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA && !video.paused;
   }, activeSelector);
+});
+
+test('the editorial ticker exposes deterministic start, middle and seam phases', async ({ page }) => {
+  const translations = {};
+
+  for (const phase of ['start', 'middle', 'seam']) {
+    await openReady(page, `/?qa-theme=light&qa-motion=full&qa-analytics=denied&ticker-phase=${phase}`);
+    translations[phase] = await page.locator('.multitool__descriptor-track').evaluate((track) => {
+      const matrix = new DOMMatrixReadOnly(getComputedStyle(track).transform);
+      const copies = [...track.children].map((copy) => copy.textContent);
+      return {
+        animation: getComputedStyle(track).animationName,
+        phase: document.documentElement.dataset.tickerPhase,
+        tx: matrix.m41,
+        width: track.getBoundingClientRect().width,
+        copies,
+        semanticText: document.querySelector('.multitool__descriptor > .sr-only')?.textContent,
+      };
+    });
+  }
+
+  for (const [phase, audit] of Object.entries(translations)) {
+    expect(audit.phase).toBe(phase);
+    expect(audit.animation).toBe('none');
+    expect(new Set(audit.copies).size).toBe(1);
+    expect(audit.copies).toHaveLength(3);
+    expect(audit.semanticText).toBe('Мужской стилист, барбер, эксперт по мужскому уходу');
+  }
+  expect(Math.abs(translations.start.tx)).toBeLessThanOrEqual(.01);
+  expect(Math.abs(translations.middle.tx + translations.middle.width / 6)).toBeLessThanOrEqual(1);
+  expect(Math.abs(translations.seam.tx + translations.seam.width * .3332)).toBeLessThanOrEqual(1);
+});
+
+test('editorial imagery stays secondary in increased contrast', async ({ page }) => {
+  for (const theme of ['light', 'dark']) {
+    await openReady(page, `/?qa-theme=${theme}&qa-motion=reduce&qa-analytics=denied&qa-contrast=more`);
+    const audit = await page.evaluate(() => ({
+      theme: document.documentElement.dataset.theme,
+      overflow: document.documentElement.scrollWidth - innerWidth,
+      previews: [...document.querySelectorAll('.multitool__editorial-row button')].map((button) => {
+        const style = getComputedStyle(button, '::before');
+        return {
+          opacity: Number.parseFloat(style.opacity),
+          filter: style.filter,
+        };
+      }),
+    }));
+
+    expect(audit.theme).toBe(theme);
+    expect(audit.overflow).toBeLessThanOrEqual(0);
+    expect(audit.previews).toHaveLength(2);
+    for (const preview of audit.previews) {
+      expect(preview.opacity).toBeCloseTo(.12, 2);
+      expect(preview.filter).toContain('grayscale(1)');
+      expect(preview.filter).toContain('contrast(0.78)');
+    }
+  }
+});
+
+test('the editorial hand settles without a horizontal jump', async ({ page }) => {
+  await openReady(page, '/?qa-theme=light&qa-motion=full&qa-analytics=denied&ticker-phase=start');
+  const musicButton = page.getByRole('button', { name: 'Музыка', exact: true });
+  const mark = musicButton.locator('.multitool__editorial-mark');
+  const readMotion = () => mark.evaluate((element) => {
+    const style = getComputedStyle(element);
+    const matrix = new DOMMatrixReadOnly(style.transform);
+    return {
+      opacity: Number.parseFloat(style.opacity),
+      scaleX: matrix.a,
+      scaleY: matrix.d,
+      x: matrix.e,
+      y: matrix.f,
+      transitionDuration: style.transitionDuration,
+      transitionProperty: style.transitionProperty,
+    };
+  });
+
+  const start = await readMotion();
+  expect(start.opacity).toBe(0);
+  expect(Math.abs(start.x)).toBeLessThanOrEqual(.01);
+  expect(start.y).toBeCloseTo(2, 1);
+  expect(start.scaleX).toBeCloseTo(.96, 2);
+  expect(start.scaleY).toBeCloseTo(.96, 2);
+  expect(start.transitionProperty).toContain('opacity');
+  expect(start.transitionProperty).toContain('transform');
+  expect(start.transitionDuration).toBe('0.22s, 0.22s');
+
+  await musicButton.focus();
+  await page.waitForTimeout(70);
+  const middle = await readMotion();
+  expect(middle.opacity).toBeGreaterThan(0);
+  expect(middle.opacity).toBeLessThan(1);
+  expect(Math.abs(middle.x)).toBeLessThanOrEqual(.01);
+  expect(middle.y).toBeGreaterThanOrEqual(0);
+  expect(middle.y).toBeLessThan(2);
+  expect(middle.scaleX).toBeGreaterThan(.96);
+  expect(middle.scaleX).toBeLessThan(1);
+
+  await page.waitForTimeout(190);
+  const end = await readMotion();
+  expect(end.opacity).toBe(1);
+  expect(Math.abs(end.x)).toBeLessThanOrEqual(.01);
+  expect(Math.abs(end.y)).toBeLessThanOrEqual(.01);
+  expect(end.scaleX).toBeCloseTo(1, 2);
+  expect(end.scaleY).toBeCloseTo(1, 2);
 });
 
 test('modules announce, focus and retain the intended responsive state', async ({ page }) => {
@@ -536,38 +656,67 @@ test('main and editorial entries keep their intentional affordances and one mobi
           hidden: mark.getAttribute('aria-hidden'),
           symbol: mark.querySelector('use')?.getAttribute('href'),
           color: getComputedStyle(mark).color,
+          opacity: Number.parseFloat(getComputedStyle(mark).opacity),
+        };
+      }),
+      editorialPreviews: [...document.querySelectorAll('.multitool__editorial-row button')].map((button) => {
+        const style = getComputedStyle(button, '::before');
+        return {
+          image: style.backgroundImage,
+          filter: style.filter,
+          opacity: Number.parseFloat(style.opacity),
         };
       }),
     };
   });
 
   expect(Math.abs(auditBeforeOpen.gallery.height - auditBeforeOpen.music.height)).toBeLessThanOrEqual(.5);
-  expect(auditBeforeOpen.gallery.height).toBeLessThan(auditBeforeOpen.profile.height);
-  expect(auditBeforeOpen.editorialGap).toBeGreaterThanOrEqual(15);
+  expect(auditBeforeOpen.gallery.height).toBeGreaterThanOrEqual(95);
+  expect(Math.abs(auditBeforeOpen.editorialGap)).toBeLessThanOrEqual(.01);
   expect(auditBeforeOpen.affordances).toEqual(['+', '+', '+', '+', 'none', 'none']);
-  expect(auditBeforeOpen.editorialMarks).toHaveLength(1);
+  expect(auditBeforeOpen.editorialMarks).toHaveLength(2);
   for (const mark of auditBeforeOpen.editorialMarks) {
     expect(mark.hidden).toBe('true');
     expect(mark.symbol).toBe('#icon-hand-scissors');
     expect(Math.abs(mark.width - mark.height)).toBeLessThanOrEqual(.01);
     expect(mark.width).toBeGreaterThanOrEqual(20);
+    expect(mark.opacity).toBe(0);
+  }
+  expect(auditBeforeOpen.editorialPreviews).toHaveLength(2);
+  for (const preview of auditBeforeOpen.editorialPreviews) {
+    expect(preview.image).toContain('assets/');
+    expect(preview.filter).toContain('grayscale(1)');
+    expect(preview.opacity).toBeCloseTo(.42, 2);
   }
   if (isMobile) expect(auditBeforeOpen.live.height).toBeLessThanOrEqual(auditBeforeOpen.address.height + 1);
   else expect(auditBeforeOpen.live.height).toBeLessThan(auditBeforeOpen.address.height);
 
   const musicButton = page.getByRole('button', { name: 'Музыка', exact: true });
+  await musicButton.focus();
+  await expect(musicButton).toBeFocused();
+  await expect.poll(() => musicButton.evaluate((button) => (
+    Number.parseFloat(getComputedStyle(button.querySelector('.multitool__editorial-mark')).opacity)
+  ))).toBe(1);
+  await expect.poll(() => musicButton.evaluate((button) => (
+    Number.parseFloat(getComputedStyle(button, '::before').opacity)
+  ))).toBeCloseTo(.68, 2);
+
   if (!isMobile) {
     await musicButton.hover();
     const hoverAudit = await musicButton.evaluate((button) => ({
       background: getComputedStyle(button).backgroundColor,
       decoration: getComputedStyle(button.querySelector('.multitool__section-label')).textDecorationLine,
-      markColor: getComputedStyle(button.parentElement.querySelector('.multitool__editorial-mark')).color,
+      markColor: getComputedStyle(button.querySelector('.multitool__editorial-mark')).color,
+      markOpacity: Number.parseFloat(getComputedStyle(button.querySelector('.multitool__editorial-mark')).opacity),
+      previewOpacity: Number.parseFloat(getComputedStyle(button, '::before').opacity),
       textColor: getComputedStyle(button).color,
     }));
     expect(hoverAudit.background).toBe('rgba(0, 0, 0, 0)');
-    expect(hoverAudit.decoration).toBe('underline');
+    expect(hoverAudit.decoration).toBe('none');
     expect(hoverAudit.markColor).toBe(auditBeforeOpen.editorialMarks[0].color);
     expect(hoverAudit.markColor).not.toBe(hoverAudit.textColor);
+    expect(hoverAudit.markOpacity).toBe(1);
+    expect(hoverAudit.previewOpacity).toBeCloseTo(.68, 2);
   }
 
   await musicButton.click();
@@ -575,10 +724,14 @@ test('main and editorial entries keep their intentional affordances and one mobi
   const activeAudit = await musicButton.evaluate((button) => ({
     background: getComputedStyle(button).backgroundColor,
     decoration: getComputedStyle(button.querySelector('.multitool__section-label')).textDecorationLine,
+    markOpacity: Number.parseFloat(getComputedStyle(button.querySelector('.multitool__editorial-mark')).opacity),
+    previewOpacity: Number.parseFloat(getComputedStyle(button, '::before').opacity),
     pseudo: getComputedStyle(button, '::after').content,
   }));
   expect(activeAudit.background).toBe('rgba(0, 0, 0, 0)');
-  expect(activeAudit.decoration).toBe('underline');
+  expect(activeAudit.decoration).toBe('none');
+  expect(activeAudit.markOpacity).toBe(1);
+  expect(activeAudit.previewOpacity).toBeCloseTo(.68, 2);
   expect(activeAudit.pseudo).toBe('none');
 
   const scrollAudit = await page.evaluate(() => {

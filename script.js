@@ -65,6 +65,7 @@ const visualQATheme = queryParams.get('qa-theme');
 const visualQASystemTransparency = queryParams.get('qa-system-transparency');
 const visualQAMotion = queryParams.get('qa-motion');
 const visualQALogoView = queryParams.get('qa-logo-view');
+const visualQATickerPhase = queryParams.get('ticker-phase');
 const visualQADrag = queryParams.get('qa-drag');
 const visualQAFocus = queryParams.get('qa-focus');
 const visualQASafeArea = queryParams.get('qa-safe-area');
@@ -259,6 +260,9 @@ function applyAnalyticsConsent(value, { persist = false, dismiss = false } = {})
 if (['125', '150', '200'].includes(visualQATextScale)) root.dataset.qaText = visualQATextScale;
 if (visualQAContrast === 'more') root.dataset.qaContrast = 'more';
 if (visualQASafeArea === 'iphone') root.dataset.qaSafeArea = 'iphone';
+if (['start', 'middle', 'seam'].includes(visualQATickerPhase)) {
+  root.dataset.tickerPhase = visualQATickerPhase;
+}
 try {
   hasSavedTheme = ['light', 'dark'].includes(localStorage.getItem(themeStorageKey));
   hasSavedReducedMotion = localStorage.getItem(motionStorageKey) === 'true';
@@ -623,8 +627,7 @@ function setGalleryPresentation(visible) {
   syncContentPresence();
 
   if (visible) {
-    const targetIndex = galleryIndex;
-    requestAnimationFrame(() => scrollGalleryTo(targetIndex, { behavior: 'auto' }));
+    requestAnimationFrame(() => scrollGalleryTo(galleryIndex, { behavior: 'auto' }));
   }
 }
 

@@ -72,6 +72,8 @@ test('mobile reading order and module control semantics stay aligned', () => {
   const navPosition = index.indexOf('<nav class="multitool__main');
   const mediaPosition = index.indexOf('id="media-panel"');
   const partnersPosition = index.indexOf('id="partners-panel"');
+  const sectionsPosition = index.indexOf('class="multitool__sections"');
+  const descriptorPosition = index.indexOf('class="multitool__descriptor"');
   const editorialPosition = index.indexOf('class="multitool__editorial-row"');
   const contactsPosition = index.indexOf('class="multitool__contacts"');
   const footerPosition = index.indexOf('class="multitool__footer-surface ');
@@ -79,7 +81,9 @@ test('mobile reading order and module control semantics stay aligned', () => {
   const profilePosition = index.indexOf('id="profile-panel"');
   const practicePosition = index.indexOf('id="practice-panel"');
   assert.ok(multitoolPosition >= 0 && multitoolPosition < navPosition);
-  assert.ok(navPosition < editorialPosition);
+  assert.ok(navPosition < sectionsPosition);
+  assert.ok(sectionsPosition < descriptorPosition);
+  assert.ok(descriptorPosition < editorialPosition);
   assert.ok(editorialPosition < contactsPosition);
   assert.ok(contactsPosition < footerPosition);
   assert.ok(footerPosition < mediaPosition);
@@ -178,6 +182,8 @@ test('only the selected video variants remain and stay within their budgets', as
 test('reduced motion still removes decorative video and gallery movement', () => {
   assert.match(styles, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.stage-video\s*{[\s\S]*?display: none/);
   assert.match(styles, /html\[data-reduce-motion="true"\] \.stage-video\s*{[\s\S]*?display: none/);
+  assert.match(styles, /data-reduce-motion="true"\] \.multitool__descriptor-track\s*{[\s\S]*?animation: none/);
+  assert.match(styles, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.multitool__descriptor-track\s*{[\s\S]*?animation: none/);
   assert.match(styles, /data-reduce-motion="true"\] \.gallery-stage__slide\.is-current \.gallery-stage__image\s*{[\s\S]*?animation: none/);
 });
 
