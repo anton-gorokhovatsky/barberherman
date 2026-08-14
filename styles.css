@@ -1632,7 +1632,7 @@ html[data-ticker-phase="seam"] .multitool__descriptor-track {
   min-width: 0;
   grid-column: 1;
   grid-row: 2;
-  gap: 3px;
+  gap: clamp(6px, 1.5cqi, 8px);
   align-self: end;
 }
 
@@ -1713,17 +1713,17 @@ html[data-ticker-phase="seam"] .multitool__descriptor-track {
   content: none;
 }
 
-.multitool__editorial-row button:focus {
+.multitool__editorial-row button:focus-visible {
   background: transparent;
 }
 
-.multitool__editorial-row button:focus::before {
+.multitool__editorial-row button:focus-visible:not([data-panel-return-focus="true"])::before {
   filter: var(--editorial-filter-active);
   opacity: var(--editorial-opacity-active);
   transform: none;
 }
 
-.multitool__editorial-row [data-panel][aria-pressed="false"]:focus .multitool__editorial-mark {
+.multitool__editorial-row [data-panel][aria-pressed="false"]:focus-visible:not([data-panel-return-focus="true"]) .multitool__editorial-mark {
   opacity: 1;
   transform: translate3d(0, 0, 0) scale(1);
 }

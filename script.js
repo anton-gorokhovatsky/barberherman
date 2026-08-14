@@ -799,6 +799,7 @@ function setPanelState(name, visible, { returnFocus = false, animate = true } = 
   });
 
   if (!visible && returnFocus) {
+    button.dataset.panelReturnFocus = 'true';
     button.focus({ preventScroll: true });
     if (mobileQuery.matches) {
       requestAnimationFrame(() => button.scrollIntoView({
@@ -1900,7 +1901,11 @@ logoViewButtons.forEach((button) => {
 });
 
 sectionButtons.forEach((button) => {
+  button.addEventListener('blur', () => button.removeAttribute('data-panel-return-focus'));
+  button.addEventListener('pointerdown', () => button.removeAttribute('data-panel-return-focus'));
+  button.addEventListener('keydown', () => button.removeAttribute('data-panel-return-focus'));
   button.addEventListener('click', () => {
+    button.removeAttribute('data-panel-return-focus');
     const name = button.dataset.panel;
     const willShow = button.getAttribute('aria-pressed') !== 'true';
     if (willShow && mobileQuery.matches) closeAllPanels({ animate: false });

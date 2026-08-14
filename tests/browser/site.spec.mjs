@@ -867,6 +867,16 @@ test('gallery is a peer content panel with edge-to-edge imagery and keyboard nav
   await expect(page.locator('html')).toHaveAttribute('data-gallery-open', 'false');
   await expect(page.locator('html')).toHaveAttribute('data-menu-open', 'true');
   await expect(galleryButton).toBeFocused();
+  await expect(galleryButton).toHaveAttribute('data-panel-return-focus', 'true');
+  await expect.poll(() => galleryButton.locator('.multitool__editorial-mark').evaluate((mark) => (
+    Number.parseFloat(getComputedStyle(mark).opacity)
+  ))).toBe(0);
+  await expect.poll(() => galleryButton.evaluate((button) => (
+    Number.parseFloat(getComputedStyle(button, '::before').opacity)
+  ))).toBeCloseTo(.42, 2);
+
+  await page.keyboard.press('Tab');
+  await expect(galleryButton).not.toHaveAttribute('data-panel-return-focus');
 });
 
 test('main and editorial entries keep their intentional affordances and one mobile scroll flow', async ({ page }) => {
@@ -891,6 +901,11 @@ test('main and editorial entries keep their intentional affordances and one mobi
       live: rect('.multitool__live'),
       editorialGap: rect('[data-panel="music"]').x
         - (rect('[data-panel="gallery"]').x + rect('[data-panel="gallery"]').width),
+      editorialCopyGaps: [...document.querySelectorAll('.multitool__editorial-copy')].map((copy) => {
+        const labelBox = copy.querySelector('.multitool__section-label').getBoundingClientRect();
+        const metaBox = copy.querySelector('.multitool__editorial-meta').getBoundingClientRect();
+        return metaBox.top - labelBox.bottom;
+      }),
       affordances: [...document.querySelectorAll('[data-panel]')]
         .map((button) => getComputedStyle(button, '::after').content.replace(/^['"]|['"]$/g, '')),
       editorialMarks: [...document.querySelectorAll('.multitool__editorial-mark')].map((mark) => {
@@ -926,6 +941,11 @@ test('main and editorial entries keep their intentional affordances and one mobi
   expect(Math.abs(auditBeforeOpen.gallery.height - auditBeforeOpen.music.height)).toBeLessThanOrEqual(.5);
   expect(auditBeforeOpen.gallery.height).toBeGreaterThanOrEqual(95);
   expect(Math.abs(auditBeforeOpen.editorialGap)).toBeLessThanOrEqual(.01);
+  expect(auditBeforeOpen.editorialCopyGaps).toHaveLength(2);
+  for (const copyGap of auditBeforeOpen.editorialCopyGaps) {
+    expect(copyGap).toBeGreaterThanOrEqual(5.5);
+    expect(copyGap).toBeLessThanOrEqual(8.5);
+  }
   expect(auditBeforeOpen.affordances).toEqual(['+', '+', '+', '+', 'none', 'none']);
   expect(auditBeforeOpen.editorialMarks).toHaveLength(2);
   for (const mark of auditBeforeOpen.editorialMarks) {
