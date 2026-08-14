@@ -1689,8 +1689,9 @@ function enableMultitoolDragging() {
   window.addEventListener('pointerup', finishDrag);
   window.addEventListener('pointercancel', finishDrag);
 
-  multitoolDragHandle.addEventListener('dblclick', (event) => {
+  multitool.addEventListener('dblclick', (event) => {
     if (mobileQuery.matches) return;
+    if (event.target.closest('a, button:not(.multitool__drag-handle), input, select, textarea, [contenteditable="true"]')) return;
     resetMultitoolPosition({ announce: true });
     multitoolDragHandle.blur();
     event.preventDefault();

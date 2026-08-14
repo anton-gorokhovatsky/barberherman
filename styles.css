@@ -674,23 +674,15 @@ html[data-content-open="true"] .stage-overlay {
 
 .music-panel__tracks {
   display: grid;
-  max-height: clamp(210px, 34svh, 292px);
+  max-height: none;
   margin: 0 !important;
   padding-left: 0;
-  padding-right: 6px;
-  overflow-x: hidden;
-  overflow-y: auto;
+  padding-right: 0;
+  overflow: visible;
   border-top: var(--tool-rule);
   counter-reset: music-track;
   list-style: none;
-  overscroll-behavior-y: contain;
-  scrollbar-color: var(--tool-line) transparent;
-  scrollbar-width: thin;
-}
-
-.music-panel__tracks:focus-visible {
-  outline: 2px solid var(--focus);
-  outline-offset: -3px;
+  overscroll-behavior-y: auto;
 }
 
 .music-panel__tracks li {
@@ -1295,10 +1287,10 @@ html[data-theme="light"] .multitool__brand > img {
   max-width: min(34ch, calc(100% - 24px));
   margin: 0;
   padding: 9px 11px;
-  border: 1px solid color-mix(in srgb, var(--tool-border), white 16%);
-  border-radius: 3px;
-  background: color-mix(in srgb, var(--tool-solid), transparent 4%);
-  box-shadow: 0 12px 34px color-mix(in srgb, var(--page), transparent 62%);
+  border: 1px solid var(--tool-border);
+  border-radius: 4px;
+  background: var(--tool-background-open);
+  box-shadow: var(--tool-shadow-open);
   color: var(--tool-ink);
   font: 600 var(--type-caption)/1.25 var(--font);
   letter-spacing: -.01em;
@@ -1307,6 +1299,8 @@ html[data-theme="light"] .multitool__brand > img {
   transform: translateY(6px) scale(.985);
   transform-origin: right bottom;
   transition: opacity var(--motion-fast) linear, transform var(--motion-medium) var(--ease-out);
+  backdrop-filter: var(--tool-backdrop-open);
+  -webkit-backdrop-filter: var(--tool-backdrop-open);
 }
 
 .multitool__status.is-visible {
@@ -1406,31 +1400,32 @@ html[data-qa-text] .multitool__section-label {
 }
 
 .multitool__editorial-row {
-  display: flex;
+  display: grid;
   grid-column: 1 / -1;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: stretch;
-  gap: clamp(16px, 4vw, 36px);
-  padding-inline: calc(var(--floor-inline) - 10px);
   border-top: var(--tool-rule);
 }
 
 .multitool__editorial-row button {
-  min-width: clamp(116px, 22vw, 160px);
+  display: flex;
+  min-width: 0;
   min-height: var(--secondary-floor);
-  padding-inline: 10px;
+  align-items: center;
+  padding-inline: var(--floor-inline);
 }
 
 .multitool__editorial-row button:first-child {
-  border-right: 0;
+  justify-content: flex-end;
 }
 
-.multitool__editorial-row button + button {
-  border-left: 0;
+.multitool__editorial-row button:last-child {
+  justify-content: flex-start;
 }
 
 .multitool__editorial-row .multitool__section-label {
-  grid-row: 1 / -1;
   align-self: center;
+  padding-right: 0;
   font-size: clamp(1.0625rem, calc(.95rem + 1cqi), 1.35rem);
   font-weight: 620;
   letter-spacing: -.018em;
@@ -1446,11 +1441,13 @@ html[data-qa-text] .multitool__section-label {
   width: 24px;
   height: 24px;
   grid-column: 2;
-  grid-row: 1 / -1;
+  grid-row: 1;
   align-self: center;
   justify-self: end;
   place-items: center;
+  margin-inline: clamp(18px, 3.2vw, 28px);
   color: color-mix(in srgb, currentColor, transparent 28%);
+  pointer-events: none;
 }
 
 .multitool__editorial-mark svg {
@@ -1612,7 +1609,6 @@ html[data-presence-available="false"] .multitool__weather {
   justify-content: center;
   gap: 6px;
   padding: 12px var(--floor-inline);
-  border-right: var(--tool-rule);
   font: 640 clamp(.925rem, 1.5vw, 1.12rem)/1 var(--font);
   letter-spacing: -.015em;
 }
@@ -1632,6 +1628,7 @@ html[data-presence-available="false"] .multitool__weather {
   letter-spacing: -.015em;
 }
 
+.multitool__address + .multitool__icon-link,
 .multitool__icon-link + .multitool__icon-link,
 .analytics-settings,
 .motion-toggle,
@@ -2430,10 +2427,6 @@ html[data-theme="dark"] .theme-toggle__icon--light {
     text-underline-offset: .28em;
   }
 
-  .multitool__editorial-row button:hover .multitool__editorial-mark {
-    color: currentColor;
-  }
-
   .logo:hover img {
     transform: translateY(calc(var(--logo-shift-y) - 1px)) scale(var(--logo-scale));
   }
@@ -2574,10 +2567,6 @@ html[data-theme="dark"] .theme-toggle__icon--light {
 
   .music-release__head {
     grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr);
-  }
-
-  .music-panel__tracks {
-    max-height: clamp(220px, 36svh, 320px);
   }
 
   .multitool__service {
@@ -2759,14 +2748,6 @@ html[data-theme="dark"] .theme-toggle__icon--light {
     margin-top: 14px;
     padding-inline: 16px;
     font-size: .9rem;
-  }
-
-  .music-panel__tracks {
-    max-height: none;
-    padding-right: 0;
-    overflow: visible;
-    overscroll-behavior-y: auto;
-    scrollbar-width: auto;
   }
 
   .privacy-document {

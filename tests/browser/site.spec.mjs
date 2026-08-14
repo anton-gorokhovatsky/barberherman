@@ -71,6 +71,9 @@ test('reflow, common axes, focus and accessibility remain intact', async ({ page
     const practice = document.querySelector('[data-panel="practice"]');
     const gallery = document.querySelector('[data-panel="gallery"]');
     const music = document.querySelector('[data-panel="music"]');
+    const address = document.querySelector('.multitool__address');
+    const telegram = document.querySelector('.multitool__icon-link');
+    const weather = document.querySelector('.multitool__weather');
     const mainSurface = document.querySelector('.multitool__main');
     const contactSurface = document.querySelector('.multitool__contact-surface');
     const footerSurface = document.querySelector('.multitool__footer-surface');
@@ -115,6 +118,14 @@ test('reflow, common axes, focus and accessibility remain intact', async ({ page
         galleryBorderRight: Number.parseFloat(getComputedStyle(gallery).borderRightWidth),
         musicBorderLeft: Number.parseFloat(getComputedStyle(music).borderLeftWidth),
       },
+      contactSplit: {
+        addressRight: rect(address).right,
+        telegramLeft: rect(telegram).x,
+        weatherLeft: rect(weather).x,
+        addressBorderRight: Number.parseFloat(getComputedStyle(address).borderRightWidth),
+        telegramBorderLeft: Number.parseFloat(getComputedStyle(telegram).borderLeftWidth),
+        weatherBorderLeft: Number.parseFloat(getComputedStyle(weather).borderLeftWidth),
+      },
       primarySplit: {
         brandRight: rect(brand).right,
         bookingLeft: rect(booking).x,
@@ -140,10 +151,15 @@ test('reflow, common axes, focus and accessibility remain intact', async ({ page
   expect(audit.primarySplit.brandBorderRight).toBeGreaterThan(0);
   expect(audit.primarySplit.profileBorderRight).toBe(audit.primarySplit.brandBorderRight);
   expect(audit.primarySplit.practiceBorderLeft).toBe(0);
-  expect(audit.editorialGroup.display).toBe('flex');
+  expect(audit.editorialGroup.display).toBe('grid');
   expect(audit.editorialGroup.gap).toBeGreaterThanOrEqual(15);
   expect(audit.editorialGroup.galleryBorderRight).toBe(0);
   expect(audit.editorialGroup.musicBorderLeft).toBe(0);
+  expect(Math.abs(audit.contactSplit.addressRight - audit.contactSplit.telegramLeft)).toBeLessThanOrEqual(.01);
+  expect(Math.abs(audit.contactSplit.telegramLeft - audit.contactSplit.weatherLeft)).toBeLessThanOrEqual(.01);
+  expect(audit.contactSplit.addressBorderRight).toBe(0);
+  expect(audit.contactSplit.telegramBorderLeft).toBeGreaterThan(0);
+  expect(audit.contactSplit.telegramBorderLeft).toBe(audit.contactSplit.weatherBorderLeft);
 
   const { main, contact, footer } = audit.surfaces;
   for (const surface of [contact, footer]) {
@@ -192,6 +208,31 @@ test('analytics compound icon keeps one quiet modifier in the shared optical slo
     expect(audit.centerY).toBeLessThan(audit.viewBox.height / 2);
     expect(audit.areaRatio).toBeLessThanOrEqual(.25);
   }
+});
+
+test('status notices reuse the expanded interface material', async ({ page }) => {
+  await openReady(page);
+
+  await page.getByRole('button', { name: 'Включить тёмную тему', exact: true }).click();
+  const status = page.locator('.multitool__status');
+  await expect(status).toBeVisible();
+  await expect(status).toContainText('Тёмная тема включена');
+
+  await expect.poll(() => page.evaluate(() => {
+    const readMaterial = (element) => {
+      const style = getComputedStyle(element);
+      return JSON.stringify({
+        background: style.backgroundColor,
+        borderColor: style.borderTopColor,
+        borderRadius: style.borderRadius,
+        boxShadow: style.boxShadow,
+        backdropFilter: style.backdropFilter || style.webkitBackdropFilter,
+      });
+    };
+
+    return readMaterial(document.querySelector('.multitool__status'))
+      === readMaterial(document.querySelector('.multitool__contact-surface'));
+  })).toBe(true);
 });
 
 test('200% text and reduced motion preserve content and controls', async ({ page }) => {
@@ -494,6 +535,7 @@ test('main and editorial entries keep their intentional affordances and one mobi
           height: box.height,
           hidden: mark.getAttribute('aria-hidden'),
           symbol: mark.querySelector('use')?.getAttribute('href'),
+          color: getComputedStyle(mark).color,
         };
       }),
     };
@@ -503,7 +545,7 @@ test('main and editorial entries keep their intentional affordances and one mobi
   expect(auditBeforeOpen.gallery.height).toBeLessThan(auditBeforeOpen.profile.height);
   expect(auditBeforeOpen.editorialGap).toBeGreaterThanOrEqual(15);
   expect(auditBeforeOpen.affordances).toEqual(['+', '+', '+', '+', 'none', 'none']);
-  expect(auditBeforeOpen.editorialMarks).toHaveLength(2);
+  expect(auditBeforeOpen.editorialMarks).toHaveLength(1);
   for (const mark of auditBeforeOpen.editorialMarks) {
     expect(mark.hidden).toBe('true');
     expect(mark.symbol).toBe('#icon-hand-scissors');
@@ -519,12 +561,13 @@ test('main and editorial entries keep their intentional affordances and one mobi
     const hoverAudit = await musicButton.evaluate((button) => ({
       background: getComputedStyle(button).backgroundColor,
       decoration: getComputedStyle(button.querySelector('.multitool__section-label')).textDecorationLine,
-      markColor: getComputedStyle(button.querySelector('.multitool__editorial-mark')).color,
+      markColor: getComputedStyle(button.parentElement.querySelector('.multitool__editorial-mark')).color,
       textColor: getComputedStyle(button).color,
     }));
     expect(hoverAudit.background).toBe('rgba(0, 0, 0, 0)');
     expect(hoverAudit.decoration).toBe('underline');
-    expect(hoverAudit.markColor).toBe(hoverAudit.textColor);
+    expect(hoverAudit.markColor).toBe(auditBeforeOpen.editorialMarks[0].color);
+    expect(hoverAudit.markColor).not.toBe(hoverAudit.textColor);
   }
 
   await musicButton.click();
@@ -538,37 +581,43 @@ test('main and editorial entries keep their intentional affordances and one mobi
   expect(activeAudit.decoration).toBe('underline');
   expect(activeAudit.pseudo).toBe('none');
 
+  const scrollAudit = await page.evaluate(() => {
+    const panelScroll = document.querySelector('.text-block--music .text-block__scroll');
+    const trackLists = [...document.querySelectorAll('.music-panel__tracks')];
+    const panelStyle = getComputedStyle(panelScroll);
+    const trackStyles = trackLists.map((tracks) => getComputedStyle(tracks));
+    return {
+      panelOverflowY: panelStyle.overflowY,
+      panelMaxHeight: panelStyle.maxHeight,
+      panelClientHeight: panelScroll.clientHeight,
+      panelScrollHeight: panelScroll.scrollHeight,
+      tracksOverflowY: trackStyles.map((style) => style.overflowY),
+      tracksMaxHeight: trackStyles.map((style) => style.maxHeight),
+      tracksClientHeights: trackLists.map((tracks) => tracks.clientHeight),
+      tracksScrollHeights: trackLists.map((tracks) => tracks.scrollHeight),
+      trackTabIndices: trackLists.map((tracks) => tracks.tabIndex),
+      trackCount: trackLists.reduce((count, tracks) => count + tracks.querySelectorAll('li').length, 0),
+      documentCanScroll: document.documentElement.scrollHeight > window.innerHeight,
+      horizontalOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    };
+  });
+
+  expect(scrollAudit.tracksOverflowY).toEqual(['visible', 'visible']);
+  expect(scrollAudit.tracksMaxHeight).toEqual(['none', 'none']);
+  expect(scrollAudit.tracksClientHeights).toEqual(scrollAudit.tracksScrollHeights);
+  expect(scrollAudit.trackTabIndices).toEqual([-1, -1]);
+  expect(scrollAudit.trackCount).toBe(28);
+  expect(scrollAudit.horizontalOverflow).toBeLessThanOrEqual(0);
+
   if (isMobile) {
     await expect(page.locator('#music-panel')).toBeFocused();
-    const scrollAudit = await page.evaluate(() => {
-      const panelScroll = document.querySelector('.text-block--music .text-block__scroll');
-      const trackLists = [...document.querySelectorAll('.music-panel__tracks')];
-      const panelStyle = getComputedStyle(panelScroll);
-      const trackStyles = trackLists.map((tracks) => getComputedStyle(tracks));
-      return {
-        panelOverflowY: panelStyle.overflowY,
-        panelMaxHeight: panelStyle.maxHeight,
-        panelClientHeight: panelScroll.clientHeight,
-        panelScrollHeight: panelScroll.scrollHeight,
-        tracksOverflowY: trackStyles.map((style) => style.overflowY),
-        tracksMaxHeight: trackStyles.map((style) => style.maxHeight),
-        tracksClientHeights: trackLists.map((tracks) => tracks.clientHeight),
-        tracksScrollHeights: trackLists.map((tracks) => tracks.scrollHeight),
-        trackCount: trackLists.reduce((count, tracks) => count + tracks.querySelectorAll('li').length, 0),
-        documentCanScroll: document.documentElement.scrollHeight > window.innerHeight,
-        horizontalOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
-      };
-    });
-
     expect(scrollAudit.panelOverflowY).toBe('visible');
     expect(scrollAudit.panelMaxHeight).toBe('none');
     expect(scrollAudit.panelClientHeight).toBe(scrollAudit.panelScrollHeight);
-    expect(scrollAudit.tracksOverflowY).toEqual(['visible', 'visible']);
-    expect(scrollAudit.tracksMaxHeight).toEqual(['none', 'none']);
-    expect(scrollAudit.tracksClientHeights).toEqual(scrollAudit.tracksScrollHeights);
-    expect(scrollAudit.trackCount).toBe(28);
     expect(scrollAudit.documentCanScroll).toBe(true);
-    expect(scrollAudit.horizontalOverflow).toBeLessThanOrEqual(0);
+  } else {
+    expect(scrollAudit.panelOverflowY).toBe('auto');
+    expect(scrollAudit.panelScrollHeight).toBeGreaterThan(scrollAudit.panelClientHeight);
   }
 });
 
@@ -691,6 +740,20 @@ test('pointer dragging has elastic boundary feedback and settles inside the safe
   await page.mouse.up();
   await expect(menu).not.toHaveClass(/is-dragging/);
   await expect.poll(async () => (await menu.boundingBox()).x).toBeGreaterThanOrEqual(7.5);
+
+  const movedOffset = await menu.getAttribute('data-drag-x');
+  expect(movedOffset).not.toBe('0');
+  const resetSurface = page.locator('.multitool__legal-copy');
+  const resetSurfaceBox = await resetSurface.boundingBox();
+  expect(resetSurfaceBox).not.toBeNull();
+  await page.mouse.dblclick(resetSurfaceBox.x + 24, resetSurfaceBox.y + 24);
+  await expect(menu).toHaveAttribute('data-drag-x', '0');
+  await expect(menu).toHaveAttribute('data-drag-y', '0');
+  await expect(page.locator('.multitool__status')).toContainText('Меню возвращено в центр');
+  await expect.poll(async () => {
+    const centered = await menu.boundingBox();
+    return Math.abs(centered.x + centered.width / 2 - (await page.viewportSize()).width / 2);
+  }).toBeLessThanOrEqual(.5);
 
   await page.getByRole('button', { name: 'Профиль', exact: true }).click();
   const panel = page.locator('#profile-panel');
