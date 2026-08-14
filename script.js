@@ -21,6 +21,7 @@ const draggablePanels = [...document.querySelectorAll('.text-block, .gallery-sta
 const textScrollSurfaces = [...document.querySelectorAll('.text-block__scroll')];
 const logoImages = [...document.querySelectorAll('.logo img')];
 const musicCoverImages = [...document.querySelectorAll('[data-music-cover]')];
+const musicTrackTitles = [...document.querySelectorAll('.music-panel__track-title')];
 const onlineCountLabel = document.querySelector('[data-online-count]');
 const onlineUnitLabel = document.querySelector('[data-online-unit]');
 const weatherTemperatureLabel = document.querySelector('[data-weather-temperature]');
@@ -66,6 +67,7 @@ const visualQASystemTransparency = queryParams.get('qa-system-transparency');
 const visualQAMotion = queryParams.get('qa-motion');
 const visualQALogoView = queryParams.get('qa-logo-view');
 const visualQATickerPhase = queryParams.get('ticker-phase');
+const visualQATrackPhase = queryParams.get('track-phase');
 const visualQADrag = queryParams.get('qa-drag');
 const visualQAFocus = queryParams.get('qa-focus');
 const visualQASafeArea = queryParams.get('qa-safe-area');
@@ -263,6 +265,9 @@ if (visualQASafeArea === 'iphone') root.dataset.qaSafeArea = 'iphone';
 if (['start', 'middle', 'seam'].includes(visualQATickerPhase)) {
   root.dataset.tickerPhase = visualQATickerPhase;
 }
+if (['start', 'middle', 'end'].includes(visualQATrackPhase)) {
+  root.dataset.trackPhase = visualQATrackPhase;
+}
 try {
   hasSavedTheme = ['light', 'dark'].includes(localStorage.getItem(themeStorageKey));
   hasSavedReducedMotion = localStorage.getItem(motionStorageKey) === 'true';
@@ -355,6 +360,40 @@ function setMusicCoverState(image, state) {
 function syncMusicCoverImage(image) {
   if (!image.complete) return;
   setMusicCoverState(image, image.naturalWidth > 0 ? 'ready' : 'fallback');
+}
+
+function syncMusicTrackTitle(title, index = 0) {
+  const text = title.querySelector('.music-panel__track-title-text');
+  if (!text) return;
+
+  title.dataset.overflow = 'false';
+  title.removeAttribute('title');
+  title.style.removeProperty('--track-title-shift');
+  title.style.removeProperty('--track-title-middle-shift');
+  title.style.removeProperty('--track-title-duration');
+  title.style.removeProperty('--track-title-cycle');
+  title.style.removeProperty('--track-title-delay');
+
+  if (!title.clientWidth) return;
+
+  const overflow = Math.ceil(text.scrollWidth - title.clientWidth);
+  if (overflow <= 1) return;
+
+  const distance = overflow + 4;
+  const travelDuration = Math.min(5.5, Math.max(1.8, distance / 24));
+  const cycleDuration = Math.min(18, Math.max(11, travelDuration * 4.5));
+
+  title.dataset.overflow = 'true';
+  title.title = text.textContent.trim();
+  title.style.setProperty('--track-title-shift', `${-distance}px`);
+  title.style.setProperty('--track-title-middle-shift', `${-distance / 2}px`);
+  title.style.setProperty('--track-title-duration', `${travelDuration.toFixed(2)}s`);
+  title.style.setProperty('--track-title-cycle', `${cycleDuration.toFixed(2)}s`);
+  title.style.setProperty('--track-title-delay', `${(index % 6) * .8}s`);
+}
+
+function syncMusicTrackTitles() {
+  musicTrackTitles.forEach(syncMusicTrackTitle);
 }
 
 function syncTextScrollFade(scrollSurface) {
@@ -751,6 +790,7 @@ function setPanelState(name, visible, { returnFocus = false, animate = true } = 
       }
     }
     prepareLogoImages(panel);
+    if (name === 'music') requestAnimationFrame(syncMusicTrackTitles);
     if (panel.matches('.text-block, .gallery-stage, .catalog-panel')) bringPanelForward(panel);
   }
   syncContentPresence();
@@ -1922,6 +1962,13 @@ musicCoverImages.forEach((image) => {
   image.addEventListener('error', () => setMusicCoverState(image, 'fallback'));
   syncMusicCoverImage(image);
 });
+const musicTrackTitleObserver = typeof ResizeObserver === 'function'
+  ? new ResizeObserver((entries) => {
+      entries.forEach(({ target }) => syncMusicTrackTitle(target, musicTrackTitles.indexOf(target)));
+    })
+  : null;
+musicTrackTitles.forEach((title) => musicTrackTitleObserver?.observe(title));
+document.fonts?.ready?.then(() => requestAnimationFrame(syncMusicTrackTitles));
 textScrollSurfaces.forEach((scrollSurface) => {
   scrollSurface.addEventListener('scroll', () => syncTextScrollFade(scrollSurface), { passive: true });
   requestAnimationFrame(() => syncTextScrollFade(scrollSurface));
@@ -1985,6 +2032,7 @@ window.addEventListener('resize', () => requestAnimationFrame(() => {
   clampCurrentMultitoolPosition();
   if (panelIsOpen('gallery')) scrollGalleryTo(galleryIndex, { behavior: 'auto' });
   textScrollSurfaces.forEach(syncTextScrollFade);
+  syncMusicTrackTitles();
   draggablePanels.forEach((panel) => {
     if (panel.hidden) return;
     const offset = panelOffset(panel);

@@ -184,7 +184,19 @@ test('reduced motion still removes decorative video and gallery movement', () =>
   assert.match(styles, /html\[data-reduce-motion="true"\] \.stage-video\s*{[\s\S]*?display: none/);
   assert.match(styles, /data-reduce-motion="true"\] \.multitool__descriptor-track\s*{[\s\S]*?animation: none/);
   assert.match(styles, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.multitool__descriptor-track\s*{[\s\S]*?animation: none/);
+  assert.match(styles, /data-reduce-motion="true"\] \.music-panel__track-title-text\s*{[\s\S]*?animation: none !important/);
+  assert.match(styles, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.music-panel__track-title-text\s*{[\s\S]*?animation: none !important/);
   assert.match(styles, /data-reduce-motion="true"\] \.gallery-stage__slide\.is-current \.gallery-stage__image\s*{[\s\S]*?animation: none/);
+});
+
+test('playlist title motion and the compact descriptor keep one shared structure', () => {
+  assert.equal([...index.matchAll(/class="music-panel__track-title"/g)].length, 28);
+  assert.equal([...index.matchAll(/class="music-panel__track-title-text"/g)].length, 28);
+  assert.equal([...index.matchAll(/class="multitool__descriptor multitool__descriptor--compact"/g)].length, 1);
+  assert.match(script, /const visualQATrackPhase = queryParams\.get\('track-phase'\)/);
+  assert.match(script, /title\.dataset\.overflow = 'true'/);
+  assert.match(styles, /@keyframes music-track-title-cycle/);
+  assert.match(styles, /html\[data-menu-open="false"\] \.multitool__descriptor--compact\s*{[\s\S]*?display: block/);
 });
 
 test('presence identity is shared across tabs rather than stored per tab', () => {

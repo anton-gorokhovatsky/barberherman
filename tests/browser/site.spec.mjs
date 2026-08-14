@@ -13,8 +13,17 @@ const baseQuery = [
 async function openReady(page, path = `/?${baseQuery}`) {
   const response = await page.goto(path, { waitUntil: 'domcontentloaded' });
   expect(response?.ok()).toBeTruthy();
+  const root = page.locator('html');
+  const params = new URL(path, 'http://127.0.0.1').searchParams;
   if (await page.locator('script[src*="script.js"]').count()) {
-    await expect(page.locator('html')).toHaveAttribute('data-reduce-motion', /^(?:true|false)$/);
+    await expect(root).toHaveAttribute('data-reduce-motion', /^(?:true|false)$/);
+    const theme = params.get('qa-theme');
+    if (theme === 'light' || theme === 'dark') await expect(root).toHaveAttribute('data-theme', theme);
+    if (params.get('qa-contrast') === 'more') await expect(root).toHaveAttribute('data-qa-contrast', 'more');
+    if (params.get('qa-menu') === 'compact') await expect(root).toHaveAttribute('data-menu-open', 'false');
+    if (Number.isFinite(Number.parseInt(params.get('qa-online') || '', 10))) {
+      await expect(root).toHaveAttribute('data-presence-available', 'true');
+    }
   }
   await page.evaluate(() => document.fonts.ready);
 }
@@ -93,6 +102,18 @@ test('reflow, common axes, focus and accessibility remain intact', async ({ page
         centerDelta: contentCenter - (cellBox.y + cellBox.height / 2),
       };
     };
+    const descriptorCenter = (selector) => {
+      const descriptor = document.querySelector(selector);
+      const copy = descriptor.querySelector('.multitool__descriptor-track span');
+      const descriptorBox = descriptor.getBoundingClientRect();
+      const range = document.createRange();
+      range.selectNodeContents(copy);
+      const textBox = range.getBoundingClientRect();
+      return {
+        height: descriptorBox.height,
+        textCenterDelta: (textBox.top + textBox.bottom - descriptorBox.top - descriptorBox.bottom) / 2,
+      };
+    };
     return {
       innerWidth,
       scrollWidth: document.documentElement.scrollWidth,
@@ -101,6 +122,7 @@ test('reflow, common axes, focus and accessibility remain intact', async ({ page
       contact: rect(document.querySelector('.multitool__contacts')),
       live: rect(document.querySelector('.multitool__live')),
       liveCells: [liveCell('.multitool__presence'), liveCell('.multitool__weather')],
+      descriptor: descriptorCenter('.multitool__drawer .multitool__descriptor'),
       privacy: rect(document.querySelector('.multitool__privacy-link')),
       credit: rect(document.querySelector('.multitool__meta')),
       service: rect(service),
@@ -146,6 +168,9 @@ test('reflow, common axes, focus and accessibility remain intact', async ({ page
   expect(audit.live.height).toBeLessThanOrEqual(audit.innerWidth <= 480 ? 73 : 53);
   expect(Math.abs(audit.liveCells[0].height - audit.liveCells[1].height)).toBeLessThanOrEqual(.5);
   for (const cell of audit.liveCells) expect(Math.abs(cell.centerDelta)).toBeLessThanOrEqual(.75);
+  expect(audit.descriptor.height).toBeGreaterThanOrEqual(29.5);
+  expect(audit.descriptor.height).toBeLessThanOrEqual(34.1);
+  expect(Math.abs(audit.descriptor.textCenterDelta)).toBeLessThanOrEqual(1);
   expect(audit.controls.filter(({ width, height }) => width < 44 || height < 44)).toEqual([]);
   expect(Math.abs(audit.primarySplit.brandRight - audit.primarySplit.bookingLeft)).toBeLessThanOrEqual(.01);
   expect(Math.abs(audit.primarySplit.brandRight - audit.primarySplit.profileRight)).toBeLessThanOrEqual(.01);
@@ -261,7 +286,7 @@ test('200% text and reduced motion preserve content and controls', async ({ page
           heightDelta: element.scrollHeight - element.clientHeight,
         }))
         .filter(({ widthDelta, heightDelta }) => widthDelta > 1 || heightDelta > 3),
-      tickerAnimation: getComputedStyle(document.querySelector('.multitool__descriptor-track')).animationName,
+      tickerAnimation: getComputedStyle(document.querySelector('.multitool__drawer .multitool__descriptor-track')).animationName,
       videos: [...document.querySelectorAll('.stage-video')].map((video) => ({
         display: getComputedStyle(video).display,
         src: video.getAttribute('src'),
@@ -300,7 +325,7 @@ test('full motion selects one inline muted video and autoplay remains available'
   await expect(activeVideo).toHaveAttribute('poster', /assets\/hero(?:-mobile)?\.jpg/);
   await expect(activeVideo).toHaveAttribute('src', isMobile ? /hero-mobile\.mp4/ : /hero-desktop-v2\.mp4/);
   await expect(page.locator(inactiveSelector)).not.toHaveAttribute('src', /.+/);
-  await expect.poll(() => page.locator('.multitool__descriptor-track')
+  await expect.poll(() => page.locator('.multitool__drawer .multitool__descriptor-track')
     .evaluate((element) => getComputedStyle(element).animationName)).toBe('descriptor-ticker');
   await page.waitForFunction((selector) => {
     const video = document.querySelector(selector);
@@ -310,10 +335,13 @@ test('full motion selects one inline muted video and autoplay remains available'
 
 test('the editorial ticker exposes deterministic start, middle and seam phases', async ({ page }) => {
   const translations = {};
+  await openReady(page, '/?qa-theme=light&qa-motion=full&qa-analytics=denied&ticker-phase=start');
 
   for (const phase of ['start', 'middle', 'seam']) {
-    await openReady(page, `/?qa-theme=light&qa-motion=full&qa-analytics=denied&ticker-phase=${phase}`);
-    translations[phase] = await page.locator('.multitool__descriptor-track').evaluate((track) => {
+    await page.evaluate((value) => {
+      document.documentElement.dataset.tickerPhase = value;
+    }, phase);
+    translations[phase] = await page.locator('.multitool__drawer .multitool__descriptor-track').evaluate((track) => {
       const matrix = new DOMMatrixReadOnly(getComputedStyle(track).transform);
       const copies = [...track.children].map((copy) => copy.textContent);
       return {
@@ -322,7 +350,7 @@ test('the editorial ticker exposes deterministic start, middle and seam phases',
         tx: matrix.m41,
         width: track.getBoundingClientRect().width,
         copies,
-        semanticText: document.querySelector('.multitool__descriptor > .sr-only')?.textContent,
+        semanticText: document.querySelector('.multitool__drawer .multitool__descriptor > .sr-only')?.textContent,
       };
     });
   }
@@ -339,9 +367,121 @@ test('the editorial ticker exposes deterministic start, middle and seam phases',
   expect(Math.abs(translations.seam.tx + translations.seam.width * .3332)).toBeLessThanOrEqual(1);
 });
 
+test('the collapsed mobile menu retains the centered editorial descriptor', async ({ page }) => {
+  const viewport = await page.viewportSize();
+  test.skip(viewport.width > 900, 'The collapsed menu is a mobile composition.');
+
+  await openReady(page, '/?qa-menu=compact&qa-theme=light&qa-motion=reduce&qa-analytics=denied&ticker-phase=start');
+  const compact = page.locator('.multitool__descriptor--compact');
+  await expect(compact).toBeVisible();
+  await expect(page.locator('.multitool__drawer')).toBeHidden();
+
+  const audit = await compact.evaluate((descriptor) => {
+    const copy = descriptor.querySelector('.multitool__descriptor-track span');
+    const range = document.createRange();
+    range.selectNodeContents(copy);
+    const descriptorBox = descriptor.getBoundingClientRect();
+    const textBox = range.getBoundingClientRect();
+    return {
+      height: descriptorBox.height,
+      textCenterDelta: (textBox.top + textBox.bottom - descriptorBox.top - descriptorBox.bottom) / 2,
+      copies: descriptor.querySelectorAll('.multitool__descriptor-track span').length,
+      semanticText: descriptor.querySelector(':scope > .sr-only')?.textContent,
+      trackAnimation: getComputedStyle(descriptor.querySelector('.multitool__descriptor-track')).animationName,
+      mainHeight: document.querySelector('.multitool__main').getBoundingClientRect().height,
+      primaryHeight: document.querySelector('.multitool__primary').getBoundingClientRect().height,
+      overflow: document.documentElement.scrollWidth - innerWidth,
+    };
+  });
+
+  expect(audit.height).toBeCloseTo(28, 1);
+  expect(Math.abs(audit.textCenterDelta)).toBeLessThanOrEqual(1);
+  expect(audit.copies).toBe(3);
+  expect(audit.semanticText).toBe('Мужской стилист, барбер, эксперт по мужскому уходу');
+  expect(audit.trackAnimation).toBe('none');
+  expect(Math.abs(audit.mainHeight - audit.primaryHeight - audit.height)).toBeLessThanOrEqual(2);
+  expect(audit.overflow).toBeLessThanOrEqual(0);
+});
+
+test('an overflowing track title reveals its full ending without becoming a second scroll area', async ({ page }) => {
+  const viewport = await page.viewportSize();
+  test.skip(viewport.width > 430, 'The title fits without movement at wider sizes.');
+  await page.setViewportSize({ width: 320, height: 900 });
+
+  await openReady(page, '/?qa-panels=music&qa-theme=light&qa-motion=full&qa-analytics=denied');
+  const title = page.locator('.music-panel__track-title').filter({ hasText: 'Fatnis Island' });
+  await expect(title).toHaveAttribute('data-overflow', 'true');
+
+  await title.hover();
+  const travel = await title.locator('.music-panel__track-title-text').evaluate((text) => (
+    text.getAnimations().map((animation) => ({
+      delay: animation.effect.getTiming().delay,
+      duration: animation.effect.getTiming().duration,
+      property: animation.transitionProperty,
+      transforms: animation.effect.getKeyframes().map((frame) => {
+        const matrix = new DOMMatrixReadOnly(frame.transform || 'none');
+        return matrix.m41;
+      }),
+    }))
+  ));
+  const transformTravel = travel.find(({ property }) => property === 'transform');
+  expect(transformTravel?.delay).toBe(350);
+  expect(transformTravel?.duration).toBeGreaterThanOrEqual(1800);
+  expect(transformTravel?.transforms.at(0)).toBeCloseTo(0, 1);
+  expect(transformTravel?.transforms.at(-1)).toBeLessThan(0);
+
+  const phases = {};
+  for (const phase of ['start', 'middle', 'end']) {
+    await page.evaluate((value) => {
+      document.documentElement.dataset.trackPhase = value;
+    }, phase);
+    phases[phase] = await title.evaluate((element) => {
+      const text = element.querySelector('.music-panel__track-title-text');
+      const matrix = new DOMMatrixReadOnly(getComputedStyle(text).transform);
+      return {
+        animation: getComputedStyle(text).animationName,
+        clientWidth: element.clientWidth,
+        fullText: element.textContent,
+        scrollWidth: text.scrollWidth,
+        shift: Number.parseFloat(getComputedStyle(element).getPropertyValue('--track-title-shift')),
+        middleShift: Number.parseFloat(getComputedStyle(element).getPropertyValue('--track-title-middle-shift')),
+        title: element.title,
+        tx: matrix.m41,
+      };
+    });
+  }
+
+  expect(phases.start.scrollWidth).toBeGreaterThan(phases.start.clientWidth);
+  expect(phases.start.fullText).toBe('Fatnis Island (feat. Menna Hussein)');
+  expect(phases.start.title).toBe(phases.start.fullText);
+  expect(phases.start.animation).toBe('none');
+  expect(Math.abs(phases.start.tx)).toBeLessThanOrEqual(.01);
+  expect(phases.middle.tx).toBeCloseTo(phases.middle.middleShift, 1);
+  expect(phases.end.tx).toBeCloseTo(phases.end.shift, 1);
+
+  await openReady(page, '/?qa-panels=music&qa-theme=light&qa-motion=reduce&qa-analytics=denied&track-phase=end');
+  const reducedTitle = page.locator('.music-panel__track-title').filter({ hasText: 'Fatnis Island' });
+  await expect(reducedTitle).toHaveAttribute('data-overflow', 'true');
+  const reduced = await reducedTitle.evaluate((element) => {
+    const text = element.querySelector('.music-panel__track-title-text');
+    const matrix = new DOMMatrixReadOnly(getComputedStyle(text).transform);
+    return {
+      animation: getComputedStyle(text).animationName,
+      transition: getComputedStyle(text).transitionDuration,
+      tx: matrix.m41,
+    };
+  });
+  expect(reduced.animation).toBe('none');
+  expect(reduced.transition).toBe('0s');
+  expect(Math.abs(reduced.tx)).toBeLessThanOrEqual(.01);
+});
+
 test('editorial imagery stays secondary in increased contrast', async ({ page }) => {
   for (const theme of ['light', 'dark']) {
     await openReady(page, `/?qa-theme=${theme}&qa-motion=reduce&qa-analytics=denied&qa-contrast=more`);
+    await expect.poll(() => page.locator('.multitool__editorial-row button').evaluateAll((buttons) => (
+      buttons.map((button) => Number.parseFloat(getComputedStyle(button, '::before').opacity))
+    ))).toEqual([.12, .12]);
     const audit = await page.evaluate(() => ({
       theme: document.documentElement.dataset.theme,
       overflow: document.documentElement.scrollWidth - innerWidth,
@@ -393,18 +533,44 @@ test('the editorial hand settles without a horizontal jump', async ({ page }) =>
   expect(start.transitionProperty).toContain('transform');
   expect(start.transitionDuration).toBe('0.22s, 0.22s');
 
-  await musicButton.focus();
-  await page.waitForTimeout(70);
-  const middle = await readMotion();
-  expect(middle.opacity).toBeGreaterThan(0);
-  expect(middle.opacity).toBeLessThan(1);
-  expect(Math.abs(middle.x)).toBeLessThanOrEqual(.01);
-  expect(middle.y).toBeGreaterThanOrEqual(0);
-  expect(middle.y).toBeLessThan(2);
-  expect(middle.scaleX).toBeGreaterThan(.96);
-  expect(middle.scaleX).toBeLessThan(1);
+  const transitions = await musicButton.evaluate((button) => {
+    const element = button.querySelector('.multitool__editorial-mark');
+    button.focus();
+    getComputedStyle(element).opacity;
+    return element.getAnimations().map((animation) => ({
+      property: animation.transitionProperty,
+      duration: animation.effect.getTiming().duration,
+      frames: animation.effect.getKeyframes().map((frame) => {
+        const matrix = new DOMMatrixReadOnly(frame.transform || 'none');
+        return {
+          opacity: frame.opacity === undefined ? null : Number.parseFloat(frame.opacity),
+          scaleX: matrix.a,
+          scaleY: matrix.d,
+          x: matrix.e,
+          y: matrix.f,
+        };
+      }),
+    }));
+  });
 
-  await page.waitForTimeout(190);
+  const opacityTransition = transitions.find(({ property }) => property === 'opacity');
+  const transformTransition = transitions.find(({ property }) => property === 'transform');
+  expect(opacityTransition?.duration).toBe(220);
+  expect(opacityTransition?.frames.at(0).opacity).toBe(0);
+  expect(opacityTransition?.frames.at(-1).opacity).toBe(1);
+  expect(transformTransition?.duration).toBe(220);
+  expect(transformTransition?.frames).toHaveLength(2);
+  for (const frame of transformTransition.frames) {
+    expect(Math.abs(frame.x)).toBeLessThanOrEqual(.01);
+  }
+  expect(transformTransition.frames[0].y).toBeCloseTo(2, 1);
+  expect(transformTransition.frames[0].scaleX).toBeCloseTo(.96, 2);
+  expect(transformTransition.frames[0].scaleY).toBeCloseTo(.96, 2);
+  expect(Math.abs(transformTransition.frames[1].y)).toBeLessThanOrEqual(.01);
+  expect(transformTransition.frames[1].scaleX).toBeCloseTo(1, 2);
+  expect(transformTransition.frames[1].scaleY).toBeCloseTo(1, 2);
+
+  await expect.poll(async () => (await readMotion()).opacity).toBe(1);
   const end = await readMotion();
   expect(end.opacity).toBe(1);
   expect(Math.abs(end.x)).toBeLessThanOrEqual(.01);
@@ -650,9 +816,17 @@ test('main and editorial entries keep their intentional affordances and one mobi
         .map((button) => getComputedStyle(button, '::after').content.replace(/^['"]|['"]$/g, '')),
       editorialMarks: [...document.querySelectorAll('.multitool__editorial-mark')].map((mark) => {
         const box = mark.getBoundingClientRect();
+        const buttonBox = mark.closest('button').getBoundingClientRect();
+        const copyBox = mark.closest('button').querySelector('.multitool__editorial-copy').getBoundingClientRect();
         return {
+          top: box.top,
+          right: box.right,
+          bottom: box.bottom,
           width: box.width,
           height: box.height,
+          buttonTop: buttonBox.top,
+          buttonRight: buttonBox.right,
+          copyTop: copyBox.top,
           hidden: mark.getAttribute('aria-hidden'),
           symbol: mark.querySelector('use')?.getAttribute('href'),
           color: getComputedStyle(mark).color,
@@ -680,6 +854,9 @@ test('main and editorial entries keep their intentional affordances and one mobi
     expect(mark.symbol).toBe('#icon-hand-scissors');
     expect(Math.abs(mark.width - mark.height)).toBeLessThanOrEqual(.01);
     expect(mark.width).toBeGreaterThanOrEqual(20);
+    expect(mark.top - mark.buttonTop).toBeGreaterThanOrEqual(12);
+    expect(mark.buttonRight - mark.right).toBeGreaterThanOrEqual(12);
+    expect(mark.bottom).toBeLessThanOrEqual(mark.copyTop - 4);
     expect(mark.opacity).toBe(0);
   }
   expect(auditBeforeOpen.editorialPreviews).toHaveLength(2);
@@ -721,16 +898,22 @@ test('main and editorial entries keep their intentional affordances and one mobi
 
   await musicButton.click();
   await expect(page.locator('#music-panel')).toBeVisible();
+  await expect.poll(() => page.locator('.multitool__editorial-mark').evaluateAll((marks) => (
+    marks.map((mark) => Number.parseFloat(getComputedStyle(mark).opacity))
+  ))).toEqual([0, 0]);
   const activeAudit = await musicButton.evaluate((button) => ({
     background: getComputedStyle(button).backgroundColor,
     decoration: getComputedStyle(button.querySelector('.multitool__section-label')).textDecorationLine,
     markOpacity: Number.parseFloat(getComputedStyle(button.querySelector('.multitool__editorial-mark')).opacity),
     previewOpacity: Number.parseFloat(getComputedStyle(button, '::before').opacity),
     pseudo: getComputedStyle(button, '::after').content,
+    rowMarkOpacities: [...button.closest('.multitool__editorial-row').querySelectorAll('.multitool__editorial-mark')]
+      .map((mark) => Number.parseFloat(getComputedStyle(mark).opacity)),
   }));
   expect(activeAudit.background).toBe('rgba(0, 0, 0, 0)');
   expect(activeAudit.decoration).toBe('none');
-  expect(activeAudit.markOpacity).toBe(1);
+  expect(activeAudit.markOpacity).toBe(0);
+  expect(activeAudit.rowMarkOpacities).toEqual([0, 0]);
   expect(activeAudit.previewOpacity).toBeCloseTo(.68, 2);
   expect(activeAudit.pseudo).toBe('none');
 
