@@ -17,7 +17,7 @@ const sectionButtons = [...document.querySelectorAll('[data-panel]')];
 const panelCloseButtons = [...document.querySelectorAll('[data-close-panel]')];
 const showcase = document.querySelector('.showcase');
 const glassSurfaces = [...document.querySelectorAll('.glass-surface')];
-const draggablePanels = [...document.querySelectorAll('.text-block, .gallery-stage')];
+const draggablePanels = [...document.querySelectorAll('.text-block, .gallery-stage, .catalog-panel')];
 const textScrollSurfaces = [...document.querySelectorAll('.text-block__scroll')];
 const logoImages = [...document.querySelectorAll('.logo img')];
 const musicCoverImages = [...document.querySelectorAll('[data-music-cover]')];
@@ -65,7 +65,6 @@ const visualQATheme = queryParams.get('qa-theme');
 const visualQASystemTransparency = queryParams.get('qa-system-transparency');
 const visualQAMotion = queryParams.get('qa-motion');
 const visualQALogoView = queryParams.get('qa-logo-view');
-const visualQATickerPhase = queryParams.get('ticker-phase');
 const visualQADrag = queryParams.get('qa-drag');
 const visualQAFocus = queryParams.get('qa-focus');
 const visualQASafeArea = queryParams.get('qa-safe-area');
@@ -260,10 +259,6 @@ function applyAnalyticsConsent(value, { persist = false, dismiss = false } = {})
 if (['125', '150', '200'].includes(visualQATextScale)) root.dataset.qaText = visualQATextScale;
 if (visualQAContrast === 'more') root.dataset.qaContrast = 'more';
 if (visualQASafeArea === 'iphone') root.dataset.qaSafeArea = 'iphone';
-if (['start', 'middle', 'seam'].includes(visualQATickerPhase)) {
-  root.dataset.tickerPhase = visualQATickerPhase;
-}
-
 try {
   hasSavedTheme = ['light', 'dark'].includes(localStorage.getItem(themeStorageKey));
   hasSavedReducedMotion = localStorage.getItem(motionStorageKey) === 'true';
@@ -440,7 +435,7 @@ function animatePanelVisibility(panel, visible, { animate = true } = {}) {
     return;
   }
 
-  if (visible && panel.matches('.text-block, .gallery-stage') && !mobileQuery.matches) {
+  if (visible && panel.matches('.text-block, .gallery-stage, .catalog-panel') && !mobileQuery.matches) {
     const offset = panelOffset(panel);
     setPanelOffset(panel, offset.x, offset.y);
   }
@@ -597,7 +592,7 @@ function setMenuOpen(open, { animate = true, force = false, focusToggle = true }
   }
   placeMenuToggle(nextOpen);
 
-  ['profile', 'practice', 'gallery', 'music'].forEach((name) => {
+  Object.keys(contentPanels).forEach((name) => {
     if (panelIsOpen(name)) animatePanelVisibility(contentPanels[name], nextOpen, { animate });
   });
   syncContentPresence();
@@ -618,7 +613,7 @@ function setMenuOpen(open, { animate = true, force = false, focusToggle = true }
 }
 
 function syncContentPresence() {
-  const hasVisibleContent = menuOpen && ['profile', 'practice', 'gallery', 'music'].some(panelIsOpen);
+  const hasVisibleContent = menuOpen && Object.keys(contentPanels).some(panelIsOpen);
   showcase?.classList.toggle('has-content', hasVisibleContent);
   root.dataset.contentOpen = String(hasVisibleContent);
 }
@@ -753,7 +748,7 @@ function setPanelState(name, visible, { returnFocus = false, animate = true } = 
       }
     }
     prepareLogoImages(panel);
-    if (panel.matches('.text-block, .gallery-stage')) bringPanelForward(panel);
+    if (panel.matches('.text-block, .gallery-stage, .catalog-panel')) bringPanelForward(panel);
   }
   syncContentPresence();
   requestAnimationFrame(() => {
@@ -841,7 +836,7 @@ function applyVisualQADragState() {
     ? contentPanels[visualQADrag]
     : null;
   const surface = visualQADrag === 'menu' ? multitool : requestedPanel;
-  if (!surface || surface.hidden || !surface.matches('.multitool, .text-block, .gallery-stage')) return;
+  if (!surface || surface.hidden || !surface.matches('.multitool, .text-block, .gallery-stage, .catalog-panel')) return;
 
   surface.style.setProperty('--glass-x', '42%');
   surface.style.setProperty('--glass-y', '18%');
@@ -1286,8 +1281,8 @@ function lockVideoPhaseForVisualQA() {
 
 async function focusVisualQASection() {
   const selectorBySection = {
-    media: '.multitool__catalog[aria-labelledby="media-title"]',
-    partners: '.multitool__catalog[aria-labelledby="partners-title"]',
+    media: '.catalog-panel[aria-labelledby="media-title"]',
+    partners: '.catalog-panel[aria-labelledby="partners-title"]',
     gallery: '.gallery-stage',
     profile: '.text-block--profile',
     practice: '.text-block--practice',
@@ -1426,7 +1421,7 @@ function resetPanelPosition(panel) {
 }
 
 function enablePanelDragging(panel) {
-  const handle = panel.querySelector('.text-block__drag-handle, .gallery-stage__drag-handle');
+  const handle = panel.querySelector('.text-block__drag-handle, .gallery-stage__drag-handle, .catalog-panel__drag-handle');
   if (!handle) return;
 
   let dragState = null;
@@ -1434,7 +1429,7 @@ function enablePanelDragging(panel) {
   panel.addEventListener('pointerdown', (event) => {
     if (mobileQuery.matches || event.button !== 0) return;
     if (event.target.closest('.gallery-stage__track')) return;
-    if (event.target.closest('a, button:not(.text-block__drag-handle):not(.gallery-stage__drag-handle), input, select, textarea, [contenteditable="true"]')) return;
+    if (event.target.closest('a, button:not(.text-block__drag-handle):not(.gallery-stage__drag-handle):not(.catalog-panel__drag-handle), input, select, textarea, [contenteditable="true"]')) return;
 
     const scrollSurface = event.target.closest('.text-block__scroll');
     if (scrollSurface && event.clientX > scrollSurface.getBoundingClientRect().right - 18) return;
@@ -1605,7 +1600,7 @@ function syncPanelDragAvailability() {
   const isAvailable = !mobileQuery.matches;
 
   draggablePanels.forEach((panel) => {
-    const handle = panel.querySelector('.text-block__drag-handle, .gallery-stage__drag-handle');
+    const handle = panel.querySelector('.text-block__drag-handle, .gallery-stage__drag-handle, .catalog-panel__drag-handle');
     if (!handle) return;
 
     handle.disabled = !isAvailable;

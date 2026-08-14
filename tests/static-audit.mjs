@@ -68,19 +68,30 @@ test('the skip link is the first interactive control on every public HTML page',
 });
 
 test('mobile reading order and module control semantics stay aligned', () => {
-  const navPosition = index.indexOf('<nav class="multitool');
+  const multitoolPosition = index.indexOf('class="multitool is-open"');
+  const navPosition = index.indexOf('<nav class="multitool__main');
   const mediaPosition = index.indexOf('id="media-panel"');
   const partnersPosition = index.indexOf('id="partners-panel"');
   const editorialPosition = index.indexOf('class="multitool__editorial-row"');
   const contactsPosition = index.indexOf('class="multitool__contacts"');
+  const footerPosition = index.indexOf('class="multitool__footer-surface ');
+  const galleryPosition = index.indexOf('id="gallery-panel"');
   const profilePosition = index.indexOf('id="profile-panel"');
   const practicePosition = index.indexOf('id="practice-panel"');
-  assert.ok(navPosition >= 0 && navPosition < profilePosition);
-  assert.ok(navPosition < mediaPosition);
-  assert.ok(mediaPosition < partnersPosition);
-  assert.ok(partnersPosition < editorialPosition);
+  assert.ok(multitoolPosition >= 0 && multitoolPosition < navPosition);
+  assert.ok(navPosition < editorialPosition);
   assert.ok(editorialPosition < contactsPosition);
+  assert.ok(contactsPosition < footerPosition);
+  assert.ok(footerPosition < mediaPosition);
+  assert.ok(mediaPosition < partnersPosition);
+  assert.ok(partnersPosition < galleryPosition);
+  assert.ok(galleryPosition < profilePosition);
   assert.ok(profilePosition < practicePosition);
+
+  const drawerMarkup = index.slice(index.indexOf('id="multitool-drawer"'), index.indexOf('</nav>', navPosition));
+  assert.doesNotMatch(drawerMarkup, /id="(?:media|partners)-panel"/);
+  assert.match(index, /class="catalog-panel glass-surface glass-surface--expanded" id="media-panel"/);
+  assert.match(index, /class="catalog-panel glass-surface glass-surface--expanded" id="partners-panel"/);
 
   const panelButtons = [...index.matchAll(/<button type="button" data-panel="[^"]+"[^>]*>/g)].map((match) => match[0]);
   assert.equal(panelButtons.length, 6);
@@ -164,10 +175,9 @@ test('only the selected video variants remain and stay within their budgets', as
   assert.ok(mobile.size <= 2_300_000, `mobile video is ${mobile.size} bytes`);
 });
 
-test('reduced motion still removes decorative video and ticker movement', () => {
+test('reduced motion still removes decorative video and gallery movement', () => {
   assert.match(styles, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.stage-video\s*{[\s\S]*?display: none/);
   assert.match(styles, /html\[data-reduce-motion="true"\] \.stage-video\s*{[\s\S]*?display: none/);
-  assert.match(styles, /data-reduce-motion="true"\] \.multitool__descriptor-track\s*{[\s\S]*?animation: none/);
   assert.match(styles, /data-reduce-motion="true"\] \.gallery-stage__slide\.is-current \.gallery-stage__image\s*{[\s\S]*?animation: none/);
 });
 

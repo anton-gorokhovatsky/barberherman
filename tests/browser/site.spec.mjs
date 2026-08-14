@@ -49,7 +49,9 @@ test('reflow, common axes, focus and accessibility remain intact', async ({ page
       const box = element.getBoundingClientRect();
       return {
         x: box.x,
+        y: box.y,
         right: box.right,
+        bottom: box.bottom,
         width: box.width,
         height: box.height,
         center: box.x + box.width / 2,
@@ -69,29 +71,57 @@ test('reflow, common axes, focus and accessibility remain intact', async ({ page
     const practice = document.querySelector('[data-panel="practice"]');
     const gallery = document.querySelector('[data-panel="gallery"]');
     const music = document.querySelector('[data-panel="music"]');
+    const mainSurface = document.querySelector('.multitool__main');
+    const contactSurface = document.querySelector('.multitool__contact-surface');
+    const footerSurface = document.querySelector('.multitool__footer-surface');
+    const liveCell = (selector) => {
+      const cell = document.querySelector(selector);
+      const label = cell.querySelector('.multitool__live-label');
+      const value = cell.querySelector('strong');
+      const cellBox = rect(cell);
+      const labelBox = rect(label);
+      const valueBox = rect(value);
+      const contentCenter = (
+        Math.min(labelBox.y, valueBox.y)
+        + Math.max(labelBox.bottom, valueBox.bottom)
+      ) / 2;
+      return {
+        height: cellBox.height,
+        centerDelta: contentCenter - (cellBox.y + cellBox.height / 2),
+      };
+    };
     return {
       innerWidth,
       scrollWidth: document.documentElement.scrollWidth,
       firstInteractive: document.querySelector('a[href], button, input, select, textarea')?.className,
       controls,
       contact: rect(document.querySelector('.multitool__contacts')),
+      live: rect(document.querySelector('.multitool__live')),
+      liveCells: [liveCell('.multitool__presence'), liveCell('.multitool__weather')],
       privacy: rect(document.querySelector('.multitool__privacy-link')),
       credit: rect(document.querySelector('.multitool__meta')),
       service: rect(service),
       serviceButtons: [...service.children].filter(visible).map(rect),
       socialJustification: [...document.querySelectorAll('.multitool__icon-link')]
         .map((element) => getComputedStyle(element).justifyContent),
+      surfaces: {
+        main: rect(mainSurface),
+        contact: rect(contactSurface),
+        footer: rect(footerSurface),
+      },
+      editorialGroup: {
+        display: getComputedStyle(document.querySelector('.multitool__editorial-row')).display,
+        gap: rect(music).x - rect(gallery).right,
+        galleryBorderRight: Number.parseFloat(getComputedStyle(gallery).borderRightWidth),
+        musicBorderLeft: Number.parseFloat(getComputedStyle(music).borderLeftWidth),
+      },
       primarySplit: {
         brandRight: rect(brand).right,
         bookingLeft: rect(booking).x,
         profileRight: rect(profile).right,
         practiceLeft: rect(practice).x,
-        galleryRight: rect(gallery).right,
-        musicLeft: rect(music).x,
         brandBorderRight: Number.parseFloat(getComputedStyle(brand).borderRightWidth),
         profileBorderRight: Number.parseFloat(getComputedStyle(profile).borderRightWidth),
-        galleryBorderRight: Number.parseFloat(getComputedStyle(gallery).borderRightWidth),
-        musicBorderLeft: Number.parseFloat(getComputedStyle(music).borderLeftWidth),
         practiceBorderLeft: Number.parseFloat(getComputedStyle(practice).borderLeftWidth),
       },
     };
@@ -100,19 +130,31 @@ test('reflow, common axes, focus and accessibility remain intact', async ({ page
   expect(audit.scrollWidth).toBeLessThanOrEqual(audit.innerWidth);
   expect(audit.firstInteractive).toContain('skip-link');
   expect(audit.contact.height).toBeLessThanOrEqual(73);
+  expect(audit.live.height).toBeLessThanOrEqual(audit.innerWidth <= 480 ? 73 : 53);
+  expect(Math.abs(audit.liveCells[0].height - audit.liveCells[1].height)).toBeLessThanOrEqual(.5);
+  for (const cell of audit.liveCells) expect(Math.abs(cell.centerDelta)).toBeLessThanOrEqual(.75);
   expect(audit.controls.filter(({ width, height }) => width < 44 || height < 44)).toEqual([]);
   expect(Math.abs(audit.primarySplit.brandRight - audit.primarySplit.bookingLeft)).toBeLessThanOrEqual(.01);
   expect(Math.abs(audit.primarySplit.brandRight - audit.primarySplit.profileRight)).toBeLessThanOrEqual(.01);
   expect(Math.abs(audit.primarySplit.brandRight - audit.primarySplit.practiceLeft)).toBeLessThanOrEqual(.01);
-  expect(Math.abs(audit.primarySplit.brandRight - audit.primarySplit.galleryRight)).toBeLessThanOrEqual(.01);
-  expect(Math.abs(audit.primarySplit.brandRight - audit.primarySplit.musicLeft)).toBeLessThanOrEqual(.01);
   expect(audit.primarySplit.brandBorderRight).toBeGreaterThan(0);
   expect(audit.primarySplit.profileBorderRight).toBe(audit.primarySplit.brandBorderRight);
-  expect(audit.primarySplit.galleryBorderRight + audit.primarySplit.musicBorderLeft).toBe(audit.primarySplit.brandBorderRight);
   expect(audit.primarySplit.practiceBorderLeft).toBe(0);
+  expect(audit.editorialGroup.display).toBe('flex');
+  expect(audit.editorialGroup.gap).toBeGreaterThanOrEqual(15);
+  expect(audit.editorialGroup.galleryBorderRight).toBe(0);
+  expect(audit.editorialGroup.musicBorderLeft).toBe(0);
+
+  const { main, contact, footer } = audit.surfaces;
+  for (const surface of [contact, footer]) {
+    expect(Math.abs(surface.x - main.x)).toBeLessThanOrEqual(.01);
+    expect(Math.abs(surface.width - main.width)).toBeLessThanOrEqual(.01);
+  }
+  expect(contact.y - main.bottom).toBeGreaterThanOrEqual(11.5);
+  expect(footer.y - contact.bottom).toBeGreaterThanOrEqual(11.5);
 
   if (audit.innerWidth <= 900) {
-    for (const floor of [audit.privacy, audit.credit, audit.service]) {
+    for (const floor of [audit.privacy, audit.credit, audit.service, main, contact, footer]) {
       expect(Math.abs(floor.center - audit.innerWidth / 2)).toBeLessThanOrEqual(.5);
     }
     const widths = audit.serviceButtons.map(({ width }) => width);
@@ -175,7 +217,6 @@ test('200% text and reduced motion preserve content and controls', async ({ page
         noSource: video.networkState === HTMLMediaElement.NETWORK_NO_SOURCE,
         paused: video.paused,
       })),
-      tickerAnimation: getComputedStyle(document.querySelector('.multitool__descriptor-track')).animationName,
     };
   });
 
@@ -190,7 +231,6 @@ test('200% text and reduced motion preserve content and controls', async ({ page
   ));
   expect(audit.reducedMotion).toBe('true');
   expect(videosAreStopped, JSON.stringify(audit, null, 2)).toBeTruthy();
-  expect(audit.tickerAnimation).toBe('none');
 });
 
 test('full motion selects one inline muted video and autoplay remains available', async ({ page }) => {
@@ -219,6 +259,9 @@ test('modules announce, focus and retain the intended responsive state', async (
   const practice = page.getByRole('button', { name: 'Экспертиза', exact: true });
   await profile.click();
   await expect(profile).toHaveAttribute('aria-expanded', 'true');
+  await expect.poll(() => profile.evaluate((button) => (
+    getComputedStyle(button, '::after').content.replace(/^['"]|['"]$/g, '')
+  ))).toBe('−');
   await expect(page.locator('#profile-panel')).toBeVisible();
 
   const isMobile = (await page.viewportSize()).width <= 900;
@@ -271,7 +314,7 @@ test('profile and expertise end with one shared keyboard-reachable booking actio
   }
 });
 
-test('media and partnership catalogs expand before the editorial floor', async ({ page }) => {
+test('media and partnership catalogs open as peer content panels', async ({ page }) => {
   await openReady(page);
 
   const modules = [
@@ -282,44 +325,41 @@ test('media and partnership catalogs expand before the editorial floor', async (
   for (const [buttonName, panelSelector, closeName] of modules) {
     const trigger = page.getByRole('button', { name: buttonName, exact: true });
     const panel = page.locator(panelSelector);
-    const editorial = page.locator('.multitool__editorial-row');
     await trigger.click();
     await expect(panel).toBeVisible();
-    await page.waitForTimeout(50);
+    await expect(trigger).toHaveAttribute('aria-expanded', 'true');
 
-    const order = await page.evaluate(({ panelSelector }) => {
-      const trigger = document.querySelector(`[data-panel="${panelSelector === '#media-panel' ? 'media' : 'partners'}"]`);
+    const audit = await page.evaluate(({ panelSelector }) => {
       const panel = document.querySelector(panelSelector);
-      const editorial = document.querySelector('.multitool__editorial-row');
-      const drawer = document.querySelector('.multitool__drawer');
-      const triggerBox = trigger.getBoundingClientRect();
       const panelBox = panel.getBoundingClientRect();
-      const editorialBox = editorial.getBoundingClientRect();
-      const drawerBox = drawer.getBoundingClientRect();
+      const handle = panel.querySelector('.catalog-panel__drag-handle');
       return {
         isDesktop: innerWidth > 900,
-        drawerTop: drawerBox.top,
-        drawerBottom: drawerBox.bottom,
-        triggerTop: triggerBox.top,
-        triggerBottom: triggerBox.bottom,
-        panelTop: panelBox.top,
-        panelBottom: panelBox.bottom,
-        editorialTop: editorialBox.top,
-        panelPrecedesEditorial: Boolean(panel.compareDocumentPosition(editorial) & Node.DOCUMENT_POSITION_FOLLOWING),
+        insideMultitool: Boolean(panel.closest('.multitool')),
+        gridArea: getComputedStyle(panel).gridArea,
+        center: panelBox.left + panelBox.width / 2,
+        viewportCenter: innerWidth / 2,
+        handleDisabled: handle.disabled,
+        handleAriaHidden: handle.getAttribute('aria-hidden'),
       };
     }, { panelSelector });
 
-    expect(order.panelPrecedesEditorial).toBe(true);
-    expect(order.panelTop).toBeGreaterThanOrEqual(order.triggerBottom - .5);
-    expect(order.editorialTop).toBeGreaterThanOrEqual(order.panelBottom - .5);
-    if (order.isDesktop) {
-      expect(order.triggerTop).toBeGreaterThanOrEqual(order.drawerTop - .5);
-      expect(order.triggerBottom).toBeLessThanOrEqual(order.drawerBottom + .5);
+    expect(audit.insideMultitool).toBe(false);
+    if (audit.isDesktop) {
+      expect(audit.gridArea).toBe('stack');
+      expect(Math.abs(audit.center - audit.viewportCenter)).toBeLessThanOrEqual(.5);
+      expect(audit.handleDisabled).toBe(false);
+      expect(audit.handleAriaHidden).toBe('false');
+    } else {
+      await expect(panel).toBeFocused();
+      expect(audit.handleDisabled).toBe(true);
+      expect(audit.handleAriaHidden).toBe('true');
     }
 
     await panel.getByRole('button', { name: closeName, exact: true }).click();
     await expect(panel).toBeHidden();
-    await expect(editorial).toBeVisible();
+    await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+    await expect(trigger).toBeFocused();
   }
 });
 
@@ -347,6 +387,7 @@ test('list-view logos share one row rhythm and one visible left axis', async ({ 
   };
 
   assertSharedSystem(await auditPanel('#media-panel'));
+  await page.getByRole('button', { name: 'Закрыть раздел «Медиа»', exact: true }).click();
   await page.getByRole('button', { name: 'Партнёрства', exact: true }).click();
   assertSharedSystem(await auditPanel('#partners-panel'));
 });
@@ -422,7 +463,7 @@ test('gallery is a peer content panel with edge-to-edge imagery and keyboard nav
   await expect(galleryButton).toBeFocused();
 });
 
-test('editorial entries share the secondary floor and music uses one mobile scroll flow', async ({ page }) => {
+test('main and editorial entries keep their intentional affordances and one mobile scroll flow', async ({ page }) => {
   await openReady(page);
 
   const viewport = await page.viewportSize();
@@ -436,37 +477,66 @@ test('editorial entries share the secondary floor and music uses one mobile scro
         height: box.height,
       };
     };
-    const pseudo = (selector) => {
-      const element = document.querySelector(selector);
-      const style = getComputedStyle(element, '::after');
-      return {
-        alignSelf: style.alignSelf,
-        transform: style.transform,
-      };
-    };
     return {
       profile: rect('[data-panel="profile"]'),
       gallery: rect('[data-panel="gallery"]'),
       music: rect('[data-panel="music"]'),
       address: rect('.multitool__address'),
-      weather: rect('.multitool__weather'),
-      galleryPlus: pseudo('[data-panel="gallery"]'),
-      musicPlus: pseudo('[data-panel="music"]'),
+      live: rect('.multitool__live'),
+      editorialGap: rect('[data-panel="music"]').x
+        - (rect('[data-panel="gallery"]').x + rect('[data-panel="gallery"]').width),
+      affordances: [...document.querySelectorAll('[data-panel]')]
+        .map((button) => getComputedStyle(button, '::after').content.replace(/^['"]|['"]$/g, '')),
+      editorialMarks: [...document.querySelectorAll('.multitool__editorial-mark')].map((mark) => {
+        const box = mark.getBoundingClientRect();
+        return {
+          width: box.width,
+          height: box.height,
+          hidden: mark.getAttribute('aria-hidden'),
+          symbol: mark.querySelector('use')?.getAttribute('href'),
+        };
+      }),
     };
   });
 
   expect(Math.abs(auditBeforeOpen.gallery.height - auditBeforeOpen.music.height)).toBeLessThanOrEqual(.5);
-  expect(Math.abs(auditBeforeOpen.gallery.height - auditBeforeOpen.address.height)).toBeLessThanOrEqual(.5);
-  expect(Math.abs(auditBeforeOpen.gallery.height - auditBeforeOpen.weather.height)).toBeLessThanOrEqual(1);
   expect(auditBeforeOpen.gallery.height).toBeLessThan(auditBeforeOpen.profile.height);
-  expect(Math.abs(auditBeforeOpen.gallery.x + auditBeforeOpen.gallery.width - auditBeforeOpen.music.x)).toBeLessThanOrEqual(.5);
-  expect(auditBeforeOpen.galleryPlus.alignSelf).toBe('center');
-  expect(auditBeforeOpen.musicPlus.alignSelf).toBe('center');
-  expect(auditBeforeOpen.galleryPlus.transform).toBe('none');
-  expect(auditBeforeOpen.musicPlus.transform).toBe('none');
+  expect(auditBeforeOpen.editorialGap).toBeGreaterThanOrEqual(15);
+  expect(auditBeforeOpen.affordances).toEqual(['+', '+', '+', '+', 'none', 'none']);
+  expect(auditBeforeOpen.editorialMarks).toHaveLength(2);
+  for (const mark of auditBeforeOpen.editorialMarks) {
+    expect(mark.hidden).toBe('true');
+    expect(mark.symbol).toBe('#icon-hand-scissors');
+    expect(Math.abs(mark.width - mark.height)).toBeLessThanOrEqual(.01);
+    expect(mark.width).toBeGreaterThanOrEqual(20);
+  }
+  if (isMobile) expect(auditBeforeOpen.live.height).toBeLessThanOrEqual(auditBeforeOpen.address.height + 1);
+  else expect(auditBeforeOpen.live.height).toBeLessThan(auditBeforeOpen.address.height);
 
-  await page.getByRole('button', { name: 'Музыка', exact: true }).click();
+  const musicButton = page.getByRole('button', { name: 'Музыка', exact: true });
+  if (!isMobile) {
+    await musicButton.hover();
+    const hoverAudit = await musicButton.evaluate((button) => ({
+      background: getComputedStyle(button).backgroundColor,
+      decoration: getComputedStyle(button.querySelector('.multitool__section-label')).textDecorationLine,
+      markColor: getComputedStyle(button.querySelector('.multitool__editorial-mark')).color,
+      textColor: getComputedStyle(button).color,
+    }));
+    expect(hoverAudit.background).toBe('rgba(0, 0, 0, 0)');
+    expect(hoverAudit.decoration).toBe('underline');
+    expect(hoverAudit.markColor).toBe(hoverAudit.textColor);
+  }
+
+  await musicButton.click();
   await expect(page.locator('#music-panel')).toBeVisible();
+  const activeAudit = await musicButton.evaluate((button) => ({
+    background: getComputedStyle(button).backgroundColor,
+    decoration: getComputedStyle(button.querySelector('.multitool__section-label')).textDecorationLine,
+    pseudo: getComputedStyle(button, '::after').content,
+  }));
+  expect(activeAudit.background).toBe('rgba(0, 0, 0, 0)');
+  expect(activeAudit.decoration).toBe('underline');
+  expect(activeAudit.pseudo).toBe('none');
 
   if (isMobile) {
     await expect(page.locator('#music-panel')).toBeFocused();
@@ -546,6 +616,8 @@ test('menu and content-panel keyboard dragging match the responsive contract', a
     await expect(menuHandle).toBeDisabled();
     await page.getByRole('button', { name: 'Профиль', exact: true }).click();
     await expect(page.locator('.text-block--profile .text-block__drag-handle')).toBeDisabled();
+    await page.getByRole('button', { name: 'Медиа', exact: true }).click();
+    await expect(page.locator('#media-panel .catalog-panel__drag-handle')).toBeDisabled();
     await page.getByRole('button', { name: 'Галерея', exact: true }).click();
     await expect(page.locator('.gallery-stage__drag-handle')).toBeDisabled();
     return;
@@ -565,6 +637,17 @@ test('menu and content-panel keyboard dragging match the responsive contract', a
   await expect(panel).toHaveAttribute('data-drag-y', /-\d+/);
   await page.keyboard.press('Home');
   await expect(panel).toHaveAttribute('data-drag-y', '0');
+  await panel.getByRole('button', { name: 'Закрыть панель «Профиль»', exact: true }).click();
+
+  await page.getByRole('button', { name: 'Медиа', exact: true }).click();
+  const catalog = page.locator('#media-panel');
+  const catalogHandle = catalog.locator('.catalog-panel__drag-handle');
+  await catalogHandle.focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(catalog).toHaveAttribute('data-drag-x', /\d+/);
+  await page.keyboard.press('Home');
+  await expect(catalog).toHaveAttribute('data-drag-x', '0');
+  await catalog.getByRole('button', { name: 'Закрыть раздел «Медиа»', exact: true }).click();
 
   const galleryButton = page.getByRole('button', { name: 'Галерея', exact: true });
   const galleryButtonBox = await galleryButton.boundingBox();
@@ -587,9 +670,10 @@ test('pointer dragging has elastic boundary feedback and settles inside the safe
   if ((await page.viewportSize()).width <= 900) return;
 
   const menu = page.locator('.multitool');
+  const mainSurface = page.locator('.multitool__main');
   const box = await menu.boundingBox();
   expect(box).not.toBeNull();
-  const restingBorder = await menu.evaluate((element) => getComputedStyle(element).borderColor);
+  const restingBorder = await mainSurface.evaluate((element) => getComputedStyle(element).borderColor);
 
   await page.mouse.move(box.x + 48, box.y + 32);
   await page.mouse.down();
@@ -601,7 +685,7 @@ test('pointer dragging has elastic boundary feedback and settles inside the safe
     return { left: rect.left };
   });
   expect(active.left).toBeLessThan(8);
-  await expect.poll(async () => menu.evaluate((element) => getComputedStyle(element).borderColor))
+  await expect.poll(async () => mainSurface.evaluate((element) => getComputedStyle(element).borderColor))
     .not.toBe(restingBorder);
 
   await page.mouse.up();
