@@ -505,6 +505,80 @@ test('editorial imagery stays secondary in increased contrast', async ({ page })
   }
 });
 
+test('dark theme uses one flat after-hours material and a slower editorial rhythm', async ({ page }) => {
+  await openReady(page, '/?qa-theme=dark&qa-motion=full&qa-analytics=denied&qa-online=1&qa-weather-temperature=16&qa-weather-code=3');
+  await expect.poll(() => page.locator('.multitool__editorial-row button').first().evaluate((button) => (
+    Number.parseFloat(getComputedStyle(button, '::before').opacity)
+  ))).toBeCloseTo(.58, 2);
+
+  const resting = await page.evaluate(() => {
+    const root = getComputedStyle(document.documentElement);
+    const overlay = getComputedStyle(document.querySelector('.stage-overlay'));
+    const surface = document.querySelector('.multitool__main');
+    const surfaceStyle = getComputedStyle(surface);
+    const surfaceTint = getComputedStyle(surface, '::before');
+    const preview = getComputedStyle(document.querySelector('.multitool__editorial-row button'), '::before');
+    const ticker = getComputedStyle(document.querySelector('.multitool__descriptor-track'));
+
+    return {
+      theme: document.documentElement.dataset.theme,
+      grade: overlay.backdropFilter || overlay.webkitBackdropFilter,
+      background: surfaceStyle.backgroundColor,
+      backdrop: surfaceStyle.backdropFilter || surfaceStyle.webkitBackdropFilter,
+      tintImage: surfaceTint.backgroundImage,
+      previewFilter: preview.filter,
+      previewOpacity: Number.parseFloat(preview.opacity),
+      tickerDuration: ticker.animationDuration,
+      durationToken: root.getPropertyValue('--descriptor-duration').trim(),
+      baseBackdropToken: root.getPropertyValue('--tool-backdrop').trim(),
+      openBackdropToken: root.getPropertyValue('--tool-backdrop-open').trim(),
+    };
+  });
+
+  expect(resting.theme).toBe('dark');
+  expect(resting.grade).toContain('saturate(');
+  expect(resting.grade).toContain('contrast(');
+  expect(resting.grade).toContain('brightness(');
+  expect(resting.background).not.toBe('rgba(0, 0, 0, 0)');
+  expect(resting.baseBackdropToken).toContain('blur(34px)');
+  expect(resting.openBackdropToken).toContain('blur(42px)');
+  expect(resting.backdrop).toContain('blur(42px)');
+  expect(resting.tintImage).toBe('none');
+  expect(resting.previewFilter).toContain('grayscale(0.72)');
+  expect(resting.previewFilter).toContain('saturate(0.72)');
+  expect(resting.previewOpacity).toBeCloseTo(.58, 2);
+  expect(resting.durationToken).toBe('58s');
+  expect(resting.tickerDuration).toBe('58s');
+
+  await page.getByRole('button', { name: 'Музыка', exact: true }).click();
+  const expanded = await page.locator('#music-panel').evaluate((panel) => {
+    const style = getComputedStyle(panel);
+    const tint = getComputedStyle(panel, '::before');
+    return {
+      backdrop: style.backdropFilter || style.webkitBackdropFilter,
+      tintImage: tint.backgroundImage,
+    };
+  });
+
+  expect(expanded.backdrop).toContain('blur(42px)');
+  expect(expanded.tintImage).toBe('none');
+
+  await openReady(page, '/?qa-theme=dark&qa-motion=reduce&qa-analytics=denied&qa-system-transparency=reduce');
+  const reducedTransparency = await page.locator('.multitool__main').evaluate((surface) => {
+    const style = getComputedStyle(surface);
+    const tint = getComputedStyle(surface, '::before');
+    return {
+      active: document.documentElement.dataset.systemReducedTransparency,
+      backdrop: style.backdropFilter || style.webkitBackdropFilter,
+      tintImage: tint.backgroundImage,
+    };
+  });
+
+  expect(reducedTransparency.active).toBe('true');
+  expect(reducedTransparency.backdrop).toBe('none');
+  expect(reducedTransparency.tintImage).toBe('none');
+});
+
 test('the editorial hand settles without a horizontal jump', async ({ page }) => {
   await openReady(page, '/?qa-theme=light&qa-motion=full&qa-analytics=denied&ticker-phase=start');
   const musicButton = page.getByRole('button', { name: 'Музыка', exact: true });

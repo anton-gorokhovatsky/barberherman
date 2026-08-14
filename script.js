@@ -303,7 +303,7 @@ function applyTheme(theme, { persist = false } = {}) {
   themeToggle?.setAttribute('aria-label', title);
 
   if (themeToggle) themeToggle.title = title;
-  themeColor?.setAttribute('content', isDark ? '#09090b' : '#e8e8e5');
+  themeColor?.setAttribute('content', isDark ? '#090806' : '#e8e8e5');
 
   if (!persist) return;
 

@@ -35,6 +35,7 @@
   --selection: rgba(7, 95, 189, .2);
   --stage-overlay: transparent;
   --stage-overlay-content: transparent;
+  --stage-grade: none;
   --copy-scrim: rgba(247, 247, 244, .72);
   --copy-shadow: 0 1px 16px rgba(255, 255, 255, .62);
   --tool-ink: #0a0a0b;
@@ -51,6 +52,10 @@
   --tool-tint-open: rgba(255, 255, 255, .04);
   --tool-highlight: rgba(255, 255, 255, .46);
   --tool-reflection: rgba(255, 255, 255, .07);
+  --tool-edge-top: color-mix(in srgb, white, transparent 68%);
+  --tool-edge-bottom: color-mix(in srgb, var(--tool-ink), transparent 88%);
+  --tool-edge-top-open: color-mix(in srgb, white, transparent 60%);
+  --tool-edge-bottom-open: color-mix(in srgb, var(--tool-ink), transparent 84%);
   --tool-shadow:
     inset 0 1px 0 rgba(255, 255, 255, .42),
     inset 0 -1px 0 rgba(18, 24, 37, .08),
@@ -94,6 +99,11 @@
   --motion-panel-enter: 360ms;
   --motion-panel-exit: 240ms;
   --motion-drag-settle: 280ms;
+  --descriptor-duration: 42s;
+  --editorial-filter: grayscale(1) contrast(.92);
+  --editorial-filter-active: grayscale(.15) contrast(1);
+  --editorial-opacity: .42;
+  --editorial-opacity-active: .68;
   --ease-out: cubic-bezier(.2, .8, .2, 1);
   --ease-panel-enter: cubic-bezier(.16, 1, .3, 1);
   --ease-panel-exit: cubic-bezier(.4, 0, .8, .2);
@@ -119,48 +129,58 @@ html[data-qa-safe-area="iphone"] {
 
 html[data-theme="dark"] {
   color-scheme: dark;
-  --page: #05070a;
-  --ink: #f4f6f8;
-  --ink-soft: rgba(244, 246, 248, .72);
-  --line: rgba(221, 232, 244, .26);
-  --line-strong: rgba(235, 241, 248, .5);
+  --page: #090806;
+  --ink: #f3efe8;
+  --ink-soft: rgba(243, 239, 232, .72);
+  --line: rgba(239, 232, 222, .24);
+  --line-strong: rgba(247, 241, 232, .48);
   --focus: #8fc2ff;
   --selection: rgba(143, 194, 255, .26);
-  --stage-overlay: rgba(2, 4, 7, .24);
-  --stage-overlay-content: rgba(2, 4, 7, .34);
-  --copy-scrim: rgba(3, 5, 8, .72);
+  --stage-overlay: rgba(8, 6, 4, .14);
+  --stage-overlay-content: rgba(8, 6, 4, .26);
+  --stage-grade: saturate(68%) contrast(108%) brightness(90%);
+  --copy-scrim: rgba(11, 9, 7, .76);
   --copy-shadow: 0 1px 20px rgba(0, 0, 0, .76);
-  --tool-ink: #f6f8fb;
-  --tool-line: rgba(230, 238, 248, .145);
-  --tool-border: rgba(229, 238, 248, .24);
-  --tool-border-open: rgba(234, 242, 250, .33);
-  --tool-background: rgba(9, 12, 17, .43);
-  --tool-background-open: rgba(10, 13, 19, .5);
-  --tool-backdrop: blur(38px) saturate(122%) contrast(76%) brightness(76%);
-  --tool-backdrop-open: blur(46px) saturate(118%) contrast(72%) brightness(74%);
-  --tool-tint: rgba(132, 154, 184, .025);
-  --tool-tint-open: rgba(132, 154, 184, .045);
-  --tool-highlight: rgba(244, 248, 255, .3);
-  --tool-reflection: rgba(172, 194, 224, .07);
+  --tool-ink: #f4f0e8;
+  --tool-line: rgba(240, 233, 222, .14);
+  --tool-border: rgba(242, 236, 226, .22);
+  --tool-border-open: rgba(246, 239, 228, .3);
+  --tool-background: rgba(13, 12, 11, .5);
+  --tool-background-open: rgba(14, 13, 12, .58);
+  --tool-backdrop: blur(34px) saturate(108%) contrast(84%) brightness(74%);
+  --tool-backdrop-open: blur(42px) saturate(104%) contrast(80%) brightness(72%);
+  --tool-tint: rgba(244, 235, 220, .012);
+  --tool-tint-open: rgba(244, 235, 220, .024);
+  --tool-highlight: rgba(248, 240, 226, .24);
+  --tool-reflection: rgba(224, 207, 182, .055);
+  --tool-edge-top: rgba(248, 240, 226, .22);
+  --tool-edge-bottom: rgba(0, 0, 0, .44);
+  --tool-edge-top-open: rgba(250, 242, 228, .29);
+  --tool-edge-bottom-open: rgba(0, 0, 0, .5);
   --tool-shadow:
-    inset 0 1px 0 rgba(245, 248, 255, .18),
-    inset 0 -1px 0 rgba(0, 0, 0, .36),
-    0 20px 64px rgba(0, 0, 0, .38);
+    inset 0 1px 0 rgba(248, 240, 226, .14),
+    inset 0 -1px 0 rgba(0, 0, 0, .4),
+    0 22px 70px rgba(0, 0, 0, .46);
   --tool-shadow-open:
-    inset 0 1px 0 rgba(248, 251, 255, .24),
-    inset 0 -1px 0 rgba(0, 0, 0, .42),
-    0 30px 90px rgba(0, 0, 0, .54);
-  --tool-hover: rgba(235, 242, 250, .1);
-  --tool-solid: rgba(8, 11, 16, .97);
-  --tool-soft: rgba(12, 15, 20, .88);
-  --tool-soft-line: rgba(232, 240, 248, .38);
+    inset 0 1px 0 rgba(250, 242, 228, .19),
+    inset 0 -1px 0 rgba(0, 0, 0, .48),
+    0 34px 100px rgba(0, 0, 0, .62);
+  --tool-hover: rgba(248, 241, 231, .085);
+  --tool-solid: rgba(13, 12, 11, .97);
+  --tool-soft: rgba(17, 16, 14, .9);
+  --tool-soft-line: rgba(241, 233, 220, .34);
   --text-fade: color-mix(in srgb, var(--tool-background-open), var(--tool-solid) 36%);
-  --tool-border-drag: rgba(235, 243, 252, .42);
+  --tool-border-drag: rgba(248, 240, 228, .4);
   --tool-shadow-drag:
-    inset 0 1px 0 rgba(248, 251, 255, .3),
-    inset 0 -1px 0 rgba(0, 0, 0, .44),
-    0 34px 96px rgba(0, 0, 0, .58),
-    0 8px 24px rgba(0, 0, 0, .34);
+    inset 0 1px 0 rgba(250, 242, 228, .24),
+    inset 0 -1px 0 rgba(0, 0, 0, .5),
+    0 38px 104px rgba(0, 0, 0, .66),
+    0 8px 24px rgba(0, 0, 0, .36);
+  --descriptor-duration: 58s;
+  --editorial-filter: grayscale(.72) saturate(.72) contrast(1.04) brightness(.76);
+  --editorial-filter-active: grayscale(.18) saturate(.88) contrast(1.05) brightness(.84);
+  --editorial-opacity: .58;
+  --editorial-opacity-active: .76;
 }
 
 * {
@@ -285,6 +305,8 @@ button {
 
 .stage-overlay {
   background: var(--stage-overlay);
+  backdrop-filter: var(--stage-grade);
+  -webkit-backdrop-filter: var(--stage-grade);
   pointer-events: none;
 }
 
@@ -1182,6 +1204,16 @@ html[data-track-phase="end"] .music-panel__track-title-text {
     linear-gradient(135deg, var(--tool-tint-open), transparent 46%, color-mix(in srgb, var(--tool-reflection), transparent 62%));
 }
 
+/* The night material is intentionally flat. The photograph supplies its
+   colour; the interface adds density and a truthful edge, not a painted glow. */
+html[data-theme="dark"] .glass-surface::before {
+  background: var(--tool-tint);
+}
+
+html[data-theme="dark"] .glass-surface--expanded::before {
+  background: var(--tool-tint-open);
+}
+
 .glass-surface::after {
   content: "";
   position: absolute;
@@ -1190,15 +1222,15 @@ html[data-track-phase="end"] .music-panel__track-title-text {
   border: 0;
   border-radius: inherit;
   box-shadow:
-    inset 0 1px 0 color-mix(in srgb, white, transparent 68%),
-    inset 0 -1px 0 color-mix(in srgb, var(--tool-ink), transparent 88%);
+    inset 0 1px 0 var(--tool-edge-top),
+    inset 0 -1px 0 var(--tool-edge-bottom);
   pointer-events: none;
 }
 
 .glass-surface--expanded::after {
   box-shadow:
-    inset 0 1px 0 color-mix(in srgb, white, transparent 60%),
-    inset 0 -1px 0 color-mix(in srgb, var(--tool-ink), transparent 84%);
+    inset 0 1px 0 var(--tool-edge-top-open),
+    inset 0 -1px 0 var(--tool-edge-bottom-open);
 }
 
 .glass-surface > * {
@@ -1268,6 +1300,15 @@ html[data-track-phase="end"] .music-panel__track-title-text {
     radial-gradient(circle 72px at var(--glass-x, 50%) var(--glass-y, 50%), color-mix(in srgb, var(--tool-highlight), transparent 78%), transparent 74%),
     radial-gradient(ellipse 70% 8% at var(--glass-x, 26%) 0%, color-mix(in srgb, var(--tool-highlight), transparent 52%), transparent 78%),
     linear-gradient(135deg, var(--tool-tint-open), transparent 46%, color-mix(in srgb, var(--tool-reflection), transparent 62%));
+}
+
+html[data-theme="dark"] :is(
+  .multitool.is-dragging > .glass-surface::before,
+  .text-block.is-dragging::before,
+  .gallery-stage.is-dragging::before,
+  .catalog-panel.is-dragging::before
+) {
+  background: var(--tool-tint-open);
 }
 
 .multitool__main,
@@ -1500,7 +1541,7 @@ html[data-qa-text] .multitool__section-label {
   width: max-content;
   height: 100%;
   align-items: stretch;
-  animation: descriptor-ticker 42s linear infinite;
+  animation: descriptor-ticker var(--descriptor-duration) linear infinite;
   will-change: transform;
 }
 
@@ -1567,8 +1608,8 @@ html[data-ticker-phase="seam"] .multitool__descriptor-track {
     var(--editorial-image);
   background-position: var(--editorial-position, center);
   background-size: cover;
-  filter: grayscale(1) contrast(.92);
-  opacity: .42;
+  filter: var(--editorial-filter);
+  opacity: var(--editorial-opacity);
   transform: scale(1.015);
   transition:
     filter var(--motion-medium) var(--ease-out),
@@ -1658,8 +1699,8 @@ html[data-ticker-phase="seam"] .multitool__descriptor-track {
 }
 
 .multitool__editorial-row [data-panel][aria-pressed="true"]::before {
-  filter: grayscale(.15) contrast(1);
-  opacity: .68;
+  filter: var(--editorial-filter-active);
+  opacity: var(--editorial-opacity-active);
   transform: none;
 }
 
@@ -1677,8 +1718,8 @@ html[data-ticker-phase="seam"] .multitool__descriptor-track {
 }
 
 .multitool__editorial-row button:focus::before {
-  filter: grayscale(.15) contrast(1);
-  opacity: .68;
+  filter: var(--editorial-filter-active);
+  opacity: var(--editorial-opacity-active);
   transform: none;
 }
 
@@ -2596,6 +2637,10 @@ html[data-system-reduced-transparency="true"] .glass-surface::before {
   background: linear-gradient(color-mix(in srgb, var(--tool-highlight), transparent 82%), transparent 34%);
 }
 
+html[data-theme="dark"][data-system-reduced-transparency="true"] .glass-surface::before {
+  background: var(--tool-tint-open);
+}
+
 .theme-toggle__icon {
   position: absolute;
   left: 50%;
@@ -2629,8 +2674,8 @@ html[data-theme="dark"] .theme-toggle__icon--light {
   }
 
   .multitool__editorial-row button:hover::before {
-    filter: grayscale(.15) contrast(1);
-    opacity: .68;
+    filter: var(--editorial-filter-active);
+    opacity: var(--editorial-opacity-active);
     transform: none;
   }
 
@@ -2686,6 +2731,14 @@ html[data-theme="dark"] .theme-toggle__icon--light {
 }
 
 @media (max-width: 900px) {
+  /* The mobile poster is materially brighter than the desktop frame, so the
+     same after-hours exposure needs a denser, named environment grade here. */
+  html[data-theme="dark"] {
+    --stage-overlay: rgba(8, 6, 4, .24);
+    --stage-overlay-content: rgba(8, 6, 4, .36);
+    --stage-grade: saturate(62%) contrast(108%) brightness(84%);
+  }
+
   .stage {
     background-image: url("assets/hero-mobile.jpg?v=20260716-2");
   }
