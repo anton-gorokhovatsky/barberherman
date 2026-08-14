@@ -563,7 +563,9 @@ test('dark theme uses one flat after-hours material and a slower editorial rhyth
   expect(expanded.backdrop).toContain('blur(42px)');
   expect(expanded.tintImage).toBe('none');
 
-  await openReady(page, '/?qa-theme=dark&qa-motion=reduce&qa-analytics=denied&qa-system-transparency=reduce');
+  await page.evaluate(() => {
+    document.documentElement.dataset.systemReducedTransparency = 'true';
+  });
   const reducedTransparency = await page.locator('.multitool__main').evaluate((surface) => {
     const style = getComputedStyle(surface);
     const tint = getComputedStyle(surface, '::before');
