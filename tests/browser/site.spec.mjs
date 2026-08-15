@@ -885,6 +885,7 @@ test('main and editorial entries keep their intentional affordances and one mobi
   const viewport = await page.viewportSize();
   const isMobile = viewport.width <= 900;
   const auditBeforeOpen = await page.evaluate(() => {
+    const music = document.querySelector('[data-panel="music"]');
     const rect = (selector) => {
       const box = document.querySelector(selector).getBoundingClientRect();
       return {
@@ -935,6 +936,12 @@ test('main and editorial entries keep their intentional affordances and one mobi
           opacity: Number.parseFloat(style.opacity),
         };
       }),
+      featuredMusicPlaylist: music.dataset.featuredPlaylist,
+      musicCoverCandidates: [...document.querySelectorAll('.music-release__cover[data-playlist-cover] img[src]')]
+        .map((image) => ({
+          playlist: image.closest('[data-playlist-cover]').dataset.playlistCover,
+          asset: new URL(image.getAttribute('src'), location.href).pathname.split('/').pop(),
+        })),
     };
   });
 
@@ -963,6 +970,12 @@ test('main and editorial entries keep their intentional affordances and one mobi
     expect(preview.image).toContain('assets/');
     expect(preview.filter).toContain('grayscale(1)');
     expect(preview.opacity).toBeCloseTo(.42, 2);
+  }
+  expect(auditBeforeOpen.musicCoverCandidates.length).toBeGreaterThanOrEqual(2);
+  expect(auditBeforeOpen.featuredMusicPlaylist).toBe(auditBeforeOpen.musicCoverCandidates[0].playlist);
+  expect(auditBeforeOpen.editorialPreviews[1].image).toContain(auditBeforeOpen.musicCoverCandidates[0].asset);
+  for (const candidate of auditBeforeOpen.musicCoverCandidates.slice(1)) {
+    expect(auditBeforeOpen.editorialPreviews[1].image).not.toContain(candidate.asset);
   }
   if (isMobile) expect(auditBeforeOpen.live.height).toBeLessThanOrEqual(auditBeforeOpen.address.height + 1);
   else expect(auditBeforeOpen.live.height).toBeLessThan(auditBeforeOpen.address.height);
@@ -1054,6 +1067,17 @@ test('main and editorial entries keep their intentional affordances and one mobi
     expect(scrollAudit.panelOverflowY).toBe('auto');
     expect(scrollAudit.panelScrollHeight).toBeGreaterThan(scrollAudit.panelClientHeight);
   }
+});
+
+test('music preview keeps the previous covered release when the latest cover fails', async ({ page }) => {
+  await page.route('**/assets/music-vol-3.jpg*', (route) => route.abort('failed'));
+  await openReady(page);
+
+  const musicButton = page.locator('[data-panel="music"]');
+  await expect(musicButton).toHaveAttribute('data-featured-playlist', 'vol-2');
+  await expect.poll(() => musicButton.evaluate((button) => (
+    getComputedStyle(button, '::before').backgroundImage
+  ))).toContain('music-vol-2.jpg');
 });
 
 test('Vol. 2 artwork keeps the authored crop and a clean fallback', async ({ page }) => {

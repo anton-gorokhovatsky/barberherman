@@ -21,6 +21,8 @@ const draggablePanels = [...document.querySelectorAll('.text-block, .gallery-sta
 const textScrollSurfaces = [...document.querySelectorAll('.text-block__scroll')];
 const logoImages = [...document.querySelectorAll('.logo img')];
 const musicCoverImages = [...document.querySelectorAll('[data-music-cover]')];
+const featuredMusicButton = document.querySelector('[data-panel="music"][data-featured-playlist]');
+const playlistCoverImages = [...document.querySelectorAll('[data-playlist-cover] img[src]')];
 const musicTrackTitles = [...document.querySelectorAll('.music-panel__track-title')];
 const onlineCountLabel = document.querySelector('[data-online-count]');
 const onlineUnitLabel = document.querySelector('[data-online-unit]');
@@ -360,6 +362,33 @@ function setMusicCoverState(image, state) {
 function syncMusicCoverImage(image) {
   if (!image.complete) return;
   setMusicCoverState(image, image.naturalWidth > 0 ? 'ready' : 'fallback');
+}
+
+function applyFeaturedMusicCover(image) {
+  const release = image.closest('[data-playlist-cover]');
+  const source = image.currentSrc || image.getAttribute('src');
+  if (!featuredMusicButton || !release || !source) return;
+
+  const absoluteSource = new URL(source, window.location.href).href;
+  featuredMusicButton.style.setProperty('--editorial-image', `url(${JSON.stringify(absoluteSource)})`);
+  featuredMusicButton.dataset.featuredPlaylist = release.dataset.playlistCover || '';
+  root.dataset.featuredMusicCover = 'ready';
+}
+
+function syncFeaturedMusicCover(index = 0) {
+  if (!featuredMusicButton) return;
+
+  const candidate = playlistCoverImages[index];
+  const source = candidate?.currentSrc || candidate?.getAttribute('src');
+  if (!candidate || !source) {
+    root.dataset.featuredMusicCover = 'fallback';
+    return;
+  }
+
+  const probe = new Image();
+  probe.addEventListener('load', () => applyFeaturedMusicCover(candidate), { once: true });
+  probe.addEventListener('error', () => syncFeaturedMusicCover(index + 1), { once: true });
+  probe.src = new URL(source, window.location.href).href;
 }
 
 function syncMusicTrackTitle(title, index = 0) {
@@ -1782,6 +1811,7 @@ applyLogoView(visualQALogoView || initialLogoView);
 applyMotionPreference();
 applyTransparencyPreference();
 applyAnalyticsConsent(loadAnalyticsConsent());
+syncFeaturedMusicCover();
 loadWeather();
 startPresence();
 lockVideoPhaseForVisualQA();

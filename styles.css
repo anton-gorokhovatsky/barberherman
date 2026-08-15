@@ -1623,8 +1623,8 @@ html[data-ticker-phase="seam"] .multitool__descriptor-track {
 }
 
 .multitool__editorial-row [data-panel="music"] {
-  --editorial-image: url("assets/music-vol-2.jpg?v=20260812-1");
-  --editorial-position: center 19%;
+  --editorial-image: url("assets/music-vol-3.jpg?v=20260815-2");
+  --editorial-position: center;
 }
 
 .multitool__editorial-copy {

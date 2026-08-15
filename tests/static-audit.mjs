@@ -195,6 +195,12 @@ test('playlist title motion and the compact descriptor keep one shared structure
   assert.match(index, /href="https:\/\/music\.apple\.com\/ru\/playlist\/www-hermanco-ru-vol-3\/pl\.u-zPyL10Pu8ppgpZ"/);
   assert.match(index, /src="assets\/music-vol-3\.jpg\?v=20260815-2"/);
   assert.match(index, /class="multitool__editorial-meta" aria-hidden="true">3&nbsp;подборки<\/span>/);
+  assert.match(index, /data-panel="music" data-featured-playlist="vol-3"/);
+  assert.match(index, /data-playlist-cover="august-2026"/);
+  assert.match(styles, /\[data-panel="music"\]\s*{[\s\S]*?--editorial-image:\s*url\("assets\/music-vol-3\.jpg\?v=20260815-2"\)/);
+  assert.match(script, /const playlistCoverImages = \[\.\.\.document\.querySelectorAll\('\[data-playlist-cover\] img\[src\]'\)\]/);
+  assert.match(script, /function syncFeaturedMusicCover\(index = 0\)/);
+  assert.match(script, /probe\.addEventListener\('error', \(\) => syncFeaturedMusicCover\(index \+ 1\)/);
   assert.equal([...index.matchAll(/class="multitool__descriptor multitool__descriptor--compact"/g)].length, 1);
   assert.match(script, /const visualQATrackPhase = queryParams\.get\('track-phase'\)/);
   assert.match(script, /title\.dataset\.overflow = 'true'/);
