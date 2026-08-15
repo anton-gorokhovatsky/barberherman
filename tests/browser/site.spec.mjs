@@ -976,19 +976,26 @@ test('gallery is a peer content panel with edge-to-edge imagery and keyboard nav
   await expect(galleryButton).not.toHaveAttribute('data-panel-return-focus');
 });
 
-test('mobile gallery swipes in both directions and wraps without reversing', async ({ page, browserName }) => {
+test('mobile gallery accepts one short swipe in both directions and wraps without reversing', async ({ page, browserName }) => {
   test.skip(browserName !== 'chromium' || (await page.viewportSize()).width !== 320);
 
   const client = await page.context().newCDPSession(page);
   await client.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 1 });
-  await openReady(page);
+  await openReady(page, `/?${baseQuery.replace('qa-motion=reduce', 'qa-motion=full')}`);
 
   await page.getByRole('button', { name: 'Галерея', exact: true }).click();
   const gallery = page.locator('#gallery-panel');
   const track = gallery.getByRole('region', { name: 'Фотографии из личного архива', exact: true });
   const count = gallery.locator('[data-gallery-count]');
+  await gallery.evaluate(async (element) => {
+    await Promise.all(element.getAnimations().map((animation) => animation.finished.catch(() => {})));
+  });
+  await track.scrollIntoViewIfNeeded();
   const trackBox = await track.boundingBox();
   expect(trackBox).not.toBeNull();
+  const touchAction = await track.evaluate((element) => getComputedStyle(element).touchAction);
+  expect(touchAction).toContain('pan-y');
+  expect(touchAction).not.toContain('pan-x');
 
   const swipe = async (fromX, toX) => {
     const y = trackBox.y + trackBox.height / 2;
@@ -1006,10 +1013,11 @@ test('mobile gallery swipes in both directions and wraps without reversing', asy
     await client.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
   };
 
-  const right = trackBox.x + trackBox.width * .78;
-  const left = trackBox.x + trackBox.width * .22;
+  const right = trackBox.x + trackBox.width * .68;
+  const left = trackBox.x + trackBox.width * .36;
   await swipe(right, left);
   await expect(count).toHaveText('02 / 02');
+  await expect.poll(() => track.evaluate((element) => Math.round(element.scrollLeft / element.clientWidth))).toBe(2);
   await swipe(right, left);
   await expect(count).toHaveText('01 / 02');
   await expect.poll(() => track.evaluate((element) => Math.round(element.scrollLeft / element.clientWidth))).toBe(1);

@@ -2322,9 +2322,12 @@ html[data-theme="dark"] .logo-uomo img {
   display: none;
 }
 
+.gallery-stage__track:is(.is-dragging, .is-touching, .is-touch-settling) {
+  scroll-snap-type: none;
+}
+
 .gallery-stage__track.is-dragging {
   cursor: grabbing;
-  scroll-snap-type: none;
 }
 
 .gallery-stage__slide {

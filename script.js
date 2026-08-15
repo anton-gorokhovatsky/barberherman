@@ -121,8 +121,9 @@ let privacySettingsReturnTarget = null;
 let menuOpen = true;
 let menuDrawerAnimation = null;
 let galleryIndex = 0;
-let galleryScrollFrame = 0;
 let galleryScrollTimer = 0;
+let galleryTouchAnimationFrame = 0;
+let galleryTouchTargetPhysical = null;
 let galleryLoopReady = false;
 let stageVideoReady = visualQAVideoLoad === 'ready' || Boolean(visualQAVideoPhase);
 let stageVideoScheduleStarted = false;
@@ -826,16 +827,78 @@ function scrollGalleryTo(index, { behavior = prefersReducedMotion() ? 'auto' : '
 }
 
 function syncGalleryFromScroll() {
-  galleryScrollFrame = 0;
   if (!galleryTrack?.clientWidth) return;
   const physicalIndex = Math.round(galleryTrack.scrollLeft / galleryTrack.clientWidth);
   syncGalleryState(galleryLogicalIndexFromPhysical(physicalIndex));
+}
+
+function completeGalleryTouchTarget({ force = false } = {}) {
+  if (!galleryTrack?.clientWidth || galleryTouchTargetPhysical === null) return false;
+
+  const targetLeft = galleryTouchTargetPhysical * galleryTrack.clientWidth;
+  if (force && galleryTouchAnimationFrame) cancelAnimationFrame(galleryTouchAnimationFrame);
+  galleryTouchAnimationFrame = 0;
+  if (force) galleryTrack.scrollTo({ left: targetLeft, behavior: 'auto' });
+  galleryTouchTargetPhysical = null;
+  galleryTrack.classList.remove('is-touch-settling');
+  syncGalleryFromScroll();
+  settleGalleryLoopEdge();
+  return true;
+}
+
+function animateGalleryTouchTo(physicalIndex) {
+  if (!galleryTrack?.clientWidth) return;
+
+  const maximumIndex = galleryLoopReady ? gallerySlides.length + 1 : gallerySlides.length - 1;
+  galleryTouchTargetPhysical = Math.min(maximumIndex, Math.max(0, physicalIndex));
+  const targetLeft = galleryTouchTargetPhysical * galleryTrack.clientWidth;
+  const startLeft = galleryTrack.scrollLeft;
+  const distance = targetLeft - startLeft;
+
+  if (galleryTouchAnimationFrame) cancelAnimationFrame(galleryTouchAnimationFrame);
+  galleryTrack.classList.add('is-touch-settling');
+  syncGalleryState(galleryLogicalIndexFromPhysical(galleryTouchTargetPhysical));
+
+  if (prefersReducedMotion() || Math.abs(distance) < 1) {
+    galleryTrack.scrollTo({ left: targetLeft, behavior: 'auto' });
+    completeGalleryTouchTarget();
+    return;
+  }
+
+  const startedAt = performance.now();
+  const distanceRatio = Math.min(1, Math.abs(distance) / galleryTrack.clientWidth);
+  const duration = 150 + distanceRatio * 130;
+  const step = (now) => {
+    const progress = Math.min(1, (now - startedAt) / duration);
+    const eased = 1 - (1 - progress) ** 3;
+    galleryTrack.scrollLeft = startLeft + distance * eased;
+
+    if (progress < 1) {
+      galleryTouchAnimationFrame = requestAnimationFrame(step);
+      return;
+    }
+
+    galleryTrack.scrollLeft = targetLeft;
+    galleryTouchAnimationFrame = 0;
+    completeGalleryTouchTarget();
+  };
+
+  galleryTouchAnimationFrame = requestAnimationFrame(step);
+}
+
+function settleGalleryScroll() {
+  window.clearTimeout(galleryScrollTimer);
+  if (galleryTrack?.classList.contains('is-touching') || galleryTouchAnimationFrame) return;
+  galleryTrack?.classList.remove('is-touch-settling');
+  syncGalleryFromScroll();
+  settleGalleryLoopEdge();
 }
 
 function enableGalleryDragging() {
   if (!galleryTrack || gallerySlides.length < 2) return;
 
   let dragState = null;
+  let touchState = null;
 
   const beginDrag = (inputId, clientX, clientY) => {
     dragState = {
@@ -920,32 +983,80 @@ function enableGalleryDragging() {
   galleryTrack.addEventListener('pointerup', finishPointerDrag);
   galleryTrack.addEventListener('pointercancel', finishPointerDrag);
 
+  const clearTouchState = () => {
+    galleryTrack.classList.remove('is-touching', 'is-touch-settling');
+    touchState = null;
+  };
+
   galleryTrack.addEventListener('touchstart', (event) => {
-    if (event.touches.length !== 1) return;
+    completeGalleryTouchTarget({ force: true });
+    if (event.touches.length !== 1) {
+      clearTouchState();
+      return;
+    }
+
     const touch = event.touches[0];
-    beginDrag(touch.identifier, touch.clientX, touch.clientY);
+    touchState = {
+      identifier: touch.identifier,
+      startX: touch.clientX,
+      startY: touch.clientY,
+      lastX: touch.clientX,
+      lastY: touch.clientY,
+      startTime: performance.now(),
+      startPhysicalIndex: galleryTrack.clientWidth
+        ? Math.round(galleryTrack.scrollLeft / galleryTrack.clientWidth)
+        : galleryPhysicalIndexFromRequest(galleryIndex),
+    };
+    galleryTrack.classList.add('is-touching');
   }, { passive: true });
 
   galleryTrack.addEventListener('touchmove', (event) => {
-    if (!dragState) return;
+    if (!touchState) return;
     if (event.touches.length !== 1) {
-      galleryTrack.classList.remove('is-dragging');
-      dragState = null;
+      clearTouchState();
       return;
     }
-    const touch = [...event.touches].find(({ identifier }) => identifier === dragState.inputId);
-    if (!touch) return;
-    if (updateDrag(touch.identifier, touch.clientX, touch.clientY)) event.preventDefault();
-  }, { passive: false });
 
-  const finishTouchDrag = (event) => {
-    if (!dragState) return;
-    const touch = [...event.changedTouches].find(({ identifier }) => identifier === dragState.inputId);
-    if (touch) finishDrag(touch.identifier);
+    const currentTouch = [...event.touches].find(
+      ({ identifier }) => identifier === touchState.identifier,
+    );
+    if (!currentTouch) return;
+    touchState.lastX = currentTouch.clientX;
+    touchState.lastY = currentTouch.clientY;
+  }, { passive: true });
+
+  const finishTouchGesture = (event) => {
+    if (!touchState) return;
+
+    const completedTouch = [...event.changedTouches].find(
+      ({ identifier }) => identifier === touchState.identifier,
+    );
+    const completedState = touchState;
+    touchState = null;
+    galleryTrack.classList.remove('is-touching');
+
+    const endX = completedTouch?.clientX ?? completedState.lastX;
+    const endY = completedTouch?.clientY ?? completedState.lastY;
+    const deltaX = endX - completedState.startX;
+    const deltaY = endY - completedState.startY;
+    const elapsed = Math.max(1, performance.now() - completedState.startTime);
+    const distanceThreshold = Math.min(36, Math.max(24, galleryTrack.clientWidth * .08));
+    const hasHorizontalIntent = Math.abs(deltaX) > Math.abs(deltaY) * 1.15;
+    const hasEnoughDistance = Math.abs(deltaX) >= distanceThreshold;
+    const isShortFlick = Math.abs(deltaX) >= 12 && Math.abs(deltaX) / elapsed >= .28;
+
+    if (!hasHorizontalIntent || (!hasEnoughDistance && !isShortFlick)) {
+      settleGalleryScroll();
+      return;
+    }
+
+    const direction = deltaX < 0 ? 1 : -1;
+    animateGalleryTouchTo(completedState.startPhysicalIndex + direction);
   };
 
-  galleryTrack.addEventListener('touchend', finishTouchDrag);
-  galleryTrack.addEventListener('touchcancel', finishTouchDrag);
+  galleryTrack.addEventListener('touchend', finishTouchGesture, { passive: true });
+  galleryTrack.addEventListener('touchcancel', finishTouchGesture, { passive: true });
+
 }
 
 function setPanelState(name, visible, { returnFocus = false, animate = true } = {}) {
@@ -2100,12 +2211,14 @@ galleryTrack?.addEventListener('keydown', (event) => {
 
 galleryTrack?.addEventListener('scroll', () => {
   if (root.dataset.galleryOpen !== 'true') return;
-  if (!galleryScrollFrame) galleryScrollFrame = requestAnimationFrame(syncGalleryFromScroll);
+  if ('onscrollend' in galleryTrack) return;
   window.clearTimeout(galleryScrollTimer);
-  galleryScrollTimer = window.setTimeout(() => {
-    syncGalleryFromScroll();
-    settleGalleryLoopEdge();
-  }, 140);
+  galleryScrollTimer = window.setTimeout(settleGalleryScroll, 220);
+}, { passive: true });
+
+galleryTrack?.addEventListener('scrollend', () => {
+  if (root.dataset.galleryOpen !== 'true') return;
+  settleGalleryScroll();
 }, { passive: true });
 
 privacySettingsButtons.forEach((button) => {
