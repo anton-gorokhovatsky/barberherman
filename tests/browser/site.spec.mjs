@@ -216,6 +216,58 @@ test('reflow, common axes, focus and accessibility remain intact', async ({ page
   await expectNoSeriousAxeViolations(page);
 });
 
+test('wordmark selects the width-appropriate master and stays inside its cell', async ({ page }) => {
+  await openReady(page);
+
+  const audit = await page.evaluate(() => {
+    const primary = document.querySelector('.multitool__primary');
+    const brand = document.querySelector('.multitool__brand');
+    const lockup = document.querySelector('.brand-lockup');
+    const word = document.querySelector('.brand-lockup__word');
+    const name = document.querySelector('.brand-lockup__name');
+    const company = document.querySelector('.brand-lockup__company');
+    const primaryBox = primary.getBoundingClientRect();
+    const brandBox = brand.getBoundingClientRect();
+    const lockupBox = lockup.getBoundingClientRect();
+    const wordBox = word.getBoundingClientRect();
+    const nameBox = name.getBoundingClientRect();
+    const companyBox = company.getBoundingClientRect();
+
+    return {
+      innerWidth,
+      primaryWidth: primaryBox.width,
+      master: getComputedStyle(lockup).getPropertyValue('--brand-master').trim(),
+      brand: { left: brandBox.left, right: brandBox.right, top: brandBox.top, bottom: brandBox.bottom },
+      lockup: { left: lockupBox.left, right: lockupBox.right },
+      word: {
+        left: wordBox.left,
+        right: wordBox.right,
+        top: wordBox.top,
+        bottom: wordBox.bottom,
+        scrollWidth: word.scrollWidth,
+        clientWidth: word.clientWidth,
+      },
+      baselineDelta: Math.abs(nameBox.bottom - companyBox.bottom),
+      text: `${name.textContent} ${company.textContent}`.toUpperCase(),
+    };
+  });
+
+  const expectedMaster = audit.primaryWidth <= 359
+    ? 'compact'
+    : audit.primaryWidth >= 700
+      ? 'wide'
+      : 'canonical';
+
+  expect(audit.master).toBe(expectedMaster);
+  expect(audit.text).toBe('HERMAN &CO');
+  expect(audit.word.left).toBeGreaterThanOrEqual(audit.lockup.left - .5);
+  expect(audit.word.right).toBeLessThanOrEqual(audit.lockup.right + .5);
+  expect(audit.word.top).toBeGreaterThanOrEqual(audit.brand.top - .5);
+  expect(audit.word.bottom).toBeLessThanOrEqual(audit.brand.bottom + .5);
+  expect(audit.word.scrollWidth).toBeLessThanOrEqual(audit.word.clientWidth + 1);
+  expect(audit.baselineDelta).toBeLessThanOrEqual(.5);
+});
+
 test('analytics compound icon keeps one quiet modifier in the shared optical slot', async ({ page }) => {
   await page.route('https://mc.yandex.ru/**', (route) => route.abort());
   for (const consent of ['prompt', 'granted', 'denied']) {
@@ -289,6 +341,14 @@ test('200% text and reduced motion preserve content and controls', async ({ page
           heightDelta: element.scrollHeight - element.clientHeight,
         }))
         .filter(({ widthDelta, heightDelta }) => widthDelta > 1 || heightDelta > 3),
+      wordmark: (() => {
+        const lockup = document.querySelector('.brand-lockup').getBoundingClientRect();
+        const word = document.querySelector('.brand-lockup__word').getBoundingClientRect();
+        return {
+          leftDelta: word.left - lockup.left,
+          rightDelta: lockup.right - word.right,
+        };
+      })(),
       tickerAnimation: getComputedStyle(document.querySelector('.multitool__drawer .multitool__descriptor-track')).animationName,
       videos: [...document.querySelectorAll('.stage-video')].map((video) => ({
         display: getComputedStyle(video).display,
@@ -304,6 +364,8 @@ test('200% text and reduced motion preserve content and controls', async ({ page
   expect(audit.badControls).toEqual([]);
   expect(audit.outsideControls).toEqual([]);
   expect(audit.clippedEditorialCopy).toEqual([]);
+  expect(audit.wordmark.leftDelta).toBeGreaterThanOrEqual(-.5);
+  expect(audit.wordmark.rightDelta).toBeGreaterThanOrEqual(-.5);
   const videosAreStopped = audit.videos.every(({ display, src, currentSrc, noSource, paused }) => (
     display === 'none'
     && src === null

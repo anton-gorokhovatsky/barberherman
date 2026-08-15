@@ -1375,6 +1375,10 @@ html[data-theme="light"] .multitool__brand > img {
 }
 
 .brand-lockup {
+  --brand-master: canonical;
+  --brand-name-tracking: .012em;
+  --brand-company-tracking: .01em;
+  --brand-word-gap: .18em;
   display: block;
   width: min(100%, 270px);
   color: currentColor;
@@ -1383,9 +1387,45 @@ html[data-theme="light"] .multitool__brand > img {
 }
 
 .brand-lockup__word {
-  font: 400 2.8rem/.82 "Herman Bebas", Impact, sans-serif;
-  letter-spacing: .024em;
+  display: inline-flex;
+  max-width: 100%;
+  align-items: baseline;
+  column-gap: var(--brand-word-gap);
+  font-family: "Herman Bebas", Impact, sans-serif;
+  font-size: min(2.8rem, 7cqi);
+  font-weight: 400;
+  line-height: .82;
+  text-transform: uppercase;
   white-space: nowrap;
+}
+
+.brand-lockup__name,
+.brand-lockup__company {
+  display: block;
+}
+
+.brand-lockup__name {
+  letter-spacing: var(--brand-name-tracking);
+}
+
+.brand-lockup__company {
+  letter-spacing: var(--brand-company-tracking);
+}
+
+@container (max-width: 359px) {
+  .brand-lockup {
+    --brand-master: compact;
+    --brand-name-tracking: -.024em;
+    --brand-word-gap: .14em;
+  }
+}
+
+@container (min-width: 700px) {
+  .brand-lockup {
+    --brand-master: wide;
+    --brand-name-tracking: .055em;
+    --brand-word-gap: .24em;
+  }
 }
 
 .multitool__status {
@@ -3087,7 +3127,7 @@ html[data-theme="dark"] .theme-toggle__icon--light {
   }
 
   .brand-lockup__word {
-    font-size: min(1.72rem, 7.6vw);
+    font-size: min(1.72rem, 8cqi);
   }
 }
 

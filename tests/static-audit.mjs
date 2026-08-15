@@ -208,6 +208,16 @@ test('playlist title motion and the compact descriptor keep one shared structure
   assert.match(styles, /html\[data-menu-open="false"\] \.multitool__descriptor--compact\s*{[\s\S]*?display: block/);
 });
 
+test('the wordmark uses three container-responsive typographic masters', () => {
+  assert.match(index, /class="brand-lockup__name">Herman<\/span>/);
+  assert.match(index, /class="brand-lockup__company">&amp;Co<\/span>/);
+  assert.match(styles, /--brand-master:\s*canonical/);
+  assert.match(styles, /@container \(max-width: 359px\)\s*{[\s\S]*?--brand-master:\s*compact/);
+  assert.match(styles, /@container \(min-width: 700px\)\s*{[\s\S]*?--brand-master:\s*wide/);
+  assert.match(styles, /\.brand-lockup__word\s*{[\s\S]*?font-size:\s*min\(2\.8rem, 7cqi\)/);
+  assert.doesNotMatch(styles, /\.brand-lockup(?:__word)?\s*{[^}]*scaleX\(/);
+});
+
 test('presence identity is shared across tabs rather than stored per tab', () => {
   assert.match(script, /const presenceAuthStorageKey = 'barberherman-presence-auth-v2'/);
   assert.match(script, /localStorage\.getItem\(presenceAuthStorageKey\)/);
