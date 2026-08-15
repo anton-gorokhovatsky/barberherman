@@ -1099,7 +1099,7 @@ test('Vol. 3 artwork keeps the supplied square crop and a clean fallback', async
   await expect(cover).toBeVisible();
   await expect(cover).toHaveAttribute('data-cover-state', 'ready');
   await expect(image).toBeVisible();
-  await expect(image).toHaveAttribute('src', 'assets/music-vol-3.jpg?v=20260815-1');
+  await expect(image).toHaveAttribute('src', 'assets/music-vol-3.jpg?v=20260815-2');
   expect(await image.evaluate((element) => element.naturalWidth)).toBe(1206);
   expect(await image.evaluate((element) => element.naturalHeight)).toBe(1206);
 
