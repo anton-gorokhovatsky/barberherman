@@ -1037,11 +1037,11 @@ test('main and editorial entries keep their intentional affordances and one mobi
     };
   });
 
-  expect(scrollAudit.tracksOverflowY).toEqual(['visible', 'visible']);
-  expect(scrollAudit.tracksMaxHeight).toEqual(['none', 'none']);
+  expect(scrollAudit.tracksOverflowY).toEqual(['visible', 'visible', 'visible']);
+  expect(scrollAudit.tracksMaxHeight).toEqual(['none', 'none', 'none']);
   expect(scrollAudit.tracksClientHeights).toEqual(scrollAudit.tracksScrollHeights);
-  expect(scrollAudit.trackTabIndices).toEqual([-1, -1]);
-  expect(scrollAudit.trackCount).toBe(28);
+  expect(scrollAudit.trackTabIndices).toEqual([-1, -1, -1]);
+  expect(scrollAudit.trackCount).toBe(40);
   expect(scrollAudit.horizontalOverflow).toBeLessThanOrEqual(0);
 
   if (isMobile) {
@@ -1059,7 +1059,7 @@ test('main and editorial entries keep their intentional affordances and one mobi
 test('Vol. 2 artwork keeps the authored crop and a clean fallback', async ({ page }) => {
   await openReady(page, `/?${baseQuery}&qa-section=music`);
 
-  const cover = page.locator('.music-release__cover--placeholder');
+  const cover = page.locator('[data-playlist-cover="vol-2"]');
   const image = cover.locator('[data-music-cover]');
   await expect(cover).toBeVisible();
   await expect(cover).toHaveAttribute('data-cover-state', 'ready');
@@ -1085,6 +1085,23 @@ test('Vol. 2 artwork keeps the authored crop and a clean fallback', async ({ pag
   expect(surface.backgroundAlpha).toBeGreaterThanOrEqual(.95);
   expect(surface.borderStyle).toBe('solid');
   expect(surface.borderWidth).toBeGreaterThan(0);
+
+  await image.evaluate((element) => element.dispatchEvent(new Event('error')));
+  await expect(image).toBeHidden();
+  await expect(cover).toHaveAttribute('data-cover-state', 'fallback');
+});
+
+test('Vol. 3 artwork keeps the supplied square crop and a clean fallback', async ({ page }) => {
+  await openReady(page, `/?${baseQuery}&qa-section=music`);
+
+  const cover = page.locator('[data-playlist-cover="vol-3"]');
+  const image = cover.locator('[data-music-cover]');
+  await expect(cover).toBeVisible();
+  await expect(cover).toHaveAttribute('data-cover-state', 'ready');
+  await expect(image).toBeVisible();
+  await expect(image).toHaveAttribute('src', 'assets/music-vol-3.jpg?v=20260815-1');
+  expect(await image.evaluate((element) => element.naturalWidth)).toBe(1206);
+  expect(await image.evaluate((element) => element.naturalHeight)).toBe(1206);
 
   await image.evaluate((element) => element.dispatchEvent(new Event('error')));
   await expect(image).toBeHidden();

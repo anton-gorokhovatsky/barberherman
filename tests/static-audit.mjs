@@ -190,8 +190,11 @@ test('reduced motion still removes decorative video and gallery movement', () =>
 });
 
 test('playlist title motion and the compact descriptor keep one shared structure', () => {
-  assert.equal([...index.matchAll(/class="music-panel__track-title"/g)].length, 28);
-  assert.equal([...index.matchAll(/class="music-panel__track-title-text"/g)].length, 28);
+  assert.equal([...index.matchAll(/class="music-panel__track-title"/g)].length, 40);
+  assert.equal([...index.matchAll(/class="music-panel__track-title-text"/g)].length, 40);
+  assert.match(index, /href="https:\/\/music\.apple\.com\/ru\/playlist\/www-hermanco-ru-vol-3\/pl\.u-zPyL10Pu8ppgpZ"/);
+  assert.match(index, /src="assets\/music-vol-3\.jpg\?v=20260815-1"/);
+  assert.match(index, /class="multitool__editorial-meta" aria-hidden="true">3&nbsp;подборки<\/span>/);
   assert.equal([...index.matchAll(/class="multitool__descriptor multitool__descriptor--compact"/g)].length, 1);
   assert.match(script, /const visualQATrackPhase = queryParams\.get\('track-phase'\)/);
   assert.match(script, /title\.dataset\.overflow = 'true'/);
