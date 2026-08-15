@@ -40,31 +40,31 @@
   --copy-shadow: 0 1px 16px rgba(255, 255, 255, .62);
   --tool-ink: #0a0a0b;
   --tool-line: rgba(11, 11, 13, .16);
-  --tool-border: rgba(255, 255, 255, .4);
-  --tool-border-open: rgba(255, 255, 255, .48);
+  --tool-border: rgba(255, 255, 255, .27);
+  --tool-border-open: rgba(255, 255, 255, .33);
   --tool-rule: .75px solid var(--tool-line);
   --tool-frame: .75px solid var(--tool-border);
-  --tool-background: rgba(232, 234, 234, .3);
-  --tool-background-open: rgba(232, 234, 234, .36);
-  --tool-backdrop: blur(36px) saturate(116%) contrast(66%) brightness(112%);
-  --tool-backdrop-open: blur(44px) saturate(112%) contrast(62%) brightness(114%);
-  --tool-tint: rgba(255, 255, 255, .025);
-  --tool-tint-open: rgba(255, 255, 255, .04);
-  --tool-highlight: rgba(255, 255, 255, .46);
-  --tool-reflection: rgba(255, 255, 255, .07);
-  --tool-edge-top: color-mix(in srgb, white, transparent 68%);
-  --tool-edge-bottom: color-mix(in srgb, var(--tool-ink), transparent 88%);
-  --tool-edge-top-open: color-mix(in srgb, white, transparent 60%);
-  --tool-edge-bottom-open: color-mix(in srgb, var(--tool-ink), transparent 84%);
+  --tool-background: rgba(232, 232, 228, .22);
+  --tool-background-open: rgba(232, 232, 228, .28);
+  --tool-backdrop: blur(28px) saturate(110%) contrast(90%) brightness(104%);
+  --tool-backdrop-open: blur(36px) saturate(108%) contrast(86%) brightness(106%);
+  --tool-tint: rgba(255, 255, 255, .012);
+  --tool-tint-open: rgba(255, 255, 255, .02);
+  --tool-highlight: rgba(255, 255, 255, .3);
+  --tool-reflection: rgba(255, 255, 255, .04);
+  --tool-edge-top: color-mix(in srgb, white, transparent 76%);
+  --tool-edge-bottom: color-mix(in srgb, var(--tool-ink), transparent 90%);
+  --tool-edge-top-open: color-mix(in srgb, white, transparent 72%);
+  --tool-edge-bottom-open: color-mix(in srgb, var(--tool-ink), transparent 87%);
   --tool-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, .42),
+    inset 0 1px 0 rgba(255, 255, 255, .28),
     inset 0 -1px 0 rgba(18, 24, 37, .08),
-    0 18px 56px rgba(22, 28, 39, .14);
+    0 18px 56px rgba(22, 28, 39, .12);
   --tool-shadow-open:
-    inset 0 1px 0 rgba(255, 255, 255, .5),
+    inset 0 1px 0 rgba(255, 255, 255, .34),
     inset 0 -1px 0 rgba(18, 24, 37, .1),
-    0 24px 72px rgba(18, 24, 35, .19);
-  --tool-hover: rgba(255, 255, 255, .16);
+    0 24px 72px rgba(18, 24, 35, .16);
+  --tool-hover: rgba(255, 255, 255, .12);
   --tool-solid: rgba(246, 248, 252, .96);
   --tool-soft: rgba(247, 247, 245, .84);
   --tool-soft-line: rgba(255, 255, 255, .82);
@@ -108,12 +108,12 @@
   --ease-panel-enter: cubic-bezier(.16, 1, .3, 1);
   --ease-panel-exit: cubic-bezier(.4, 0, .8, .2);
   --ease-drag-settle: cubic-bezier(.22, 1, .36, 1);
-  --tool-border-drag: rgba(255, 255, 255, .58);
+  --tool-border-drag: rgba(255, 255, 255, .46);
   --tool-shadow-drag:
-    inset 0 1px 0 rgba(255, 255, 255, .54),
+    inset 0 1px 0 rgba(255, 255, 255, .38),
     inset 0 -1px 0 rgba(18, 24, 37, .1),
-    0 30px 88px rgba(18, 24, 35, .22),
-    0 7px 20px rgba(18, 24, 35, .12);
+    0 30px 88px rgba(18, 24, 35, .18),
+    0 7px 20px rgba(18, 24, 35, .1);
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
@@ -1192,27 +1192,16 @@ html[data-track-phase="end"] .music-panel__track-title-text {
   position: absolute;
   inset: 0;
   z-index: 1;
-  background:
-    radial-gradient(ellipse 68% 8% at var(--glass-x, 26%) 0%, color-mix(in srgb, var(--tool-highlight), transparent 58%), transparent 78%),
-    linear-gradient(135deg, var(--tool-tint), transparent 44%, color-mix(in srgb, var(--tool-reflection), transparent 58%));
+  background: var(--tool-tint);
   pointer-events: none;
 }
 
 .glass-surface--expanded::before {
-  background:
-    radial-gradient(ellipse 70% 8% at var(--glass-x, 26%) 0%, color-mix(in srgb, var(--tool-highlight), transparent 52%), transparent 78%),
-    linear-gradient(135deg, var(--tool-tint-open), transparent 46%, color-mix(in srgb, var(--tool-reflection), transparent 62%));
-}
-
-/* The night material is intentionally flat. The photograph supplies its
-   colour; the interface adds density and a truthful edge, not a painted glow. */
-html[data-theme="dark"] .glass-surface::before {
-  background: var(--tool-tint);
-}
-
-html[data-theme="dark"] .glass-surface--expanded::before {
   background: var(--tool-tint-open);
 }
+
+/* The photograph supplies the material's colour in both themes. The interface
+   adds only shared density and a truthful edge, never a painted resting glow. */
 
 .glass-surface::after {
   content: "";
@@ -2677,10 +2666,6 @@ html[data-system-reduced-transparency="true"] .glass-surface {
 }
 
 html[data-system-reduced-transparency="true"] .glass-surface::before {
-  background: linear-gradient(color-mix(in srgb, var(--tool-highlight), transparent 82%), transparent 34%);
-}
-
-html[data-theme="dark"][data-system-reduced-transparency="true"] .glass-surface::before {
   background: var(--tool-tint-open);
 }
 

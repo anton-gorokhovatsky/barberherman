@@ -601,6 +601,49 @@ test('editorial imagery stays secondary in increased contrast', async ({ page })
   }
 });
 
+test('light theme keeps one flat translucent material with a denser open state', async ({ page }) => {
+  await openReady(page);
+
+  const material = await page.evaluate(() => {
+    const root = getComputedStyle(document.documentElement);
+    const surfaces = [
+      document.querySelector('.multitool__main'),
+      document.querySelector('.multitool__contact-surface'),
+      document.querySelector('.multitool__footer-surface'),
+    ];
+
+    return {
+      theme: document.documentElement.dataset.theme,
+      baseBackground: root.getPropertyValue('--tool-background').trim(),
+      openBackground: root.getPropertyValue('--tool-background-open').trim(),
+      baseBackdrop: root.getPropertyValue('--tool-backdrop').trim(),
+      openBackdrop: root.getPropertyValue('--tool-backdrop-open').trim(),
+      surfaces: surfaces.map((surface) => {
+        const style = getComputedStyle(surface);
+        const tint = getComputedStyle(surface, '::before');
+        return {
+          background: style.backgroundColor,
+          backdrop: style.backdropFilter || style.webkitBackdropFilter,
+          tintImage: tint.backgroundImage,
+        };
+      }),
+    };
+  });
+
+  expect(material.theme).toBe('light');
+  expect(material.baseBackground).toBe('rgba(232, 232, 228, .22)');
+  expect(material.openBackground).toBe('rgba(232, 232, 228, .28)');
+  expect(material.baseBackdrop).toBe('blur(28px) saturate(110%) contrast(90%) brightness(104%)');
+  expect(material.openBackdrop).toBe('blur(36px) saturate(108%) contrast(86%) brightness(106%)');
+  expect(material.surfaces).toHaveLength(3);
+  for (const surface of material.surfaces) {
+    expect(surface.background).toBe('rgba(232, 232, 228, 0.28)');
+    expect(surface.backdrop).toContain('blur(36px)');
+    expect(surface.backdrop).toContain('contrast(0.86)');
+    expect(surface.tintImage).toBe('none');
+  }
+});
+
 test('dark theme uses one flat after-hours material and a slower editorial rhythm', async ({ page }) => {
   await openReady(page, '/?qa-theme=dark&qa-motion=full&qa-analytics=denied&qa-online=1&qa-weather-temperature=16&qa-weather-code=3');
   await expect.poll(() => page.locator('.multitool__editorial-row button').first().evaluate((button) => (

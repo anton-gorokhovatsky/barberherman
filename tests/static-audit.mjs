@@ -61,6 +61,14 @@ test('profile and expertise share the final booking continuation', () => {
   }
 });
 
+test('expertise uses one public name in the menu and panel chrome', () => {
+  const panel = index.split('id="practice-panel"')[1]?.split('</article>')[0] || '';
+  assert.match(index, /data-panel="practice" aria-label="Экспертиза"/);
+  assert.match(panel, />02 \/ Экспертиза<\/button>/);
+  assert.match(panel, /<h2 id="practice-title">Экспертиза<\/h2>/);
+  assert.doesNotMatch(panel, />02 \/ Практика<\/button>/);
+});
+
 test('the skip link is the first interactive control on every public HTML page', () => {
   assert.match(firstInteractiveMarkup(index), /class="skip-link"/);
   assert.match(firstInteractiveMarkup(privacy), /class="skip-link"/);

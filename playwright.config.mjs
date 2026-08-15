@@ -1,6 +1,8 @@
 import { defineConfig } from '@playwright/test';
 
-const baseURL = 'http://127.0.0.1:8081';
+const configuredTestPort = Number.parseInt(process.env.PLAYWRIGHT_PORT || '', 10);
+const testPort = Number.isInteger(configuredTestPort) ? configuredTestPort : 4173;
+const baseURL = `http://127.0.0.1:${testPort}`;
 
 export default defineConfig({
   testDir: './tests/browser',
@@ -21,9 +23,9 @@ export default defineConfig({
     video: 'off',
   },
   webServer: {
-    command: 'python3 -m http.server 8081 --bind 127.0.0.1',
+    command: `python3 -m http.server ${testPort} --bind 127.0.0.1`,
     url: baseURL,
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false,
     timeout: 15_000,
   },
   projects: [
