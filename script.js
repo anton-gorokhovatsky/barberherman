@@ -22,7 +22,7 @@ const textScrollSurfaces = [...document.querySelectorAll('.text-block__scroll')]
 const logoImages = [...document.querySelectorAll('.logo img')];
 const musicCoverImages = [...document.querySelectorAll('[data-music-cover]')];
 const featuredMusicButton = document.querySelector('[data-panel="music"][data-featured-playlist]');
-const playlistCoverImages = [...document.querySelectorAll('[data-playlist-cover] img[src]')];
+const playlistCoverImages = [...document.querySelectorAll('[data-playlist-cover] img[data-featured-src]')];
 const musicTrackTitles = [...document.querySelectorAll('.music-panel__track-title')];
 const onlineCountLabel = document.querySelector('[data-online-count]');
 const onlineUnitLabel = document.querySelector('[data-online-unit]');
@@ -60,6 +60,7 @@ const logoViewStorageKey = 'barberherman-logo-view';
 const queryParams = new URLSearchParams(window.location.search);
 const visualQASection = queryParams.get('qa-section');
 const visualQAVideoPhase = queryParams.get('hero-phase');
+const visualQAVideoLoad = queryParams.get('qa-video-load');
 const visualQAMenu = queryParams.get('qa-menu');
 const visualQATextScale = queryParams.get('qa-text');
 const visualQAContrast = queryParams.get('qa-contrast');
@@ -122,6 +123,8 @@ let menuDrawerAnimation = null;
 let galleryIndex = 0;
 let galleryScrollFrame = 0;
 let galleryScrollTimer = 0;
+let stageVideoReady = visualQAVideoLoad === 'ready' || Boolean(visualQAVideoPhase);
+let stageVideoScheduleStarted = false;
 const panelAnimations = new Map();
 
 window[metrikaDisableKey] = true;
@@ -340,12 +343,27 @@ function syncLogoImage(image) {
   if (!logo) return;
 
   logo.dataset.logoLabel = image.alt || 'Логотип';
-  logo.dataset.logoError = String(image.complete && image.naturalWidth === 0);
+  const hasSource = Boolean(image.currentSrc || image.getAttribute('src'));
+  logo.dataset.logoError = String(hasSource && image.complete && image.naturalWidth === 0);
+}
+
+function hydrateDeferredImage(image) {
+  const source = image.dataset.src;
+  if (!source || image.getAttribute('src')) return;
+
+  if (image.dataset.sizes) image.sizes = image.dataset.sizes;
+  if (image.dataset.srcset) image.srcset = image.dataset.srcset;
+  image.loading = 'eager';
+  image.src = source;
+}
+
+function prepareDeferredImages(panel = document) {
+  panel.querySelectorAll('img[data-src]').forEach(hydrateDeferredImage);
 }
 
 function prepareLogoImages(panel = document) {
   panel.querySelectorAll('.logo img').forEach((image) => {
-    image.loading = 'eager';
+    hydrateDeferredImage(image);
     syncLogoImage(image);
   });
 }
@@ -360,13 +378,13 @@ function setMusicCoverState(image, state) {
 }
 
 function syncMusicCoverImage(image) {
+  if (!image.currentSrc && !image.getAttribute('src')) return;
   if (!image.complete) return;
   setMusicCoverState(image, image.naturalWidth > 0 ? 'ready' : 'fallback');
 }
 
-function applyFeaturedMusicCover(image) {
+function applyFeaturedMusicCover(image, source) {
   const release = image.closest('[data-playlist-cover]');
-  const source = image.currentSrc || image.getAttribute('src');
   if (!featuredMusicButton || !release || !source) return;
 
   const absoluteSource = new URL(source, window.location.href).href;
@@ -379,14 +397,14 @@ function syncFeaturedMusicCover(index = 0) {
   if (!featuredMusicButton) return;
 
   const candidate = playlistCoverImages[index];
-  const source = candidate?.currentSrc || candidate?.getAttribute('src');
+  const source = candidate?.dataset.featuredSrc;
   if (!candidate || !source) {
     root.dataset.featuredMusicCover = 'fallback';
     return;
   }
 
   const probe = new Image();
-  probe.addEventListener('load', () => applyFeaturedMusicCover(candidate), { once: true });
+  probe.addEventListener('load', () => applyFeaturedMusicCover(candidate, source), { once: true });
   probe.addEventListener('error', () => syncFeaturedMusicCover(index + 1), { once: true });
   probe.src = new URL(source, window.location.href).href;
 }
@@ -818,6 +836,7 @@ function setPanelState(name, visible, { returnFocus = false, animate = true } = 
         requestAnimationFrame(() => syncTextScrollFade(scrollSurface));
       }
     }
+    prepareDeferredImages(panel);
     prepareLogoImages(panel);
     if (name === 'music') requestAnimationFrame(syncMusicTrackTitles);
     if (panel.matches('.text-block, .gallery-stage, .catalog-panel')) bringPanelForward(panel);
@@ -1288,17 +1307,73 @@ function lockVideoToVisualPhase(video) {
   }
 }
 
+function connectionConstrainsStageVideo() {
+  const effectiveType = dataConnection?.effectiveType || '';
+  return dataConnection?.saveData === true
+    || ['slow-2g', '2g', '3g'].includes(effectiveType);
+}
+
+function stageVideoCanLoad() {
+  return !prefersReducedMotion() && !connectionConstrainsStageVideo();
+}
+
+function activateStageVideoLoad() {
+  stageVideoScheduleStarted = false;
+
+  if (document.hidden || !stageVideoCanLoad()) {
+    syncStageVideos();
+    return;
+  }
+
+  stageVideoReady = true;
+  syncStageVideos();
+}
+
+function scheduleStageVideoLoad() {
+  if (visualQAVideoPhase || stageVideoReady) {
+    syncStageVideos();
+    return;
+  }
+
+  if (visualQAVideoLoad === 'manual' || !stageVideoCanLoad()) {
+    syncStageVideos();
+    return;
+  }
+
+  if (stageVideoScheduleStarted) return;
+  stageVideoScheduleStarted = true;
+  root.dataset.videoLoad = 'pending';
+
+  const scheduleWhenIdle = () => {
+    if ('requestIdleCallback' in window) {
+      window.requestIdleCallback(activateStageVideoLoad, { timeout: 4000 });
+    } else {
+      window.setTimeout(activateStageVideoLoad, 1500);
+    }
+  };
+
+  if (document.readyState === 'complete') scheduleWhenIdle();
+  else window.addEventListener('load', scheduleWhenIdle, { once: true });
+}
+
 function syncStageVideos() {
   const mobile = mobileQuery.matches;
-  const saveData = dataConnection?.saveData === true;
   const isReduced = prefersReducedMotion();
-  root.dataset.saveData = String(saveData);
+  const isConstrained = connectionConstrainsStageVideo();
+  const isVisualQA = Boolean(visualQAVideoPhase);
+
+  root.dataset.saveData = String(dataConnection?.saveData === true);
+  root.dataset.videoLoad = isVisualQA || (stageVideoReady && !isReduced && !isConstrained)
+    ? 'ready'
+    : isReduced || isConstrained
+      ? 'blocked'
+      : 'pending';
 
   stageVideos.forEach((video) => {
     const isMobileVideo = video.classList.contains('stage-video--mobile');
     const isBreakpointVideo = mobile === isMobileVideo;
     const shouldLoad = isBreakpointVideo
-      && (Boolean(visualQAVideoPhase) || (!isReduced && (!saveData || !menuOpen)));
+      && (isVisualQA || (stageVideoReady && !isReduced && !isConstrained));
     const shouldPlay = shouldLoad && !visualQAVideoPhase && !document.hidden;
 
     if (shouldLoad) attachVideoSource(video);
@@ -1346,6 +1421,7 @@ function applyMotionPreference({ persist = false } = {}) {
   }
 
   syncStageVideos();
+  scheduleStageVideoLoad();
 }
 
 function lockVideoPhaseForVisualQA() {
@@ -2055,13 +2131,19 @@ colorSchemeQuery.addEventListener('change', (event) => {
 });
 document.addEventListener('visibilitychange', () => {
   syncStageVideos();
-  if (!document.hidden) syncPresence();
+  if (!document.hidden) {
+    scheduleStageVideoLoad();
+    syncPresence();
+  }
 });
 window.addEventListener('pagehide', disconnectPresence);
 window.addEventListener('pageshow', (event) => {
   if (event.persisted) startPresence();
 });
-dataConnection?.addEventListener?.('change', syncStageVideos);
+dataConnection?.addEventListener?.('change', () => {
+  syncStageVideos();
+  scheduleStageVideoLoad();
+});
 finePointerQuery.addEventListener('change', syncMultitoolDragAvailability);
 window.addEventListener('resize', () => requestAnimationFrame(() => {
   clampCurrentMultitoolPosition();

@@ -125,7 +125,15 @@ test('IDs are unique and cache versions remain aligned', () => {
 test('all repository-local asset references resolve', async () => {
   const refs = new Set();
   for (const source of [index, privacy, notFound]) {
-    for (const match of source.matchAll(/(?:src|href|poster|data-src)="(assets\/[^"?#]+)/g)) refs.add(match[1]);
+    for (const match of source.matchAll(/(?:src|href|poster|data-src|data-featured-src)="(assets\/[^"?#]+)/g)) {
+      refs.add(match[1]);
+    }
+    for (const match of source.matchAll(/(?:srcset|data-srcset)="([^"]+)"/g)) {
+      match[1].split(',').forEach((candidate) => {
+        const ref = candidate.trim().split(/\s+/)[0].split(/[?#]/)[0];
+        if (ref.startsWith('assets/')) refs.add(ref);
+      });
+    }
   }
   for (const match of styles.matchAll(/url\(["']?(assets\/[^"')?#]+)/g)) refs.add(match[1]);
 
@@ -175,8 +183,27 @@ test('only the selected video variants remain and stay within their budgets', as
     stat(path.join(root, 'assets/hero-desktop-v2.mp4')),
     stat(path.join(root, 'assets/hero-mobile.mp4')),
   ]);
-  assert.ok(desktop.size <= 5_500_000, `desktop video is ${desktop.size} bytes`);
-  assert.ok(mobile.size <= 2_300_000, `mobile video is ${mobile.size} bytes`);
+  assert.ok(desktop.size <= 2_100_000, `desktop video is ${desktop.size} bytes`);
+  assert.ok(mobile.size <= 1_250_000, `mobile video is ${mobile.size} bytes`);
+  assert.match(script, /window\.requestIdleCallback\(activateStageVideoLoad, \{ timeout: 4000 \}\)/);
+  assert.match(script, /\['slow-2g', '2g', '3g'\]\.includes\(effectiveType\)/);
+  assert.match(script, /visualQAVideoLoad === 'manual'/);
+});
+
+test('closed panels hydrate their images only when opened', () => {
+  const catalogMarkup = index.slice(index.indexOf('id="media-panel"'), index.indexOf('id="gallery-panel"'));
+  const galleryMarkup = index.slice(index.indexOf('id="gallery-panel"'), index.indexOf('id="profile-panel"'));
+  const musicMarkup = index.slice(index.indexOf('id="music-panel"'), index.indexOf('</main>'));
+
+  assert.equal([...catalogMarkup.matchAll(/<img data-src="assets\/logos-transparent\//g)].length, 16);
+  assert.doesNotMatch(catalogMarkup, /<img[^>]+\ssrc="/);
+  assert.equal([...galleryMarkup.matchAll(/class="gallery-stage__image" data-src=/g)].length, 2);
+  assert.doesNotMatch(galleryMarkup, /class="gallery-stage__image" src=/);
+  assert.equal([...musicMarkup.matchAll(/data-featured-src="assets\/music-/g)].length, 3);
+  assert.equal([...musicMarkup.matchAll(/data-srcset="assets\/music-/g)].length, 3);
+  assert.doesNotMatch(musicMarkup, /<img src="assets\/music-/);
+  assert.match(script, /function prepareDeferredImages\(panel = document\)/);
+  assert.match(script, /panel\.querySelectorAll\('img\[data-src\]'\)\.forEach\(hydrateDeferredImage\)/);
 });
 
 test('reduced motion still removes decorative video and gallery movement', () => {
@@ -193,12 +220,13 @@ test('playlist title motion and the compact descriptor keep one shared structure
   assert.equal([...index.matchAll(/class="music-panel__track-title"/g)].length, 40);
   assert.equal([...index.matchAll(/class="music-panel__track-title-text"/g)].length, 40);
   assert.match(index, /href="https:\/\/music\.apple\.com\/ru\/playlist\/www-hermanco-ru-vol-3\/pl\.u-zPyL10Pu8ppgpZ"/);
-  assert.match(index, /src="assets\/music-vol-3\.jpg\?v=20260815-2"/);
+  assert.match(index, /data-src="assets\/music-vol-3-960\.jpg\?v=20260815-perf1"/);
+  assert.match(index, /data-featured-src="assets\/music-vol-3-480\.jpg\?v=20260815-perf1"/);
   assert.match(index, /class="multitool__editorial-meta" aria-hidden="true">3&nbsp;подборки<\/span>/);
   assert.match(index, /data-panel="music" data-featured-playlist="vol-3"/);
   assert.match(index, /data-playlist-cover="august-2026"/);
-  assert.match(styles, /\[data-panel="music"\]\s*{[\s\S]*?--editorial-image:\s*url\("assets\/music-vol-3\.jpg\?v=20260815-2"\)/);
-  assert.match(script, /const playlistCoverImages = \[\.\.\.document\.querySelectorAll\('\[data-playlist-cover\] img\[src\]'\)\]/);
+  assert.match(styles, /\[data-panel="music"\]\s*{[\s\S]*?--editorial-image:\s*url\("assets\/music-vol-3-480\.jpg\?v=20260815-perf1"\)/);
+  assert.match(script, /const playlistCoverImages = \[\.\.\.document\.querySelectorAll\('\[data-playlist-cover\] img\[data-featured-src\]'\)\]/);
   assert.match(script, /function syncFeaturedMusicCover\(index = 0\)/);
   assert.match(script, /probe\.addEventListener\('error', \(\) => syncFeaturedMusicCover\(index \+ 1\)/);
   assert.equal([...index.matchAll(/class="multitool__descriptor multitool__descriptor--compact"/g)].length, 1);

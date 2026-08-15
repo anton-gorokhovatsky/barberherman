@@ -377,8 +377,39 @@ test('200% text and reduced motion preserve content and controls', async ({ page
   expect(videosAreStopped, JSON.stringify(audit, null, 2)).toBeTruthy();
 });
 
-test('full motion selects one inline muted video and autoplay remains available', async ({ page }) => {
+test('full motion keeps video pending until the page is ready for background work', async ({ page }) => {
+  await openReady(page, `/?qa-theme=light&qa-motion=full&qa-video-load=manual&qa-analytics=denied&qa-online=1&qa-weather-temperature=20&qa-weather-code=0`);
+
+  await expect(page.locator('html')).toHaveAttribute('data-video-load', 'pending');
+  for (const video of await page.locator('.stage-video').all()) {
+    await expect(video).not.toHaveAttribute('src', /.+/);
+    await expect(video).toHaveAttribute('poster', /assets\/hero(?:-mobile)?\.jpg/);
+  }
+});
+
+test('slow connections keep the lightweight poster instead of fetching video', async ({ page }) => {
+  await page.addInitScript(() => {
+    const connection = {
+      effectiveType: '3g',
+      saveData: false,
+      addEventListener() {},
+      removeEventListener() {},
+    };
+    Object.defineProperty(Navigator.prototype, 'connection', {
+      configurable: true,
+      get: () => connection,
+    });
+  });
   await openReady(page, `/?qa-theme=light&qa-motion=full&qa-analytics=denied&qa-online=1&qa-weather-temperature=20&qa-weather-code=0`);
+
+  await expect(page.locator('html')).toHaveAttribute('data-video-load', 'blocked');
+  for (const video of await page.locator('.stage-video').all()) {
+    await expect(video).not.toHaveAttribute('src', /.+/);
+  }
+});
+
+test('full motion selects one inline muted video and autoplay remains available', async ({ page }) => {
+  await openReady(page, `/?qa-theme=light&qa-motion=full&qa-video-load=ready&qa-analytics=denied&qa-online=1&qa-weather-temperature=20&qa-weather-code=0`);
 
   const isMobile = (await page.viewportSize()).width <= 900;
   const activeSelector = isMobile ? '.stage-video--mobile' : '.stage-video--desktop';
@@ -999,10 +1030,10 @@ test('main and editorial entries keep their intentional affordances and one mobi
         };
       }),
       featuredMusicPlaylist: music.dataset.featuredPlaylist,
-      musicCoverCandidates: [...document.querySelectorAll('.music-release__cover[data-playlist-cover] img[src]')]
+      musicCoverCandidates: [...document.querySelectorAll('.music-release__cover[data-playlist-cover] img[data-featured-src]')]
         .map((image) => ({
           playlist: image.closest('[data-playlist-cover]').dataset.playlistCover,
-          asset: new URL(image.getAttribute('src'), location.href).pathname.split('/').pop(),
+          asset: new URL(image.dataset.featuredSrc, location.href).pathname.split('/').pop(),
         })),
     };
   });
@@ -1131,15 +1162,46 @@ test('main and editorial entries keep their intentional affordances and one mobi
   }
 });
 
+test('closed panels hydrate only the images required by the section being opened', async ({ page }) => {
+  await openReady(page);
+
+  const initial = await page.evaluate(() => ({
+    logos: [...document.querySelectorAll('.logo img')].map((image) => image.getAttribute('src')),
+    gallery: [...document.querySelectorAll('.gallery-stage__image')].map((image) => image.getAttribute('src')),
+    music: [...document.querySelectorAll('[data-playlist-cover] img')].map((image) => image.getAttribute('src')),
+  }));
+  expect(initial.logos).toHaveLength(16);
+  expect(initial.logos.every((source) => source === null)).toBe(true);
+  expect(initial.gallery).toEqual([null, null]);
+  expect(initial.music).toEqual([null, null, null]);
+
+  await page.getByRole('button', { name: 'Медиа', exact: true }).click();
+  await expect(page.locator('#media-panel .logo img').first()).toHaveAttribute('src', /assets\/logos-transparent\//);
+  expect(await page.locator('#partners-panel .logo img').evaluateAll((images) => (
+    images.every((image) => image.getAttribute('src') === null)
+  ))).toBe(true);
+
+  await page.getByRole('button', { name: 'Галерея', exact: true }).click();
+  await expect(page.locator('.gallery-stage__image').first()).toHaveAttribute('src', /assets\/profile\.jpg/);
+  await expect(page.locator('.gallery-stage__image').nth(1)).toHaveAttribute('src', /assets\/portrait\.jpg/);
+  await page.getByRole('button', { name: 'Закрыть раздел «Галерея»', exact: true }).click();
+
+  await page.getByRole('button', { name: 'Музыка', exact: true }).click();
+  const musicImages = page.locator('[data-playlist-cover] img');
+  await expect(musicImages.first()).toHaveAttribute('src', /assets\/music-vol-3-960\.jpg/);
+  await expect(musicImages.first()).toHaveAttribute('srcset', /music-vol-3-480\.jpg.+480w.+music-vol-3-960\.jpg.+960w/);
+  expect(await musicImages.evaluateAll((images) => images.every((image) => Boolean(image.getAttribute('src'))))).toBe(true);
+});
+
 test('music preview keeps the previous covered release when the latest cover fails', async ({ page }) => {
-  await page.route('**/assets/music-vol-3.jpg*', (route) => route.abort('failed'));
+  await page.route('**/assets/music-vol-3-480.jpg*', (route) => route.abort('failed'));
   await openReady(page);
 
   const musicButton = page.locator('[data-panel="music"]');
   await expect(musicButton).toHaveAttribute('data-featured-playlist', 'vol-2');
   await expect.poll(() => musicButton.evaluate((button) => (
     getComputedStyle(button, '::before').backgroundImage
-  ))).toContain('music-vol-2.jpg');
+  ))).toContain('music-vol-2-480.jpg');
 });
 
 test('Vol. 2 artwork keeps the authored crop and a clean fallback', async ({ page }) => {
@@ -1150,8 +1212,17 @@ test('Vol. 2 artwork keeps the authored crop and a clean fallback', async ({ pag
   await expect(cover).toBeVisible();
   await expect(cover).toHaveAttribute('data-cover-state', 'ready');
   await expect(image).toBeVisible();
-  await expect(image).toHaveAttribute('src', 'assets/music-vol-2.jpg?v=20260812-1');
-  expect(await image.evaluate((element) => element.naturalWidth)).toBe(1080);
+  await expect(image).toHaveAttribute('src', 'assets/music-vol-2-960.jpg?v=20260815-perf1');
+  await expect(image).toHaveAttribute('srcset', /music-vol-2-480\.jpg.+480w.+music-vol-2-960\.jpg.+960w/);
+  const responsiveSource = await image.evaluate((element) => ({
+    currentSrc: element.currentSrc,
+    naturalWidth: element.naturalWidth,
+    naturalHeight: element.naturalHeight,
+  }));
+  expect(responsiveSource.currentSrc).toContain('music-vol-2-480.jpg');
+  expect(responsiveSource.naturalWidth).toBeGreaterThan(0);
+  expect(responsiveSource.naturalWidth).toBeLessThanOrEqual(480);
+  expect(responsiveSource.naturalHeight / responsiveSource.naturalWidth).toBeCloseTo(853 / 480, 2);
   expect(await image.evaluate((element) => getComputedStyle(element).objectPosition)).toMatch(/^50% (?:0%|0px)$/);
 
   const surface = await cover.evaluate((element) => {
@@ -1185,9 +1256,17 @@ test('Vol. 3 artwork keeps the supplied square crop and a clean fallback', async
   await expect(cover).toBeVisible();
   await expect(cover).toHaveAttribute('data-cover-state', 'ready');
   await expect(image).toBeVisible();
-  await expect(image).toHaveAttribute('src', 'assets/music-vol-3.jpg?v=20260815-2');
-  expect(await image.evaluate((element) => element.naturalWidth)).toBe(1206);
-  expect(await image.evaluate((element) => element.naturalHeight)).toBe(1206);
+  await expect(image).toHaveAttribute('src', 'assets/music-vol-3-960.jpg?v=20260815-perf1');
+  await expect(image).toHaveAttribute('srcset', /music-vol-3-480\.jpg.+480w.+music-vol-3-960\.jpg.+960w/);
+  const responsiveSource = await image.evaluate((element) => ({
+    currentSrc: element.currentSrc,
+    naturalWidth: element.naturalWidth,
+    naturalHeight: element.naturalHeight,
+  }));
+  expect(responsiveSource.currentSrc).toContain('music-vol-3-480.jpg');
+  expect(responsiveSource.naturalWidth).toBeGreaterThan(0);
+  expect(responsiveSource.naturalWidth).toBeLessThanOrEqual(480);
+  expect(responsiveSource.naturalHeight).toBe(responsiveSource.naturalWidth);
 
   await image.evaluate((element) => element.dispatchEvent(new Event('error')));
   await expect(image).toBeHidden();
