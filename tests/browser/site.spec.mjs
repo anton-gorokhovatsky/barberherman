@@ -912,7 +912,7 @@ test('gallery is a peer content panel with edge-to-edge imagery and keyboard nav
   await expect(page.locator('html')).toHaveAttribute('data-menu-open', 'true');
   await expect(page.locator('#multitool-drawer')).toBeVisible();
   await expect(count).toHaveText('01 / 02');
-  await expect(gallery.getByRole('button', { name: 'Предыдущая фотография', exact: true })).toBeDisabled();
+  await expect(gallery.getByRole('button', { name: 'Предыдущая фотография', exact: true })).toBeEnabled();
 
   if (isMobile) await expect(gallery).toBeFocused();
 
@@ -939,13 +939,17 @@ test('gallery is a peer content panel with edge-to-edge imagery and keyboard nav
   expect(geometry.radius).toBe('0px');
 
   await track.focus();
+  await page.keyboard.press('ArrowLeft');
+  await expect(count).toHaveText('02 / 02');
+  await page.keyboard.press('ArrowRight');
+  await expect(count).toHaveText('01 / 02');
   await page.keyboard.press('ArrowRight');
   await expect(count).toHaveText('02 / 02');
-  await expect(gallery.getByRole('button', { name: 'Следующая фотография', exact: true })).toBeDisabled();
+  await expect(gallery.getByRole('button', { name: 'Следующая фотография', exact: true })).toBeEnabled();
   await page.keyboard.press('Home');
   await expect(count).toHaveText('01 / 02');
 
-  const imageMotion = await gallery.locator('.gallery-stage__slide.is-current .gallery-stage__image')
+  const imageMotion = await gallery.locator('[data-gallery-slide].is-current .gallery-stage__image')
     .evaluate((element) => getComputedStyle(element).animationName);
   expect(imageMotion).toBe('none');
 
@@ -970,6 +974,48 @@ test('gallery is a peer content panel with edge-to-edge imagery and keyboard nav
 
   await page.keyboard.press('Tab');
   await expect(galleryButton).not.toHaveAttribute('data-panel-return-focus');
+});
+
+test('mobile gallery swipes in both directions and wraps without reversing', async ({ page, browserName }) => {
+  test.skip(browserName !== 'chromium' || (await page.viewportSize()).width !== 320);
+
+  const client = await page.context().newCDPSession(page);
+  await client.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 1 });
+  await openReady(page);
+
+  await page.getByRole('button', { name: 'Галерея', exact: true }).click();
+  const gallery = page.locator('#gallery-panel');
+  const track = gallery.getByRole('region', { name: 'Фотографии из личного архива', exact: true });
+  const count = gallery.locator('[data-gallery-count]');
+  const trackBox = await track.boundingBox();
+  expect(trackBox).not.toBeNull();
+
+  const swipe = async (fromX, toX) => {
+    const y = trackBox.y + trackBox.height / 2;
+    await client.send('Input.dispatchTouchEvent', {
+      type: 'touchStart',
+      touchPoints: [{ x: fromX, y }],
+    });
+    for (let step = 1; step <= 6; step += 1) {
+      await client.send('Input.dispatchTouchEvent', {
+        type: 'touchMove',
+        touchPoints: [{ x: fromX + ((toX - fromX) * step) / 6, y }],
+      });
+      await page.waitForTimeout(16);
+    }
+    await client.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  };
+
+  const right = trackBox.x + trackBox.width * .78;
+  const left = trackBox.x + trackBox.width * .22;
+  await swipe(right, left);
+  await expect(count).toHaveText('02 / 02');
+  await swipe(right, left);
+  await expect(count).toHaveText('01 / 02');
+  await expect.poll(() => track.evaluate((element) => Math.round(element.scrollLeft / element.clientWidth))).toBe(1);
+  await swipe(left, right);
+  await expect(count).toHaveText('02 / 02');
+  await expect.poll(() => track.evaluate((element) => Math.round(element.scrollLeft / element.clientWidth))).toBe(2);
 });
 
 test('main and editorial entries keep their intentional affordances and one mobile scroll flow', async ({ page }) => {
@@ -1182,8 +1228,9 @@ test('closed panels hydrate only the images required by the section being opened
   ))).toBe(true);
 
   await page.getByRole('button', { name: 'Галерея', exact: true }).click();
-  await expect(page.locator('.gallery-stage__image').first()).toHaveAttribute('src', /assets\/profile\.jpg/);
-  await expect(page.locator('.gallery-stage__image').nth(1)).toHaveAttribute('src', /assets\/portrait\.jpg/);
+  await expect(page.locator('[data-gallery-slide] .gallery-stage__image').first()).toHaveAttribute('src', /assets\/profile\.jpg/);
+  await expect(page.locator('[data-gallery-slide] .gallery-stage__image').nth(1)).toHaveAttribute('src', /assets\/portrait\.jpg/);
+  await expect(page.locator('[data-gallery-clone]')).toHaveCount(2);
   await page.getByRole('button', { name: 'Закрыть раздел «Галерея»', exact: true }).click();
 
   await page.getByRole('button', { name: 'Музыка', exact: true }).click();
@@ -1403,6 +1450,27 @@ test('pointer dragging has elastic boundary feedback and settles inside the safe
   await expect(gallery).not.toHaveClass(/is-dragging/);
   await expect(gallery).toHaveAttribute('data-drag-x', /\d+/);
   await expect(gallery).toHaveAttribute('data-drag-y', /\d+/);
+  await gallery.evaluate(async (element) => {
+    await Promise.all(element.getAnimations().map((animation) => animation.finished.catch(() => {})));
+  });
+
+  const stableGalleryBox = await gallery.boundingBox();
+  const bottomDragHandleBox = await gallery.locator('.gallery-stage__drag-handle').boundingBox();
+  expect(stableGalleryBox).not.toBeNull();
+  expect(bottomDragHandleBox).not.toBeNull();
+  await page.mouse.move(bottomDragHandleBox.x + 80, bottomDragHandleBox.y + bottomDragHandleBox.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(bottomDragHandleBox.x + 80, (await page.viewportSize()).height + 140, { steps: 10 });
+  await expect(gallery).toHaveClass(/is-dragging/);
+  expect(Math.abs((await gallery.boundingBox()).height - stableGalleryBox.height)).toBeLessThanOrEqual(2);
+  await page.mouse.up();
+  await expect(gallery).not.toHaveClass(/is-dragging/);
+  await expect.poll(async () => {
+    const settledGalleryBox = await gallery.boundingBox();
+    return settledGalleryBox.y + settledGalleryBox.height;
+  }).toBeLessThanOrEqual((await page.viewportSize()).height - 7.5);
+  const settledGalleryBox = await gallery.boundingBox();
+  expect(Math.abs(settledGalleryBox.height - stableGalleryBox.height)).toBeLessThanOrEqual(2);
 });
 
 test('privacy page keeps the same accessibility baseline', async ({ page, browserName }) => {

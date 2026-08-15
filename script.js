@@ -123,6 +123,7 @@ let menuDrawerAnimation = null;
 let galleryIndex = 0;
 let galleryScrollFrame = 0;
 let galleryScrollTimer = 0;
+let galleryLoopReady = false;
 let stageVideoReady = visualQAVideoLoad === 'ready' || Boolean(visualQAVideoPhase);
 let stageVideoScheduleStarted = false;
 const panelAnimations = new Map();
@@ -713,12 +714,73 @@ function setGalleryPresentation(visible) {
   syncContentPresence();
 
   if (visible) {
+    prepareGalleryLoop();
+    scrollGalleryTo(galleryIndex, { behavior: 'auto' });
     requestAnimationFrame(() => scrollGalleryTo(galleryIndex, { behavior: 'auto' }));
   }
 }
 
 function normalizedGalleryIndex(index) {
-  return Math.min(Math.max(0, index), Math.max(0, gallerySlides.length - 1));
+  if (!gallerySlides.length) return 0;
+
+  const roundedIndex = Number.isFinite(index) ? Math.round(index) : 0;
+  return ((roundedIndex % gallerySlides.length) + gallerySlides.length) % gallerySlides.length;
+}
+
+function prepareGalleryLoop() {
+  if (galleryLoopReady || !galleryTrack || gallerySlides.length < 2) return;
+
+  gallerySlides.forEach((slide, index) => {
+    slide.dataset.galleryLogicalIndex = String(index);
+  });
+
+  const cloneSlide = (slide, edge) => {
+    const clone = slide.cloneNode(true);
+    clone.removeAttribute('data-gallery-slide');
+    clone.dataset.galleryClone = edge;
+    clone.setAttribute('aria-hidden', 'true');
+    clone.setAttribute('inert', '');
+    clone.removeAttribute('aria-label');
+    clone.removeAttribute('aria-current');
+    clone.querySelectorAll('img').forEach((image) => {
+      image.alt = '';
+    });
+    return clone;
+  };
+
+  galleryTrack.prepend(cloneSlide(gallerySlides.at(-1), 'before'));
+  galleryTrack.append(cloneSlide(gallerySlides[0], 'after'));
+  galleryLoopReady = true;
+}
+
+function galleryLogicalIndexFromPhysical(index) {
+  if (!galleryLoopReady) return normalizedGalleryIndex(index);
+  if (index <= 0) return gallerySlides.length - 1;
+  if (index >= gallerySlides.length + 1) return 0;
+  return index - 1;
+}
+
+function galleryPhysicalIndexFromRequest(index) {
+  if (!galleryLoopReady) {
+    return Math.min(Math.max(0, index), Math.max(0, gallerySlides.length - 1));
+  }
+  if (index < 0) return 0;
+  if (index >= gallerySlides.length) return gallerySlides.length + 1;
+  return normalizedGalleryIndex(index) + 1;
+}
+
+function settleGalleryLoopEdge() {
+  if (!galleryLoopReady || !galleryTrack?.clientWidth) return;
+
+  const physicalIndex = Math.round(galleryTrack.scrollLeft / galleryTrack.clientWidth);
+  const canonicalIndex = physicalIndex <= 0
+    ? gallerySlides.length
+    : physicalIndex >= gallerySlides.length + 1
+      ? 1
+      : null;
+
+  if (canonicalIndex === null) return;
+  galleryTrack.scrollTo({ left: canonicalIndex * galleryTrack.clientWidth, behavior: 'auto' });
 }
 
 function syncGalleryState(index) {
@@ -732,24 +794,42 @@ function syncGalleryState(index) {
     if (slideIndex === galleryIndex) slide.setAttribute('aria-current', 'true');
     else slide.removeAttribute('aria-current');
   });
+  galleryTrack?.querySelectorAll('[data-gallery-clone]').forEach((slide) => {
+    slide.classList.toggle(
+      'is-current',
+      Number.parseInt(slide.dataset.galleryLogicalIndex || '-1', 10) === galleryIndex,
+    );
+  });
   if (galleryCount) galleryCount.textContent = visualCount;
   if (galleryCountA11y) galleryCountA11y.textContent = `Изображение ${galleryIndex + 1} из ${gallerySlides.length}`;
-  if (galleryPrevious) galleryPrevious.disabled = galleryIndex === 0;
-  if (galleryNext) galleryNext.disabled = galleryIndex === gallerySlides.length - 1;
+  if (galleryPrevious) galleryPrevious.disabled = gallerySlides.length < 2;
+  if (galleryNext) galleryNext.disabled = gallerySlides.length < 2;
+}
+
+function scrollGalleryPhysicalTo(
+  physicalIndex,
+  { behavior = prefersReducedMotion() ? 'auto' : 'smooth' } = {},
+) {
+  if (!galleryTrack || !gallerySlides.length) return;
+
+  const maximumIndex = galleryLoopReady ? gallerySlides.length + 1 : gallerySlides.length - 1;
+  const nextPhysicalIndex = Math.min(Math.max(0, Math.round(physicalIndex)), maximumIndex);
+  syncGalleryState(galleryLogicalIndexFromPhysical(nextPhysicalIndex));
+  galleryTrack.scrollTo({ left: nextPhysicalIndex * galleryTrack.clientWidth, behavior });
 }
 
 function scrollGalleryTo(index, { behavior = prefersReducedMotion() ? 'auto' : 'smooth' } = {}) {
   if (!galleryTrack || !gallerySlides.length) return;
 
-  const nextIndex = normalizedGalleryIndex(index);
-  syncGalleryState(nextIndex);
-  galleryTrack.scrollTo({ left: nextIndex * galleryTrack.clientWidth, behavior });
+  prepareGalleryLoop();
+  scrollGalleryPhysicalTo(galleryPhysicalIndexFromRequest(index), { behavior });
 }
 
 function syncGalleryFromScroll() {
   galleryScrollFrame = 0;
   if (!galleryTrack?.clientWidth) return;
-  syncGalleryState(Math.round(galleryTrack.scrollLeft / galleryTrack.clientWidth));
+  const physicalIndex = Math.round(galleryTrack.scrollLeft / galleryTrack.clientWidth);
+  syncGalleryState(galleryLogicalIndexFromPhysical(physicalIndex));
 }
 
 function enableGalleryDragging() {
@@ -757,27 +837,32 @@ function enableGalleryDragging() {
 
   let dragState = null;
 
-  galleryTrack.addEventListener('pointerdown', (event) => {
-    if (!finePointerQuery.matches || event.button !== 0) return;
-
-    event.preventDefault();
+  const beginDrag = (inputId, clientX, clientY) => {
     dragState = {
-      pointerId: event.pointerId,
-      startX: event.clientX,
+      inputId,
+      startX: clientX,
+      startY: clientY,
       startScroll: galleryTrack.scrollLeft,
-      lastX: event.clientX,
+      startPhysicalIndex: galleryTrack.clientWidth
+        ? Math.round(galleryTrack.scrollLeft / galleryTrack.clientWidth)
+        : galleryPhysicalIndexFromRequest(galleryIndex),
+      lastX: clientX,
       lastTime: performance.now(),
       velocity: 0,
       active: false,
     };
-    galleryTrack.setPointerCapture?.(event.pointerId);
-  });
+  };
 
-  galleryTrack.addEventListener('pointermove', (event) => {
-    if (!dragState || event.pointerId !== dragState.pointerId) return;
+  const updateDrag = (inputId, clientX, clientY) => {
+    if (!dragState || inputId !== dragState.inputId) return false;
 
-    const deltaX = event.clientX - dragState.startX;
-    if (!dragState.active && Math.abs(deltaX) < 5) return;
+    const deltaX = clientX - dragState.startX;
+    const deltaY = clientY - dragState.startY;
+    if (!dragState.active && Math.hypot(deltaX, deltaY) < 7) return false;
+    if (!dragState.active && Math.abs(deltaY) >= Math.abs(deltaX)) {
+      dragState = null;
+      return false;
+    }
     if (!dragState.active) {
       dragState.active = true;
       galleryTrack.classList.add('is-dragging');
@@ -785,33 +870,82 @@ function enableGalleryDragging() {
 
     const now = performance.now();
     const elapsed = Math.max(1, now - dragState.lastTime);
-    const instantaneousVelocity = (dragState.lastX - event.clientX) / elapsed;
+    const instantaneousVelocity = (dragState.lastX - clientX) / elapsed;
     dragState.velocity = dragState.velocity * .68 + instantaneousVelocity * .32;
-    dragState.lastX = event.clientX;
+    dragState.lastX = clientX;
     dragState.lastTime = now;
     galleryTrack.scrollLeft = dragState.startScroll - deltaX;
-    event.preventDefault();
-  });
+    return true;
+  };
 
-  const finishDrag = (event) => {
-    if (!dragState || event.pointerId !== dragState.pointerId) return;
+  const finishDrag = (inputId) => {
+    if (!dragState || inputId !== dragState.inputId) return;
 
     const wasActive = dragState.active;
     const projectedScroll = galleryTrack.scrollLeft + dragState.velocity * 170;
-    const nextIndex = galleryTrack.clientWidth
+    const projectedPhysicalIndex = galleryTrack.clientWidth
       ? Math.round(projectedScroll / galleryTrack.clientWidth)
-      : galleryIndex;
+      : galleryPhysicalIndexFromRequest(galleryIndex);
+    const nextPhysicalIndex = Math.min(
+      dragState.startPhysicalIndex + 1,
+      Math.max(dragState.startPhysicalIndex - 1, projectedPhysicalIndex),
+    );
 
     galleryTrack.classList.remove('is-dragging');
+    dragState = null;
+    if (wasActive) scrollGalleryPhysicalTo(nextPhysicalIndex);
+  };
+
+  galleryTrack.addEventListener('pointerdown', (event) => {
+    if (!finePointerQuery.matches || event.pointerType === 'touch' || !event.isPrimary || event.button !== 0) return;
+
+    event.preventDefault();
+    beginDrag(event.pointerId, event.clientX, event.clientY);
+    galleryTrack.setPointerCapture?.(event.pointerId);
+  });
+
+  galleryTrack.addEventListener('pointermove', (event) => {
+    if (!dragState || event.pointerId !== dragState.inputId) return;
+    if (updateDrag(event.pointerId, event.clientX, event.clientY)) event.preventDefault();
+  });
+
+  const finishPointerDrag = (event) => {
+    if (!dragState || event.pointerId !== dragState.inputId) return;
     if (galleryTrack.hasPointerCapture?.(event.pointerId)) {
       galleryTrack.releasePointerCapture(event.pointerId);
     }
-    dragState = null;
-    if (wasActive) scrollGalleryTo(nextIndex);
+    finishDrag(event.pointerId);
   };
 
-  galleryTrack.addEventListener('pointerup', finishDrag);
-  galleryTrack.addEventListener('pointercancel', finishDrag);
+  galleryTrack.addEventListener('pointerup', finishPointerDrag);
+  galleryTrack.addEventListener('pointercancel', finishPointerDrag);
+
+  galleryTrack.addEventListener('touchstart', (event) => {
+    if (event.touches.length !== 1) return;
+    const touch = event.touches[0];
+    beginDrag(touch.identifier, touch.clientX, touch.clientY);
+  }, { passive: true });
+
+  galleryTrack.addEventListener('touchmove', (event) => {
+    if (!dragState) return;
+    if (event.touches.length !== 1) {
+      galleryTrack.classList.remove('is-dragging');
+      dragState = null;
+      return;
+    }
+    const touch = [...event.touches].find(({ identifier }) => identifier === dragState.inputId);
+    if (!touch) return;
+    if (updateDrag(touch.identifier, touch.clientX, touch.clientY)) event.preventDefault();
+  }, { passive: false });
+
+  const finishTouchDrag = (event) => {
+    if (!dragState) return;
+    const touch = [...event.changedTouches].find(({ identifier }) => identifier === dragState.inputId);
+    if (touch) finishDrag(touch.identifier);
+  };
+
+  galleryTrack.addEventListener('touchend', finishTouchDrag);
+  galleryTrack.addEventListener('touchcancel', finishTouchDrag);
 }
 
 function setPanelState(name, visible, { returnFocus = false, animate = true } = {}) {
@@ -825,8 +959,8 @@ function setPanelState(name, visible, { returnFocus = false, animate = true } = 
 
   button.setAttribute('aria-pressed', String(visible));
   button.setAttribute('aria-expanded', String(visible));
-  if (name === 'gallery') setGalleryPresentation(visible);
   animatePanelVisibility(panel, visible, { animate });
+  if (name === 'gallery') setGalleryPresentation(visible);
   if (visible) {
     mostRecentPanelName = name;
     if (!wasVisible) {
@@ -1527,6 +1661,9 @@ function setPanelOffset(panel, x, y, { elastic = false } = {}) {
   let nextY = y;
 
   if (!mobileQuery.matches && !panel.hidden) {
+    const preservesRenderedHeight = panel.classList.contains('gallery-stage');
+    if (preservesRenderedHeight) panel.style.removeProperty('--panel-available-height');
+
     const current = panelOffset(panel);
     const rect = panel.getBoundingClientRect();
     const insets = dragViewportInsets();
@@ -1535,19 +1672,22 @@ function setPanelOffset(panel, x, y, { elastic = false } = {}) {
     const minX = insets.left - baseLeft;
     const maxX = window.innerWidth - insets.right - (baseLeft + rect.width);
     const minimumPanelHeight = Math.min(360, Math.max(260, window.innerHeight * .45));
+    const constrainedPanelHeight = preservesRenderedHeight ? rect.height : minimumPanelHeight;
     const minY = insets.top - baseTop;
-    const maxY = window.innerHeight - insets.bottom - minimumPanelHeight - baseTop;
+    const maxY = window.innerHeight - insets.bottom - constrainedPanelHeight - baseTop;
     const constrainedX = minX <= maxX ? clampDragAxis(x, minX, maxX) : 0;
     const constrainedY = minY <= maxY ? clampDragAxis(y, minY, maxY) : minY;
 
     nextX = elastic && minX <= maxX ? resistDragAxis(x, minX, maxX) : constrainedX;
     nextY = elastic && minY <= maxY ? resistDragAxis(y, minY, maxY) : constrainedY;
 
-    const availableHeight = Math.max(
-      minimumPanelHeight,
-      window.innerHeight - insets.bottom - (baseTop + constrainedY),
-    );
-    panel.style.setProperty('--panel-available-height', `${Math.floor(availableHeight)}px`);
+    if (!preservesRenderedHeight) {
+      const availableHeight = Math.max(
+        minimumPanelHeight,
+        window.innerHeight - insets.bottom - (baseTop + constrainedY),
+      );
+      panel.style.setProperty('--panel-available-height', `${Math.floor(availableHeight)}px`);
+    }
   }
 
   panel.dataset.dragX = String(Math.round(nextX));
@@ -1964,6 +2104,7 @@ galleryTrack?.addEventListener('scroll', () => {
   window.clearTimeout(galleryScrollTimer);
   galleryScrollTimer = window.setTimeout(() => {
     syncGalleryFromScroll();
+    settleGalleryLoopEdge();
   }, 140);
 }, { passive: true });
 

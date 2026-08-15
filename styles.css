@@ -2955,11 +2955,11 @@ html[data-theme="dark"] .theme-toggle__icon--light {
     margin: 0;
   }
 
-  .gallery-stage__slide:first-child .gallery-stage__image {
+  .gallery-stage__slide[data-gallery-logical-index="0"] .gallery-stage__image {
     object-position: 50% 48%;
   }
 
-  .gallery-stage__slide:nth-child(2) .gallery-stage__image {
+  .gallery-stage__slide[data-gallery-logical-index="1"] .gallery-stage__image {
     object-position: 43% 50%;
   }
 
