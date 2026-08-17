@@ -2690,6 +2690,7 @@ html[data-theme="dark"] .theme-toggle__icon--light {
 
   .multitool a:hover,
   .multitool button:hover,
+  .catalog-panel a:hover,
   .gallery-stage button:hover,
   .privacy-consent button:hover,
   .privacy-document__back:hover,
@@ -2712,13 +2713,14 @@ html[data-theme="dark"] .theme-toggle__icon--light {
     transform: translate3d(0, 0, 0) scale(1);
   }
 
-  .logo:hover img {
+  a.logo:hover img {
     transform: translateY(calc(var(--logo-shift-y) - 1px)) scale(var(--logo-scale));
   }
 }
 
 .multitool a:active,
 .multitool button:active,
+.catalog-panel a:active,
 .text-block button:active,
 .gallery-stage button:active {
   background: color-mix(in srgb, var(--tool-hover), currentColor 5%);

@@ -214,6 +214,14 @@ test('closed panels hydrate their images only when opened', () => {
   assert.match(script, /panel\.querySelectorAll\('img\[data-src\]'\)\.forEach\(hydrateDeferredImage\)/);
 });
 
+test('retired Maxim destination is rendered as a static catalog mark', () => {
+  const mediaMarkup = index.slice(index.indexOf('id="media-panel"'), index.indexOf('id="partners-panel"'));
+
+  assert.match(mediaMarkup, /<span class="logo logo-maxim">/);
+  assert.doesNotMatch(mediaMarkup, /<a class="logo logo-maxim"/);
+  assert.doesNotMatch(mediaMarkup, /maximonline\.ru/);
+});
+
 test('reduced motion still removes decorative video and gallery movement', () => {
   assert.match(styles, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.stage-video\s*{[\s\S]*?display: none/);
   assert.match(styles, /html\[data-reduce-motion="true"\] \.stage-video\s*{[\s\S]*?display: none/);

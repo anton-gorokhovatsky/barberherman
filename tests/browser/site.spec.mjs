@@ -905,6 +905,67 @@ test('media and partnership catalogs open as peer content panels', async ({ page
   }
 });
 
+test('catalog logos distinguish live links and block click-through to the menu', async ({ page }) => {
+  await openReady(page);
+
+  const modules = [
+    {
+      buttonName: 'Медиа',
+      panelSelector: '#media-panel',
+      staticLogoSelector: '.logo-esquire',
+      closeName: 'Закрыть раздел «Медиа»',
+    },
+    {
+      buttonName: 'Партнёрства',
+      panelSelector: '#partners-panel',
+      staticLogoSelector: '.logo-autoradio',
+      closeName: 'Закрыть раздел «Партнёрства»',
+    },
+  ];
+  const isDesktop = (await page.viewportSize()).width > 900;
+
+  await expect(page.locator('#media-panel span.logo-maxim')).toHaveCount(1);
+  await expect(page.locator('#media-panel a.logo-maxim')).toHaveCount(0);
+
+  for (const { buttonName, panelSelector, staticLogoSelector, closeName } of modules) {
+    const trigger = page.getByRole('button', { name: buttonName, exact: true });
+    const panel = page.locator(panelSelector);
+    const liveLogo = panel.locator('a.logo').first();
+    const staticLogo = panel.locator(staticLogoSelector);
+
+    await trigger.click();
+    await expect(panel).toBeVisible();
+    await page.mouse.move(1, 1);
+
+    if (isDesktop) {
+      const readAppearance = (logo) => logo.evaluate((element) => ({
+        background: getComputedStyle(element).backgroundColor,
+        imageTransform: getComputedStyle(element.querySelector('img')).transform,
+      }));
+      const liveRest = await readAppearance(liveLogo);
+      const staticRest = await readAppearance(staticLogo);
+
+      await liveLogo.hover();
+      await expect.poll(() => readAppearance(liveLogo)).not.toEqual(liveRest);
+
+      await staticLogo.hover();
+      await expect.poll(() => readAppearance(staticLogo)).toEqual(staticRest);
+    }
+
+    const stateBeforeClick = await page.locator('.multitool [data-panel]').evaluateAll((buttons) => (
+      buttons.map((button) => [button.dataset.panel, button.getAttribute('aria-pressed')])
+    ));
+    await staticLogo.click();
+    const stateAfterClick = await page.locator('.multitool [data-panel]').evaluateAll((buttons) => (
+      buttons.map((button) => [button.dataset.panel, button.getAttribute('aria-pressed')])
+    ));
+
+    expect(stateAfterClick).toEqual(stateBeforeClick);
+    await expect(panel).toBeVisible();
+    await panel.getByRole('button', { name: closeName, exact: true }).click();
+  }
+});
+
 test('list-view logos share one row rhythm and one visible left axis', async ({ page }) => {
   await openReady(page, `/?${baseQuery}&qa-logo-view=list&qa-section=media`);
 

@@ -2280,6 +2280,7 @@ sectionButtons.forEach((button) => {
 document.addEventListener('pointerdown', (event) => {
   if (!multitool || mobileQuery.matches || event.button !== 0) return;
   if (!(event.target instanceof Element) || event.target.closest('.multitool')) return;
+  if (event.target.closest('.catalog-panel')) return;
 
   const box = multitool.getBoundingClientRect();
   const isInsideMenu = event.clientX >= box.left
