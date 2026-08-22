@@ -1301,11 +1301,11 @@ test('main and editorial entries keep their intentional affordances and one mobi
     };
   });
 
-  expect(scrollAudit.tracksOverflowY).toEqual(['visible', 'visible', 'visible']);
-  expect(scrollAudit.tracksMaxHeight).toEqual(['none', 'none', 'none']);
+  expect(scrollAudit.tracksOverflowY).toEqual(['visible', 'visible', 'visible', 'visible']);
+  expect(scrollAudit.tracksMaxHeight).toEqual(['none', 'none', 'none', 'none']);
   expect(scrollAudit.tracksClientHeights).toEqual(scrollAudit.tracksScrollHeights);
-  expect(scrollAudit.trackTabIndices).toEqual([-1, -1, -1]);
-  expect(scrollAudit.trackCount).toBe(40);
+  expect(scrollAudit.trackTabIndices).toEqual([-1, -1, -1, -1]);
+  expect(scrollAudit.trackCount).toBe(55);
   expect(scrollAudit.horizontalOverflow).toBeLessThanOrEqual(0);
 
   if (isMobile) {
@@ -1331,7 +1331,7 @@ test('closed panels hydrate only the images required by the section being opened
   expect(initial.logos).toHaveLength(16);
   expect(initial.logos.every((source) => source === null)).toBe(true);
   expect(initial.gallery).toEqual([null, null]);
-  expect(initial.music).toEqual([null, null, null]);
+  expect(initial.music).toEqual([null, null, null, null]);
 
   await page.getByRole('button', { name: 'Медиа', exact: true }).click();
   await expect(page.locator('#media-panel .logo img').first()).toHaveAttribute('src', /assets\/logos-transparent\//);
@@ -1347,20 +1347,47 @@ test('closed panels hydrate only the images required by the section being opened
 
   await page.getByRole('button', { name: 'Музыка', exact: true }).click();
   const musicImages = page.locator('[data-playlist-cover] img');
-  await expect(musicImages.first()).toHaveAttribute('src', /assets\/music-vol-3-960\.jpg/);
-  await expect(musicImages.first()).toHaveAttribute('srcset', /music-vol-3-480\.jpg.+480w.+music-vol-3-960\.jpg.+960w/);
+  await expect(musicImages.first()).toHaveAttribute('src', /assets\/music-vol-4-960\.jpg/);
+  await expect(musicImages.first()).toHaveAttribute('srcset', /music-vol-4-480\.jpg.+480w.+music-vol-4-960\.jpg.+960w/);
   expect(await musicImages.evaluateAll((images) => images.every((image) => Boolean(image.getAttribute('src'))))).toBe(true);
 });
 
 test('music preview keeps the previous covered release when the latest cover fails', async ({ page }) => {
-  await page.route('**/assets/music-vol-3-480.jpg*', (route) => route.abort('failed'));
+  await page.route('**/assets/music-vol-4-480.jpg*', (route) => route.abort('failed'));
   await openReady(page);
 
   const musicButton = page.locator('[data-panel="music"]');
-  await expect(musicButton).toHaveAttribute('data-featured-playlist', 'vol-2');
+  await expect(musicButton).toHaveAttribute('data-featured-playlist', 'vol-3');
   await expect.poll(() => musicButton.evaluate((button) => (
     getComputedStyle(button, '::before').backgroundImage
-  ))).toContain('music-vol-2-480.jpg');
+  ))).toContain('music-vol-3-480.jpg');
+});
+
+test('Vol. 4 artwork keeps the supplied portrait focus and a clean fallback', async ({ page }) => {
+  await openReady(page, '/?' + baseQuery + '&qa-section=music');
+
+  const cover = page.locator('[data-playlist-cover="vol-4"]');
+  const image = cover.locator('[data-music-cover]');
+  await expect(cover).toBeVisible();
+  await expect(cover).toHaveAttribute('data-cover-state', 'ready');
+  await expect(image).toBeVisible();
+  await expect(image).toHaveAttribute('src', 'assets/music-vol-4-960.jpg?v=20260822-1');
+  await expect(image).toHaveAttribute('srcset', /music-vol-4-480\.jpg.+480w.+music-vol-4-960\.jpg.+960w/);
+  const responsiveSource = await image.evaluate((element) => ({
+    currentSrc: element.currentSrc,
+    naturalWidth: element.naturalWidth,
+    naturalHeight: element.naturalHeight,
+    objectPosition: getComputedStyle(element).objectPosition,
+  }));
+  expect(responsiveSource.currentSrc).toContain('music-vol-4-480.jpg');
+  expect(responsiveSource.naturalWidth).toBeGreaterThan(0);
+  expect(responsiveSource.naturalWidth).toBeLessThanOrEqual(480);
+  expect(responsiveSource.naturalHeight / responsiveSource.naturalWidth).toBeCloseTo(1039 / 480, 2);
+  expect(responsiveSource.objectPosition).toBe('50% 50%');
+
+  await image.evaluate((element) => element.dispatchEvent(new Event('error')));
+  await expect(image).toBeHidden();
+  await expect(cover).toHaveAttribute('data-cover-state', 'fallback');
 });
 
 test('Vol. 2 artwork keeps the authored crop and a clean fallback', async ({ page }) => {

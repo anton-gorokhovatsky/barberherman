@@ -207,8 +207,8 @@ test('closed panels hydrate their images only when opened', () => {
   assert.doesNotMatch(catalogMarkup, /<img[^>]+\ssrc="/);
   assert.equal([...galleryMarkup.matchAll(/class="gallery-stage__image" data-src=/g)].length, 2);
   assert.doesNotMatch(galleryMarkup, /class="gallery-stage__image" src=/);
-  assert.equal([...musicMarkup.matchAll(/data-featured-src="assets\/music-/g)].length, 3);
-  assert.equal([...musicMarkup.matchAll(/data-srcset="assets\/music-/g)].length, 3);
+  assert.equal([...musicMarkup.matchAll(/data-featured-src="assets\/music-/g)].length, 4);
+  assert.equal([...musicMarkup.matchAll(/data-srcset="assets\/music-/g)].length, 4);
   assert.doesNotMatch(musicMarkup, /<img src="assets\/music-/);
   assert.match(script, /function prepareDeferredImages\(panel = document\)/);
   assert.match(script, /panel\.querySelectorAll\('img\[data-src\]'\)\.forEach\(hydrateDeferredImage\)/);
@@ -233,15 +233,20 @@ test('reduced motion still removes decorative video and gallery movement', () =>
 });
 
 test('playlist title motion and the compact descriptor keep one shared structure', () => {
-  assert.equal([...index.matchAll(/class="music-panel__track-title"/g)].length, 40);
-  assert.equal([...index.matchAll(/class="music-panel__track-title-text"/g)].length, 40);
+  assert.equal([...index.matchAll(/class="music-panel__track-title"/g)].length, 55);
+  assert.equal([...index.matchAll(/class="music-panel__track-title-text"/g)].length, 55);
+  assert.match(index, /href="https:\/\/music\.apple\.com\/ru\/playlist\/www-hermanco-ru-vol-4\/pl\.u-qxyl07atdRR5R2"/);
+  assert.match(index, /data-src="assets\/music-vol-4-960\.jpg\?v=20260822-1"/);
+  assert.match(index, /data-featured-src="assets\/music-vol-4-480\.jpg\?v=20260822-1"/);
+  assert.match(index, /15&nbsp;треков&nbsp;· 1&nbsp;ч&nbsp;41&nbsp;мин/);
   assert.match(index, /href="https:\/\/music\.apple\.com\/ru\/playlist\/www-hermanco-ru-vol-3\/pl\.u-zPyL10Pu8ppgpZ"/);
   assert.match(index, /data-src="assets\/music-vol-3-960\.jpg\?v=20260815-perf1"/);
   assert.match(index, /data-featured-src="assets\/music-vol-3-480\.jpg\?v=20260815-perf1"/);
-  assert.match(index, /class="multitool__editorial-meta" aria-hidden="true">3&nbsp;подборки<\/span>/);
-  assert.match(index, /data-panel="music" data-featured-playlist="vol-3"/);
+  assert.match(index, /class="multitool__editorial-meta" aria-hidden="true">4&nbsp;подборки<\/span>/);
+  assert.match(index, /data-panel="music" data-featured-playlist="vol-4"/);
   assert.match(index, /data-playlist-cover="august-2026"/);
-  assert.match(styles, /\[data-panel="music"\]\s*{[\s\S]*?--editorial-image:\s*url\("assets\/music-vol-3-480\.jpg\?v=20260815-perf1"\)/);
+  assert.match(styles, /\[data-panel="music"\]\s*{[\s\S]*?--editorial-image:\s*url\("assets\/music-vol-4-480\.jpg\?v=20260822-1"\)/);
+  assert.match(styles, /\.music-release__cover--portrait-centered\s*{[\s\S]*?--music-cover-position:\s*50% 50%/);
   assert.match(script, /const playlistCoverImages = \[\.\.\.document\.querySelectorAll\('\[data-playlist-cover\] img\[data-featured-src\]'\)\]/);
   assert.match(script, /function syncFeaturedMusicCover\(index = 0\)/);
   assert.match(script, /probe\.addEventListener\('error', \(\) => syncFeaturedMusicCover\(index \+ 1\)/);

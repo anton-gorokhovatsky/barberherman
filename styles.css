@@ -634,7 +634,11 @@ html[data-content-open="true"] .stage-overlay {
   inset: 0;
   height: 100%;
   border: 0;
-  object-position: 50% 0;
+  object-position: var(--music-cover-position, 50% 0);
+}
+
+.music-release__cover--portrait-centered {
+  --music-cover-position: 50% 50%;
 }
 
 .music-release__summary {
@@ -1652,7 +1656,7 @@ html[data-ticker-phase="seam"] .multitool__descriptor-track {
 }
 
 .multitool__editorial-row [data-panel="music"] {
-  --editorial-image: url("assets/music-vol-3-480.jpg?v=20260815-perf1");
+  --editorial-image: url("assets/music-vol-4-480.jpg?v=20260822-1");
   --editorial-position: center;
 }
 
