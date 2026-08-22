@@ -1041,6 +1041,46 @@ test('every floating surface blocks click-through to overlapping menu controls',
   await expect(privacy).toBeVisible();
 });
 
+test('wide desktop music summary shares the square cover bottom axis', async ({ page }, testInfo) => {
+  if (!testInfo.project.name.endsWith('-1060')) return;
+  await page.setViewportSize({ width: 1512, height: 862 });
+  await openReady(page, `/?${baseQuery}&qa-section=music`);
+
+  const geometry = await page.locator('[data-playlist-cover="vol-4"]').evaluate((cover) => {
+    const head = cover.closest('.music-release__head');
+    const summary = head.querySelector('.music-release__summary');
+    const action = summary.querySelector('.music-panel__listen');
+    const tracks = head.closest('.music-release').querySelector('.music-panel__tracks');
+    const coverBox = cover.getBoundingClientRect();
+    const summaryBox = summary.getBoundingClientRect();
+    const actionBox = action.getBoundingClientRect();
+    const tracksBox = tracks.getBoundingClientRect();
+    const panelScroll = cover.closest('.music-panel__scroll');
+    return {
+      viewportWidth: window.innerWidth,
+      viewportHeight: window.innerHeight,
+      coverWidth: coverBox.width,
+      coverHeight: coverBox.height,
+      coverBottom: coverBox.bottom,
+      summaryHeight: summaryBox.height,
+      summaryBottom: summaryBox.bottom,
+      actionBottom: actionBox.bottom,
+      tracksTop: tracksBox.top,
+      panelOverflow: panelScroll.scrollWidth - panelScroll.clientWidth,
+    };
+  });
+
+  expect(geometry.viewportWidth).toBe(1512);
+  expect(geometry.viewportHeight).toBe(862);
+  expect(geometry.coverWidth).toBeGreaterThan(220);
+  expect(Math.abs(geometry.coverWidth - geometry.coverHeight)).toBeLessThanOrEqual(.5);
+  expect(Math.abs(geometry.coverHeight - geometry.summaryHeight)).toBeLessThanOrEqual(.5);
+  expect(Math.abs(geometry.coverBottom - geometry.summaryBottom)).toBeLessThanOrEqual(.5);
+  expect(Math.abs(geometry.coverBottom - geometry.actionBottom)).toBeLessThanOrEqual(.5);
+  expect(geometry.tracksTop).toBeGreaterThan(geometry.coverBottom);
+  expect(geometry.panelOverflow).toBeLessThanOrEqual(1);
+});
+
 test('every playlist cover stays square at 200% text and blocks menu click-through', async ({ page }) => {
   await openReady(page, `/?${baseQuery}&qa-text=200&qa-section=music`);
   const covers = page.locator('[data-playlist-cover]');

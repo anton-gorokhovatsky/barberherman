@@ -587,7 +587,7 @@ html[data-content-open="true"] .stage-overlay {
   min-width: 0;
   grid-template-columns: minmax(150px, .72fr) minmax(0, 1fr);
   gap: clamp(16px, 5cqi, 24px);
-  align-items: start;
+  align-items: stretch;
 }
 
 .music-release__cover {
