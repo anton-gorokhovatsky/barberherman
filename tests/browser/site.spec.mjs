@@ -966,6 +966,136 @@ test('catalog logos distinguish live links and block click-through to the menu',
   }
 });
 
+test('every floating surface blocks click-through to overlapping menu controls', async ({ page }) => {
+  await openReady(page);
+  if ((await page.viewportSize()).width <= 900) return;
+
+  const cases = [
+    { buttonName: 'Профиль', surface: '#profile-panel', closeName: 'Закрыть панель «Профиль»' },
+    { buttonName: 'Экспертиза', surface: '#practice-panel', closeName: 'Закрыть панель «Экспертиза»' },
+    { buttonName: 'Медиа', surface: '#media-panel', closeName: 'Закрыть раздел «Медиа»' },
+    { buttonName: 'Партнёрства', surface: '#partners-panel', closeName: 'Закрыть раздел «Партнёрства»' },
+    { buttonName: 'Галерея', surface: '#gallery-panel', closeName: 'Закрыть раздел «Галерея»' },
+    { buttonName: 'Музыка', surface: '#music-panel', closeName: 'Закрыть панель «Музыка»' },
+  ];
+
+  const menuState = () => page.locator('.multitool [data-panel]').evaluateAll((buttons) => (
+    buttons.map((button) => [button.dataset.panel, button.getAttribute('aria-pressed')])
+  ));
+
+  const overlappingNeutralPoint = (surfaceSelector) => page.evaluate((selector) => {
+    const surface = document.querySelector(selector);
+    const menu = document.querySelector('.multitool');
+    if (!surface || !menu) return null;
+
+    const surfaceBox = surface.getBoundingClientRect();
+    const menuBox = menu.getBoundingClientRect();
+    const left = Math.max(surfaceBox.left, menuBox.left) + 4;
+    const right = Math.min(surfaceBox.right, menuBox.right) - 4;
+    const top = Math.max(surfaceBox.top, menuBox.top) + 4;
+    const bottom = Math.min(surfaceBox.bottom, menuBox.bottom) - 4;
+
+    for (let y = top; y <= bottom; y += 8) {
+      for (let x = left; x <= right; x += 8) {
+        const stack = document.elementsFromPoint(x, y);
+        const target = stack[0];
+        const underlyingButton = stack
+          .find((element) => element.closest?.('.multitool [data-panel]'))
+          ?.closest('.multitool [data-panel]');
+        const isInteractive = target?.closest?.('a, button, input, select, textarea, [contenteditable="true"]');
+        if (target && surface.contains(target) && !isInteractive && underlyingButton) {
+          return { x, y, underlyingPanel: underlyingButton.dataset.panel };
+        }
+      }
+    }
+    return null;
+  }, surfaceSelector);
+
+  for (const { buttonName, surface, closeName } of cases) {
+    await page.getByRole('button', { name: buttonName, exact: true }).click();
+    const panel = page.locator(surface);
+    await expect(panel).toBeVisible();
+    const point = await overlappingNeutralPoint(surface);
+    expect(point, `${surface} has no audited overlap with the menu`).not.toBeNull();
+
+    const before = await menuState();
+    await page.mouse.click(point.x, point.y);
+    expect(await menuState()).toEqual(before);
+    await expect(panel).toBeVisible();
+    await panel.getByRole('button', { name: closeName, exact: true }).click();
+  }
+
+  await page.locator('[data-privacy-settings]').click();
+  const privacy = page.locator('#privacy-consent');
+  await expect(privacy).toBeVisible();
+  const privacyPoint = await overlappingNeutralPoint('#privacy-consent');
+  const privacyCopyBox = await privacy.locator('.privacy-consent__copy').boundingBox();
+  expect(privacyCopyBox).not.toBeNull();
+  const privacyAuditPoint = privacyPoint || {
+    x: privacyCopyBox.x + privacyCopyBox.width / 2,
+    y: privacyCopyBox.y + privacyCopyBox.height / 2,
+  };
+  const beforePrivacyClick = await menuState();
+  await page.mouse.click(privacyAuditPoint.x, privacyAuditPoint.y);
+  expect(await menuState()).toEqual(beforePrivacyClick);
+  await expect(privacy).toBeVisible();
+});
+
+test('every playlist cover stays square at 200% text and blocks menu click-through', async ({ page }) => {
+  await openReady(page, `/?${baseQuery}&qa-text=200&qa-section=music`);
+  const covers = page.locator('[data-playlist-cover]');
+  await expect(covers).toHaveCount(4);
+
+  const menuState = () => page.locator('.multitool [data-panel]').evaluateAll((buttons) => (
+    buttons.map((button) => [button.dataset.panel, button.getAttribute('aria-pressed')])
+  ));
+
+  for (let index = 0; index < await covers.count(); index += 1) {
+    const cover = covers.nth(index);
+    await cover.scrollIntoViewIfNeeded();
+    await expect(cover).toBeVisible();
+    const geometry = await cover.evaluate((element) => {
+      const image = element.querySelector('img');
+      const release = element.closest('.music-release');
+      const panelScroll = element.closest('.music-panel__scroll');
+      const summary = release.querySelector('.music-release__summary');
+      const action = release.querySelector('.music-panel__listen');
+      const coverBox = element.getBoundingClientRect();
+      const imageBox = image.getBoundingClientRect();
+      const summaryBox = summary.getBoundingClientRect();
+      const actionBox = action.getBoundingClientRect();
+      const panelScrollBox = panelScroll.getBoundingClientRect();
+      return {
+        coverWidth: coverBox.width,
+        coverHeight: coverBox.height,
+        imageWidth: imageBox.width,
+        imageHeight: imageBox.height,
+        objectFit: getComputedStyle(image).objectFit,
+        summaryOverflow: summary.scrollWidth - summary.clientWidth,
+        actionLeft: actionBox.left,
+        actionRight: actionBox.right,
+        panelLeft: panelScrollBox.left,
+        panelRight: panelScrollBox.right,
+        panelOverflow: panelScroll.scrollWidth - panelScroll.clientWidth,
+        summaryWidth: summaryBox.width,
+      };
+    });
+    expect(Math.abs(geometry.coverWidth - geometry.coverHeight)).toBeLessThanOrEqual(.5);
+    expect(Math.abs(geometry.imageWidth - geometry.imageHeight)).toBeLessThanOrEqual(.5);
+    expect(geometry.objectFit).toBe('cover');
+    expect(geometry.summaryOverflow).toBeLessThanOrEqual(1);
+    expect(geometry.panelOverflow).toBeLessThanOrEqual(1);
+    expect(geometry.actionLeft).toBeGreaterThanOrEqual(geometry.panelLeft - .5);
+    expect(geometry.actionRight).toBeLessThanOrEqual(geometry.panelRight + .5);
+    expect(geometry.summaryWidth).toBeGreaterThan(0);
+
+    const before = await menuState();
+    await cover.click();
+    expect(await menuState()).toEqual(before);
+    await expect(page.locator('#music-panel')).toBeVisible();
+  }
+});
+
 test('list-view logos share one row rhythm and one visible left axis', async ({ page }) => {
   await openReady(page, `/?${baseQuery}&qa-logo-view=list&qa-section=media`);
 
@@ -1442,7 +1572,7 @@ test('Vol. 3 artwork keeps the supplied square crop and a clean fallback', async
   await expect(cover).toBeVisible();
   await expect(cover).toHaveAttribute('data-cover-state', 'ready');
   await expect(image).toBeVisible();
-  await expect(image).toHaveAttribute('src', 'assets/music-vol-3-960.jpg?v=20260815-perf1');
+  await expect(image).toHaveAttribute('src', 'assets/music-vol-3-960.jpg?v=20260822-2');
   await expect(image).toHaveAttribute('srcset', /music-vol-3-480\.jpg.+480w.+music-vol-3-960\.jpg.+960w/);
   const responsiveSource = await image.evaluate((element) => ({
     currentSrc: element.currentSrc,

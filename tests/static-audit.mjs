@@ -222,6 +222,11 @@ test('retired Maxim destination is rendered as a static catalog mark', () => {
   assert.doesNotMatch(mediaMarkup, /maximonline\.ru/);
 });
 
+test('floating surfaces never synthesize clicks on controls below them', () => {
+  assert.doesNotMatch(script, /document\.elementsFromPoint\(event\.clientX, event\.clientY\)/);
+  assert.doesNotMatch(script, /underlyingButton\.click\(\)/);
+});
+
 test('reduced motion still removes decorative video and gallery movement', () => {
   assert.match(styles, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.stage-video\s*{[\s\S]*?display: none/);
   assert.match(styles, /html\[data-reduce-motion="true"\] \.stage-video\s*{[\s\S]*?display: none/);
@@ -238,10 +243,10 @@ test('playlist title motion and the compact descriptor keep one shared structure
   assert.match(index, /href="https:\/\/music\.apple\.com\/ru\/playlist\/www-hermanco-ru-vol-4\/pl\.u-qxyl07atdRR5R2"/);
   assert.match(index, /data-src="assets\/music-vol-4-960\.jpg\?v=20260822-1"/);
   assert.match(index, /data-featured-src="assets\/music-vol-4-480\.jpg\?v=20260822-1"/);
-  assert.match(index, /15&nbsp;треков&nbsp;· 1&nbsp;ч&nbsp;41&nbsp;мин/);
+  assert.match(index, /15&nbsp;треков&nbsp;·<wbr> 1&nbsp;ч&nbsp;41&nbsp;мин/);
   assert.match(index, /href="https:\/\/music\.apple\.com\/ru\/playlist\/www-hermanco-ru-vol-3\/pl\.u-zPyL10Pu8ppgpZ"/);
-  assert.match(index, /data-src="assets\/music-vol-3-960\.jpg\?v=20260815-perf1"/);
-  assert.match(index, /data-featured-src="assets\/music-vol-3-480\.jpg\?v=20260815-perf1"/);
+  assert.match(index, /data-src="assets\/music-vol-3-960\.jpg\?v=20260822-2"/);
+  assert.match(index, /data-featured-src="assets\/music-vol-3-480\.jpg\?v=20260822-2"/);
   assert.match(index, /class="multitool__editorial-meta" aria-hidden="true">4&nbsp;подборки<\/span>/);
   assert.match(index, /data-panel="music" data-featured-playlist="vol-4"/);
   assert.match(index, /data-playlist-cover="august-2026"/);
