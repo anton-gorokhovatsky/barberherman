@@ -1,3 +1,5 @@
+import { createPanelNavigation } from './assets/panel-navigation.mjs?v=20260904-1';
+
 const root = document.documentElement;
 const themeToggle = document.querySelector('.theme-toggle');
 const motionToggle = document.querySelector('.motion-toggle');
@@ -1156,6 +1158,44 @@ function revealPanel(name) {
   });
 }
 
+function revealPlaylist(playlist) {
+  if (!playlist) return;
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    const release = document.getElementById(`music-${playlist}`);
+    const surface = contentPanels.music.querySelector('.text-block__scroll');
+    if (!release || !surface) return;
+    if (mobileQuery.matches) {
+      release.scrollIntoView({ block: 'start', behavior: 'auto' });
+    } else {
+      surface.scrollTop += release.getBoundingClientRect().top - surface.getBoundingClientRect().top;
+    }
+    syncTextScrollFade(surface);
+  }));
+}
+
+function openPanelAddress({ active, playlist }) {
+  if (mobileQuery.matches) closeAllPanels({ animate: false });
+  setMenuOpen(true, { animate: false, focusToggle: false });
+  setPanelState(active, true, { animate: false });
+  mostRecentPanelName = active;
+  bringPanelForward(contentPanels[active]);
+  revealPanel(active);
+  revealPlaylist(playlist);
+}
+
+function restorePanelNavigation({ panels, active, playlist }, { initial }) {
+  const previous = mostRecentPanelName;
+  closeAllPanels({ animate: false });
+  const visible = mobileQuery.matches ? panels.filter((name) => name === active) : panels;
+  visible.forEach((name) => setPanelState(name, true, { animate: false }));
+  if (active) openPanelAddress({ active, playlist });
+  else if (!initial && previous) {
+    const trigger = sectionButtons.find((button) => button.dataset.panel === previous);
+    trigger?.focus({ preventScroll: true });
+    if (mobileQuery.matches) trigger?.scrollIntoView({ block: 'center', behavior: 'auto' });
+  }
+}
+
 function applyVisualQAContentState() {
   const requestedPanels = (visualQAPanels || '')
     .split(',')
@@ -2156,6 +2196,14 @@ syncPanelDragAvailability();
 enableMultitoolDragging();
 applyVisualQADragState();
 
+const panelNavigation = createPanelNavigation({
+  readPanels: () => Object.keys(contentPanels).filter(panelIsOpen).sort(
+    (a, b) => Number(contentPanels[a].style.zIndex) - Number(contentPanels[b].style.zIndex)
+  ),
+  restore: restorePanelNavigation,
+  open: openPanelAddress,
+});
+
 if (visualQAFocus === 'skip') {
   requestAnimationFrame(() => document.querySelector('.skip-link')?.focus());
 }
@@ -2199,6 +2247,7 @@ motionToggle?.addEventListener('click', () => {
 
 multitoolMenuToggle?.addEventListener('click', () => {
   setMenuOpen(!menuOpen);
+  panelNavigation.record(mostRecentPanelName);
 });
 
 galleryPrevious?.addEventListener('click', () => scrollGalleryTo(galleryIndex - 1));
@@ -2282,6 +2331,7 @@ sectionButtons.forEach((button) => {
       reachMetrikaGoal('module_open', { module: name });
       revealPanel(name);
     }
+    panelNavigation.record(willShow ? name : null);
   });
 });
 
@@ -2299,6 +2349,7 @@ document.addEventListener('click', (event) => {
 panelCloseButtons.forEach((button) => {
   button.addEventListener('click', () => {
     setPanelState(button.dataset.closePanel, false, { returnFocus: true });
+    panelNavigation.record(null);
   });
 });
 
@@ -2342,6 +2393,7 @@ document.addEventListener('keydown', (event) => {
 
   if (name) {
     setPanelState(name, false, { returnFocus: true });
+    panelNavigation.record(null);
     event.preventDefault();
   } else if (mobileQuery.matches) {
     setMenuOpen(false);
@@ -2363,6 +2415,7 @@ mobileQuery.addEventListener('change', () => {
   } else {
     requestAnimationFrame(clampCurrentMultitoolPosition);
   }
+  panelNavigation.record(mostRecentPanelName, { replace: true });
 });
 reduceMotionQuery.addEventListener('change', applyMotionPreference);
 reduceTransparencyQuery.addEventListener('change', applyTransparencyPreference);

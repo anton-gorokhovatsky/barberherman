@@ -3,6 +3,7 @@ import { access, readFile } from 'node:fs/promises';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import { parsePanelAddress, panelAddress } from '../assets/panel-navigation.mjs';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 const read = (file) => readFile(path.join(root, file), 'utf8');
@@ -42,11 +43,11 @@ test('analytics is absent from HTML and remains an explicit JavaScript opt-in', 
   assert.match(index, /data-privacy-settings/);
 });
 
-test('profile and expertise share the final booking continuation', () => {
+test('profile and expertise share the booking component', () => {
   const bookingHref = 'https://b11133.yclients.com/company/30187/personal/menu?o=';
   const panels = [
     ['profile-panel', 'Профиль', 'Записаться после раздела «Профиль»'],
-    ['practice-panel', 'Экспертиза', 'Записаться после раздела «Экспертиза»'],
+    ['practice-panel', 'Экспертиза', 'Записаться на стрижку'],
   ];
 
   for (const [panelId, label, accessibleName] of panels) {
@@ -59,6 +60,19 @@ test('profile and expertise share the final booking continuation', () => {
     assert.match(panel, /data-metrika-goal="booking_click"/);
     assert.match(panel, new RegExp(`data-metrika-label="${label}"`));
   }
+});
+
+test('non-booking enquiries use email rather than the public Telegram channel', () => {
+  const expertise = index.split('id="practice-panel"')[1]?.split('</article>')[0] || '';
+  const actions = [...expertise.matchAll(/<a class="practice-group__action"[^>]*>/g)].map((match) => match[0]);
+  assert.equal(actions.length, 3);
+  for (const action of actions) {
+    assert.match(action, /href="mailto:info@barberherman\.ru"/);
+    assert.match(action, /data-metrika-goal="email_click"/);
+    assert.doesNotMatch(action, /target=/);
+  }
+  assert.match(privacy, /<a href="mailto:info@barberherman\.ru">info@barberherman\.ru<\/a>/);
+  assert.doesNotMatch(privacy, /href="https:\/\/t\.me\//);
 });
 
 test('expertise uses one public name in the menu and panel chrome', () => {
@@ -277,4 +291,21 @@ test('presence identity is shared across tabs rather than stored per tab', () =>
   assert.match(script, /localStorage\.getItem\(presenceAuthStorageKey\)/);
   assert.match(script, /localStorage\.setItem\(presenceAuthStorageKey/);
   assert.doesNotMatch(script, /sessionStorage\.(?:getItem|setItem)\(presenceAuthStorageKey/);
+});
+
+test('panel addresses validate input and keep legacy aliases', () => {
+  assert.deepEqual(parsePanelAddress('#music-panel'), { active: 'music', playlist: null });
+  assert.deepEqual(parsePanelAddress('#expertise'), { active: 'practice', playlist: null });
+  assert.deepEqual(parsePanelAddress('#music/vol-3'), { active: 'music', playlist: 'vol-3' });
+  assert.equal(panelAddress({ active: 'gallery' }), '#archive');
+  assert.equal(panelAddress({ active: 'music', playlist: 'vol-4' }), '#music/vol-4');
+  for (const hash of ['#content', '#privacy-settings', '#__proto__', '#constructor', '#music/missing', '#music/vol-4/extra', '#%E0%A4%A']) {
+    assert.equal(parsePanelAddress(hash), null);
+  }
+});
+
+test('text QA changes the base font only, not component layout', () => {
+  assert.doesNotMatch(styles, /html\[data-qa-text[^\]]*\]\s+\./);
+  assert.match(styles, /@container menu \(max-width: 18em\)/);
+  assert.match(index, /type="module" src="script\.js/);
 });

@@ -823,12 +823,12 @@ test('modules announce, focus and retain the intended responsive state', async (
   }
 });
 
-test('profile and expertise end with one shared keyboard-reachable booking action', async ({ page }) => {
+test('profile and expertise keep a shared keyboard-reachable booking action', async ({ page }) => {
   await openReady(page);
 
   const panels = [
     ['Профиль', '#profile-panel', 'Записаться после раздела «Профиль»'],
-    ['Экспертиза', '#practice-panel', 'Записаться после раздела «Экспертиза»'],
+    ['Экспертиза', '#practice-panel', 'Записаться на стрижку'],
   ];
 
   for (const [buttonName, panelSelector, accessibleName] of panels) {
@@ -975,7 +975,7 @@ test('every floating surface blocks click-through to overlapping menu controls',
     { buttonName: 'Экспертиза', surface: '#practice-panel', closeName: 'Закрыть панель «Экспертиза»' },
     { buttonName: 'Медиа', surface: '#media-panel', closeName: 'Закрыть раздел «Медиа»' },
     { buttonName: 'Партнёрства', surface: '#partners-panel', closeName: 'Закрыть раздел «Партнёрства»' },
-    { buttonName: 'Галерея', surface: '#gallery-panel', closeName: 'Закрыть раздел «Галерея»' },
+    { buttonName: 'Личный архив', surface: '#gallery-panel', closeName: 'Закрыть раздел «Личный архив»' },
     { buttonName: 'Музыка', surface: '#music-panel', closeName: 'Закрыть панель «Музыка»' },
   ];
 
@@ -1139,7 +1139,13 @@ test('every playlist cover stays square at 200% text and blocks menu click-throu
 test('list-view logos share one row rhythm and one visible left axis', async ({ page }) => {
   await openReady(page, `/?${baseQuery}&qa-logo-view=list&qa-section=media`);
 
-  const auditPanel = async (selector) => page.locator(selector).evaluate((panel) => (
+  const auditPanel = async (selector) => {
+    // Image geometry is meaningful only after deferred assets have decoded.
+    // A missing asset must fail this assertion, not masquerade as an axis bug.
+    await expect.poll(() => page.locator(`${selector} .logo img`).evaluateAll((images) => (
+      images.length > 0 && images.every((image) => image.complete && image.naturalWidth > 0)
+    ))).toBe(true);
+    return page.locator(selector).evaluate((panel) => (
     [...panel.querySelectorAll('.logo')].map((cell) => {
       const cellBox = cell.getBoundingClientRect();
       const imageBox = cell.querySelector('img').getBoundingClientRect();
@@ -1150,7 +1156,8 @@ test('list-view logos share one row rhythm and one visible left axis', async ({ 
         imageHeight: imageBox.height,
       };
     })
-  ));
+    ));
+  };
 
   const assertSharedSystem = (metrics) => {
     expect(new Set(metrics.map(({ rowHeight }) => Math.round(rowHeight))).size).toBe(1);
@@ -1233,7 +1240,7 @@ test('gallery is a peer content panel with edge-to-edge imagery and keyboard nav
     await expect(gallery).toBeVisible();
   }
 
-  await gallery.getByRole('button', { name: 'Закрыть раздел «Галерея»', exact: true }).click();
+  await gallery.getByRole('button', { name: 'Закрыть раздел «Личный архив»', exact: true }).click();
   await expect(gallery).toBeHidden();
   await expect(page.locator('html')).toHaveAttribute('data-gallery-open', 'false');
   await expect(page.locator('html')).toHaveAttribute('data-menu-open', 'true');
@@ -1257,7 +1264,7 @@ test('mobile gallery accepts one short swipe in both directions and wraps withou
   await client.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 1 });
   await openReady(page, `/?${baseQuery.replace('qa-motion=reduce', 'qa-motion=full')}`);
 
-  await page.getByRole('button', { name: 'Галерея', exact: true }).click();
+  await page.getByRole('button', { name: 'Личный архив', exact: true }).click();
   const gallery = page.locator('#gallery-panel');
   const track = gallery.getByRole('region', { name: 'Фотографии из личного архива', exact: true });
   const count = gallery.locator('[data-gallery-count]');
@@ -1509,11 +1516,11 @@ test('closed panels hydrate only the images required by the section being opened
     images.every((image) => image.getAttribute('src') === null)
   ))).toBe(true);
 
-  await page.getByRole('button', { name: 'Галерея', exact: true }).click();
+  await page.getByRole('button', { name: 'Личный архив', exact: true }).click();
   await expect(page.locator('[data-gallery-slide] .gallery-stage__image').first()).toHaveAttribute('src', /assets\/profile\.jpg/);
   await expect(page.locator('[data-gallery-slide] .gallery-stage__image').nth(1)).toHaveAttribute('src', /assets\/portrait\.jpg/);
   await expect(page.locator('[data-gallery-clone]')).toHaveCount(2);
-  await page.getByRole('button', { name: 'Закрыть раздел «Галерея»', exact: true }).click();
+  await page.getByRole('button', { name: 'Закрыть раздел «Личный архив»', exact: true }).click();
 
   await page.getByRole('button', { name: 'Музыка', exact: true }).click();
   const musicImages = page.locator('[data-playlist-cover] img');
@@ -1640,7 +1647,7 @@ test('menu and content-panel keyboard dragging match the responsive contract', a
     await expect(page.locator('.text-block--profile .text-block__drag-handle')).toBeDisabled();
     await page.getByRole('button', { name: 'Медиа', exact: true }).click();
     await expect(page.locator('#media-panel .catalog-panel__drag-handle')).toBeDisabled();
-    await page.getByRole('button', { name: 'Галерея', exact: true }).click();
+    await page.getByRole('button', { name: 'Личный архив', exact: true }).click();
     await expect(page.locator('.gallery-stage__drag-handle')).toBeDisabled();
     return;
   }
@@ -1671,7 +1678,7 @@ test('menu and content-panel keyboard dragging match the responsive contract', a
   await expect(catalog).toHaveAttribute('data-drag-x', '0');
   await catalog.getByRole('button', { name: 'Закрыть раздел «Медиа»', exact: true }).click();
 
-  const galleryButton = page.getByRole('button', { name: 'Галерея', exact: true });
+  const galleryButton = page.getByRole('button', { name: 'Личный архив', exact: true });
   const galleryButtonBox = await galleryButton.boundingBox();
   expect(galleryButtonBox).not.toBeNull();
   await page.mouse.click(
@@ -1746,7 +1753,7 @@ test('pointer dragging has elastic boundary feedback and settles inside the safe
     return settled.x + settled.width;
   }).toBeLessThanOrEqual((await page.viewportSize()).width - 7.5);
 
-  await page.getByRole('button', { name: 'Галерея', exact: true }).click();
+  await page.getByRole('button', { name: 'Личный архив', exact: true }).click();
   const gallery = page.locator('#gallery-panel');
   const galleryHandleBox = await gallery.locator('.gallery-stage__drag-handle').boundingBox();
   expect(galleryHandleBox).not.toBeNull();
