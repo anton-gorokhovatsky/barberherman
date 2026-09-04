@@ -329,6 +329,8 @@ html[data-content-open="true"] .stage-overlay {
 .text-block {
   --panel-available-height: calc(100svh - (2 * var(--layout-gutter)));
   --action-inline-inset: 12px;
+  --action-content-gap: .75rem;
+  --section-content-gap: 2rem;
   position: relative;
   z-index: 3;
   width: clamp(366px, 31vw, 520px);
@@ -844,8 +846,7 @@ html[data-track-phase="end"] .music-panel__track-title-text {
 .facts {
   display: grid;
   gap: 0;
-  margin: clamp(30px, 5vh, 56px) 0 0;
-  border-bottom: 1px solid var(--line);
+  margin: clamp(30px, 5vh, 56px) calc(-1 * var(--action-inline-inset)) 0;
 }
 
 .facts div {
@@ -853,8 +854,8 @@ html[data-track-phase="end"] .music-panel__track-title-text {
   grid-template-columns: minmax(112px, .8fr) minmax(0, 1.2fr);
   gap: clamp(12px, 1.6vw, 22px);
   align-items: baseline;
-  padding: 15px 0 17px;
-  border-top: 1px solid var(--line);
+  padding: 15px var(--action-inline-inset) 17px;
+  border-top: var(--tool-rule);
 }
 
 .facts dt {
@@ -874,9 +875,18 @@ html[data-track-phase="end"] .music-panel__track-title-text {
 }
 
 .text-block__continuation {
-  margin: clamp(32px, 5vh, 52px) calc(-1 * var(--action-inline-inset)) 0;
+  margin: var(--action-content-gap) calc(-1 * var(--action-inline-inset)) 0;
   border-top: var(--tool-rule);
-  border-bottom: var(--tool-rule);
+}
+
+/* Fact rows already supply their closing padding; join the next action row
+   without an extra paragraph, empty band or duplicate separator. */
+.facts + .text-block__continuation {
+  margin-top: 0;
+}
+
+.text-block__action + .text-block__action {
+  border-top: var(--tool-rule);
 }
 
 .text-block__action {
@@ -927,13 +937,11 @@ html[data-track-phase="end"] .music-panel__track-title-text {
   --action-min-height: 44px;
   --action-block-padding: 12px;
   --action-type: 500 var(--type-body)/1.3 var(--font);
-  margin: 12px calc(-1 * var(--action-inline-inset)) 0;
-  border-top: var(--tool-rule);
   letter-spacing: 0;
 }
 
 .practice-group + .practice-group {
-  margin-top: clamp(24px, 4vh, 42px);
+  margin-top: var(--section-content-gap);
 }
 
 .practice-group ul {
@@ -965,16 +973,6 @@ html[data-track-phase="end"] .music-panel__track-title-text {
 .practice-group a {
   text-decoration-thickness: 1px;
   text-underline-offset: 3px;
-}
-
-.practice-group__action {
-  display: flex;
-  width: fit-content;
-  min-height: 44px;
-  align-items: center;
-  margin-top: 12px;
-  font: 640 var(--type-body)/1.3 var(--font);
-  overflow-wrap: anywhere;
 }
 
 .music-release__title-link {
@@ -2827,9 +2825,6 @@ html[data-theme="dark"] .theme-toggle__icon--light {
     margin-bottom: 24px;
   }
 
-  .practice-group + .practice-group {
-    margin-top: 22px;
-  }
 }
 
 @media (min-width: 901px) {
@@ -3592,6 +3587,24 @@ html[data-theme="dark"] .theme-toggle__icon--light {
     transition-duration: .01ms !important;
     animation-duration: .01ms !important;
     animation-iteration-count: 1 !important;
+  }
+}
+
+/* Facts need enough readable measure for both columns. A text-relative
+   threshold also handles larger system text without QA-only selectors. */
+@container (max-width: 18rem) {
+  .facts div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: .5rem;
+  }
+}
+
+/* Keep live labels and values within their own cells as text grows. */
+@container menu (max-width: 40rem) {
+  .multitool__presence,
+  .multitool__weather {
+    grid-template-columns: minmax(0, 1fr);
+    gap: .3rem;
   }
 }
 

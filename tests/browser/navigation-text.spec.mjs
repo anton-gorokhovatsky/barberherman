@@ -116,6 +116,94 @@ test('secondary enquiry rows share action axes, hierarchy and keyboard states', 
   }
 });
 
+test('all contextual actions keep shared rhythm across panels, window heights and text sizes', async ({ page }) => {
+  const width = page.viewportSize().width;
+  for (const height of [600, 1000]) {
+    await page.setViewportSize({ width, height });
+    for (const scale of [100, 200]) {
+      await ready(page, `&qa-text=${scale}#profile`);
+      const profile = page.locator('#profile-panel');
+      const forward = profile.locator('a[href="#expertise"]');
+      await expect(forward).toHaveCSS('text-decoration-line', 'none');
+      await expect(forward.locator('svg use')).toHaveAttribute('href', '#icon-forward');
+      const factsLayout = await profile.evaluate(panel => {
+        const scroll = panel.querySelector('.text-block__scroll');
+        const style = getComputedStyle(scroll);
+        const measure = scroll.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+        const rem = parseFloat(getComputedStyle(document.documentElement).fontSize);
+        return { shouldStack: measure <= 18 * rem,
+          rows: [...panel.querySelectorAll('.facts div')].map(row => ({
+            columns: getComputedStyle(row).gridTemplateColumns.split(' ').length,
+            gap: row.querySelector('dd').getBoundingClientRect().top - row.querySelector('dt').getBoundingClientRect().bottom,
+          })) };
+      });
+      if (factsLayout.shouldStack) for (const row of factsLayout.rows) {
+        expect(row.columns).toBe(1);
+        expect(row.gap).toBeGreaterThanOrEqual(8);
+      }
+      const geometry = await profile.evaluate((panel) => {
+        const rows = [...panel.querySelectorAll('.text-block__action')];
+        const rect = (el) => el.getBoundingClientRect();
+        const facts = rect(panel.querySelector('.facts'));
+        const group = rect(panel.querySelector('.text-block__continuation'));
+        return { attachedGap: group.top - facts.bottom,
+          separatorLeft: group.left - facts.left,
+          separatorRight: group.right - facts.right,
+          rowGap: rect(rows[1]).top - rect(rows[0]).bottom,
+          rows: rows.map(el => ({
+            textLeft: rect(el.querySelector('span')).left,
+            iconRight: rect(el.querySelector('svg')).right,
+            weight: Number(getComputedStyle(el).fontWeight),
+            height: rect(el).height,
+            parent: el.parentElement.className,
+          })) };
+      });
+      for (const key of ['attachedGap', 'separatorLeft', 'separatorRight', 'rowGap']) expect(Math.abs(geometry[key]), key).toBeLessThanOrEqual(1);
+      expect(geometry.rows).toHaveLength(2);
+      const [secondary, booking] = geometry.rows;
+      expect(secondary.weight).toBeLessThan(booking.weight);
+      expect(Math.abs(secondary.textLeft - booking.textLeft)).toBeLessThanOrEqual(1);
+      expect(Math.abs(secondary.iconRight - booking.iconRight)).toBeLessThanOrEqual(1);
+      geometry.rows.forEach(row => {
+        expect(row.height).toBeGreaterThanOrEqual(44);
+        expect(row.parent).toBe('text-block__continuation');
+      });
+      await forward.focus();
+      await expect(forward).toBeFocused();
+      await expect(forward).not.toHaveCSS('box-shadow', 'none');
+      await forward.press('Enter');
+      await expect(page).toHaveURL(/#expertise$/);
+      const practice = page.locator('#practice-panel');
+      await expect(practice).toBeVisible();
+      await expect.poll(() => practice.locator('.text-block__action').first().evaluate(el => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(18 * scale / 100);
+      const rhythm = await practice.evaluate(panel => {
+        const groups = [...panel.querySelectorAll('.practice-group')];
+        return { rem: parseFloat(getComputedStyle(document.documentElement).fontSize),
+          groups: groups.map((el, i) => {
+            const list = el.querySelector('ul').getBoundingClientRect();
+            const continuation = el.querySelector('.text-block__continuation');
+            const action = continuation.querySelector('.text-block__action');
+            const box = continuation.getBoundingClientRect();
+            return { actionGap: box.top - list.bottom,
+              nextGap: i ? el.getBoundingClientRect().top - groups[i - 1].getBoundingClientRect().bottom : null,
+              textAxis: action.querySelector('span').getBoundingClientRect().left - list.left,
+              parent: action.parentElement.className,
+              bottomBorder: parseFloat(getComputedStyle(continuation).borderBottomWidth) };
+          }) };
+      });
+      expect(rhythm.groups).toHaveLength(4);
+      for (const group of rhythm.groups) {
+        expect(Math.abs(group.actionGap - rhythm.rem * .75)).toBeLessThanOrEqual(1);
+        if (group.nextGap !== null) expect(Math.abs(group.nextGap - rhythm.rem * 2)).toBeLessThanOrEqual(1);
+        expect(Math.abs(group.textAxis)).toBeLessThanOrEqual(1);
+        expect(group.parent).toBe('text-block__continuation');
+        expect(group.bottomBorder).toBe(0);
+      }
+      expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
+    }
+  }
+});
+
 test('editorial symbols keep their clearance with real text scaling', async ({ page }) => {
   await ready(page);
   for (const percent of [100, 125, 150, 200]) {
@@ -129,6 +217,26 @@ test('editorial symbols keep their clearance with real text scaling', async ({ p
         - button.querySelector('.multitool__editorial-mark').getBoundingClientRect().bottom
       )))
     ))).toBeGreaterThanOrEqual(4);
+  }
+});
+
+test('live information labels and values never collide when text grows', async ({ page }) => {
+  await ready(page);
+  for (const percent of [100, 125, 150, 200]) {
+    await page.evaluate(scale => { document.documentElement.style.fontSize = `${scale}%`; }, percent);
+    await expect.poll(() => page.locator('.multitool__live-label').first().evaluate(el => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(10 * percent / 100);
+    const cells = await page.locator('.multitool__presence, .multitool__weather').evaluateAll(elements => elements.map(el => {
+      const box = el.getBoundingClientRect();
+      const label = el.querySelector('.multitool__live-label').getBoundingClientRect();
+      const value = el.querySelector('strong').getBoundingClientRect();
+      const right = Math.max(...[...el.querySelector('strong').children].map(child => child.getBoundingClientRect().right));
+      return { distinct: label.right <= value.left + 1 || label.bottom <= value.top + 1,
+        overflow: right - box.right };
+    }));
+    for (const cell of cells) {
+      expect(cell.distinct).toBe(true);
+      expect(cell.overflow).toBeLessThanOrEqual(1);
+    }
   }
 });
 

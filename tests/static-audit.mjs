@@ -62,6 +62,19 @@ test('profile and expertise share the booking component', () => {
   }
 });
 
+test('all contextual actions share their container and spacing contract', () => {
+  const profile = index.split('id="profile-panel"')[1]?.split('</article>')[0] || '';
+  assert.match(profile, /class="text-block__action text-block__action--secondary" href="#expertise"/);
+  assert.match(profile, /<use href="#icon-forward"\/>/);
+  assert.doesNotMatch(index + styles, /practice-group__action/);
+  assert.equal((index.match(/class="text-block__continuation"/g) || []).length, 5);
+  assert.match(styles, /--action-content-gap: \.75rem/);
+  assert.match(styles, /--section-content-gap: 2rem/);
+  const continuation = styles.split('.text-block__continuation {')[1]?.split('}')[0] || '';
+  assert.match(continuation, /margin: var\(--action-content-gap\)/);
+  assert.doesNotMatch(continuation, /\bvh\b|\dvh|border-bottom/);
+});
+
 test('non-booking enquiries use email rather than the public Telegram channel', () => {
   const expertise = index.split('id="practice-panel"')[1]?.split('</article>')[0] || '';
   const actions = [...expertise.matchAll(/<a class="text-block__action text-block__action--secondary"[^>]*>/g)].map((match) => match[0]);
