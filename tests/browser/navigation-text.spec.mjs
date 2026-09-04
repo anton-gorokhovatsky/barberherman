@@ -72,6 +72,22 @@ test('profile and expertise offer distinct contextual next steps', async ({ page
   }
 });
 
+test('editorial symbols keep their clearance with real text scaling', async ({ page }) => {
+  await ready(page);
+  for (const percent of [100, 125, 150, 200]) {
+    await page.evaluate((scale) => { document.documentElement.style.fontSize = `${scale}%`; }, percent);
+    await expect.poll(() => page.locator('.multitool__editorial-meta').first().evaluate(
+      (element) => parseFloat(getComputedStyle(element).fontSize)
+    )).toBeGreaterThanOrEqual(12 * percent / 100);
+    await expect.poll(() => page.locator('.multitool__editorial-row button').evaluateAll((buttons) => (
+      Math.min(...buttons.map((button) => (
+        button.querySelector('.multitool__editorial-copy').getBoundingClientRect().top
+        - button.querySelector('.multitool__editorial-mark').getBoundingClientRect().bottom
+      )))
+    ))).toBeGreaterThanOrEqual(4);
+  }
+});
+
 test('real 200% base text grows and matches QA layout without special selectors', async ({ page }) => {
   await ready(page, '#profile');
   const measure = () => page.evaluate(() => {
@@ -98,6 +114,9 @@ test('real 200% base text grows and matches QA layout without special selectors'
   expect(actual.overflow).toBe(false);
   expect(actual.controls.filter(({ width, height, left, right }) => width < 44 || height < 44 || left < -.5 || right > page.viewportSize().width + .5)).toEqual([]);
   await ready(page, '&qa-text=200#profile');
+  // WebKit may resolve inherited rem tokens a frame later on navigation too.
+  // Require the exact same final font values, without weakening the comparison.
+  await expect.poll(async () => (await measure()).fonts).toEqual(actual.fonts);
   const qa = await measure();
   expect(qa.fonts).toEqual(actual.fonts);
   expect(qa.columns).toEqual(actual.columns);

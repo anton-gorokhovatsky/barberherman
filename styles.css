@@ -1654,6 +1654,7 @@ html[data-ticker-phase="seam"] .multitool__descriptor-track {
 }
 
 .multitool__editorial-row {
+  --editorial-content-gap: clamp(6px, 1.5cqi, 8px);
   display: grid;
   grid-column: 1 / -1;
   grid-template-columns: var(--split-grid);
@@ -1669,6 +1670,7 @@ html[data-ticker-phase="seam"] .multitool__descriptor-track {
   min-height: clamp(96px, 11.5vw, 116px);
   grid-template-columns: minmax(0, 1fr) auto;
   grid-template-rows: 1fr auto;
+  row-gap: var(--editorial-content-gap);
   align-items: end;
   padding: 15px var(--floor-inline) 16px;
 }
@@ -1712,7 +1714,7 @@ html[data-ticker-phase="seam"] .multitool__descriptor-track {
   min-width: 0;
   grid-column: 1;
   grid-row: 2;
-  gap: clamp(6px, 1.5cqi, 8px);
+  gap: var(--editorial-content-gap);
   align-self: end;
 }
 
