@@ -53,7 +53,7 @@ test('profile and expertise share the booking component', () => {
   for (const [panelId, label, accessibleName] of panels) {
     const panel = index.split(`id="${panelId}"`)[1]?.split('</article>')[0] || '';
     assert.match(panel, /class="text-block__continuation"/);
-    assert.match(panel, /class="text-block__booking"/);
+    assert.match(panel, /class="text-block__booking text-block__action"/);
     assert.match(panel, new RegExp(`href="${bookingHref.replace(/[?]/g, '\\?')}"`));
     assert.match(panel, /target="_blank" rel="noopener"/);
     assert.match(panel, new RegExp(`aria-label="${accessibleName}"`));
@@ -64,7 +64,7 @@ test('profile and expertise share the booking component', () => {
 
 test('non-booking enquiries use email rather than the public Telegram channel', () => {
   const expertise = index.split('id="practice-panel"')[1]?.split('</article>')[0] || '';
-  const actions = [...expertise.matchAll(/<a class="practice-group__action"[^>]*>/g)].map((match) => match[0]);
+  const actions = [...expertise.matchAll(/<a class="text-block__action text-block__action--secondary"[^>]*>/g)].map((match) => match[0]);
   assert.equal(actions.length, 3);
   for (const action of actions) {
     assert.match(action, /href="mailto:info@barberherman\.ru"/);
@@ -73,6 +73,9 @@ test('non-booking enquiries use email rather than the public Telegram channel', 
   }
   assert.match(privacy, /<a href="mailto:info@barberherman\.ru">info@barberherman\.ru<\/a>/);
   assert.doesNotMatch(privacy, /href="https:\/\/t\.me\//);
+  assert.match(expertise, /<span>Обсудить обучение<\/span>/);
+  assert.doesNotMatch(expertise, /Обсудить обучение по/);
+  assert.equal((index.match(/<use href="#icon-outbound"\/>/g) || []).length, 5);
 });
 
 test('expertise uses one public name in the menu and panel chrome', () => {

@@ -328,6 +328,7 @@ html[data-content-open="true"] .stage-overlay {
 
 .text-block {
   --panel-available-height: calc(100svh - (2 * var(--layout-gutter)));
+  --action-inline-inset: 12px;
   position: relative;
   z-index: 3;
   width: clamp(366px, 31vw, 520px);
@@ -873,21 +874,22 @@ html[data-track-phase="end"] .music-panel__track-title-text {
 }
 
 .text-block__continuation {
-  margin: clamp(32px, 5vh, 52px) -12px 0;
+  margin: clamp(32px, 5vh, 52px) calc(-1 * var(--action-inline-inset)) 0;
   border-top: var(--tool-rule);
   border-bottom: var(--tool-rule);
 }
 
-.text-block__booking {
+.text-block__action {
   display: flex;
-  min-height: 64px;
+  min-height: var(--action-min-height, 64px);
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  padding: 14px 12px 15px;
+  padding-block: var(--action-block-padding, 14px 15px);
+  padding-inline: var(--action-inline-inset);
   background: transparent;
   color: inherit;
-  font: 720 var(--type-lead)/1 var(--font);
+  font: var(--action-type, 720 var(--type-lead)/1 var(--font));
   letter-spacing: -.025em;
   text-decoration: none;
   overflow-wrap: anywhere;
@@ -896,7 +898,11 @@ html[data-track-phase="end"] .music-panel__track-title-text {
     box-shadow var(--motion-medium) var(--ease-out);
 }
 
-.text-block__booking svg {
+.text-block__action > span {
+  min-width: 0;
+}
+
+.text-block__action svg {
   width: var(--icon-size-default);
   height: var(--icon-size-default);
   flex: 0 0 auto;
@@ -908,13 +914,22 @@ html[data-track-phase="end"] .music-panel__track-title-text {
   vector-effect: non-scaling-stroke;
 }
 
-.text-block__booking:is(:hover, :focus-visible) {
+.text-block__action:is(:hover, :focus-visible) {
   background: var(--tool-hover);
   box-shadow: inset 0 -1px 0 currentColor;
 }
 
-.text-block__booking:active {
+.text-block__action:active {
   background: color-mix(in srgb, var(--tool-hover), currentColor 5%);
+}
+
+.text-block__action--secondary {
+  --action-min-height: 44px;
+  --action-block-padding: 12px;
+  --action-type: 500 var(--type-body)/1.3 var(--font);
+  margin: 12px calc(-1 * var(--action-inline-inset)) 0;
+  border-top: var(--tool-rule);
+  letter-spacing: 0;
 }
 
 .practice-group + .practice-group {

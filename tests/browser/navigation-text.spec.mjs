@@ -72,6 +72,50 @@ test('profile and expertise offer distinct contextual next steps', async ({ page
   }
 });
 
+test('secondary enquiry rows share action axes, hierarchy and keyboard states', async ({ page }) => {
+  for (const theme of ['light', 'dark']) {
+    await page.goto(`/?${query.replace('qa-theme=light', `qa-theme=${theme}`)}#expertise`);
+    await page.evaluate(() => document.fonts.ready);
+    const panel = page.locator('#practice-panel');
+    const links = panel.locator('.text-block__action--secondary');
+    await expect(links).toHaveCount(3);
+    for (const scale of [100, 200]) {
+      await page.evaluate((percent) => { document.documentElement.style.fontSize = `${percent}%`; }, scale);
+      await expect.poll(() => links.first().evaluate((el) => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(16 * scale / 100);
+      const axes = await panel.locator('.text-block__action').evaluateAll((actions) => actions.map((el) => {
+        const row = el.getBoundingClientRect();
+        const copy = el.querySelector('span').getBoundingClientRect();
+        const icon = el.querySelector('svg').getBoundingClientRect();
+        const style = getComputedStyle(el);
+        return { left: copy.left, right: icon.right, width: row.width, height: row.height,
+          weight: Number(style.fontWeight), decoration: style.textDecorationLine,
+          iconSize: icon.width, iconCenter: icon.top + icon.height / 2,
+          rowCenter: row.top + (row.height + parseFloat(style.borderTopWidth)) / 2 };
+      }));
+      const [booking, ...enquiries] = axes;
+      for (const action of enquiries) {
+        expect(Math.abs(action.left - booking.left)).toBeLessThanOrEqual(1);
+        expect(Math.abs(action.right - booking.right)).toBeLessThanOrEqual(1);
+        expect(Math.abs(action.width - booking.width)).toBeLessThanOrEqual(1);
+        expect(Math.abs(action.iconCenter - action.rowCenter)).toBeLessThanOrEqual(1);
+        expect(action.height).toBeGreaterThanOrEqual(44);
+        expect(action.weight).toBeLessThan(booking.weight);
+        expect(action.decoration).toBe('none');
+        expect(action.iconSize).toBe(booking.iconSize);
+      }
+      for (const link of await links.all()) {
+        await link.scrollIntoViewIfNeeded();
+        await link.focus();
+        await expect(link).toBeFocused();
+        await expect(link).not.toHaveCSS('box-shadow', 'none');
+        await expect(link.locator('svg use')).toHaveAttribute('href', '#icon-outbound');
+        await expect(link).toHaveAttribute('href', 'mailto:info@barberherman.ru');
+      }
+      expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
+    }
+  }
+});
+
 test('editorial symbols keep their clearance with real text scaling', async ({ page }) => {
   await ready(page);
   for (const percent of [100, 125, 150, 200]) {
