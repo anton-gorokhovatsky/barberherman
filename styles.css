@@ -2670,7 +2670,8 @@ html[data-analytics-consent="denied"] .analytics-settings__state--denied {
 }
 
 .theme-toggle__icon--light,
-.theme-toggle__icon--dark {
+.theme-toggle__icon--dark,
+.theme-toggle__icon--morph {
   width: var(--icon-size-delicate) !important;
   height: var(--icon-size-delicate) !important;
   stroke-width: var(--icon-stroke-default);
@@ -2700,10 +2701,19 @@ html[data-system-reduced-transparency="true"] .glass-surface::before {
   top: 50%;
   opacity: 0;
   transform: translate(-50%, -50%);
+  pointer-events: none;
 }
 
 html[data-theme="light"] .theme-toggle__icon--dark,
 html[data-theme="dark"] .theme-toggle__icon--light {
+  opacity: 1;
+}
+
+.theme-toggle[data-theme-icon="morph"] :is(.theme-toggle__icon--light, .theme-toggle__icon--dark) {
+  opacity: 0;
+}
+
+.theme-toggle[data-theme-icon="morph"] .theme-toggle__icon--morph {
   opacity: 1;
 }
 

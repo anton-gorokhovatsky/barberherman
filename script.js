@@ -2172,6 +2172,14 @@ if (window.location.hash === '#privacy-settings') {
 
 requestAnimationFrame(() => root.classList.add('theme-ready'));
 
+// Progressive enhancement; the accepted static icons remain the offline fallback.
+// ?qa-icons=static provides the unchanged version for the local comparison.
+if (queryParams.get('qa-icons') !== 'static') {
+  import('./assets/theme-icon.mjs')
+    .then(({ enhanceThemeIcon }) => enhanceThemeIcon(themeToggle))
+    .catch(() => { /* The theme button works without the optional animation. */ });
+}
+
 themeToggle?.addEventListener('click', () => {
   const nextTheme = root.dataset.theme === 'dark' ? 'light' : 'dark';
   applyTheme(nextTheme, { persist: true });

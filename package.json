@@ -4,12 +4,14 @@
   "packageManager": "pnpm@11.9.0",
   "scripts": {
     "bump:cache": "node scripts/bump-cache-version.mjs",
+    "vendor:icons": "node scripts/vendor-morphicons.mjs",
     "test": "pnpm run test:static && pnpm run test:browser",
-    "test:static": "node --check script.js && node --check scripts/bump-cache-version.mjs && node --test tests/static-audit.mjs",
+    "test:static": "node --check script.js && node --check assets/theme-icon.mjs && node --check scripts/vendor-morphicons.mjs && node --check scripts/bump-cache-version.mjs && node --test tests/static-audit.mjs",
     "test:browser": "playwright test"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.12.1",
-    "@playwright/test": "1.61.1"
+    "@playwright/test": "1.61.1",
+    "morphicons": "1.7.1"
   }
 }
