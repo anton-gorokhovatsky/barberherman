@@ -75,6 +75,14 @@ test('all contextual actions share their container and spacing contract', () => 
   assert.doesNotMatch(continuation, /\bvh\b|\dvh|border-bottom/);
 });
 
+test('contextual arrows share one path and differ only by a 45-degree rotation', () => {
+  const outbound = index.match(/<symbol id="icon-outbound" viewBox="0 0 24 24">([\s\S]*?)<\/symbol>/)?.[1].trim();
+  const forward = index.match(/<symbol id="icon-forward" viewBox="0 0 24 24">([\s\S]*?)<\/symbol>/)?.[1].trim();
+  assert.equal(outbound, '<path id="icon-arrow-path" d="M5.5 18.5 18.5 5.5M9 5.5h9.5V15"/>');
+  assert.equal(forward, '<use href="#icon-arrow-path" transform="rotate(45 12 12)"/>');
+  assert.equal((index.match(/id="icon-arrow-path"/g) || []).length, 1);
+});
+
 test('non-booking enquiries use email rather than the public Telegram channel', () => {
   const expertise = index.split('id="practice-panel"')[1]?.split('</article>')[0] || '';
   const actions = [...expertise.matchAll(/<a class="text-block__action text-block__action--secondary"[^>]*>/g)].map((match) => match[0]);
