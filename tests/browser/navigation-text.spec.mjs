@@ -51,6 +51,25 @@ test('every panel and playlist can be reached directly and unknown anchors are s
   }
 });
 
+test('mobile full-motion entries reveal the requested reading panel', async ({ page }) => {
+  test.skip(page.viewportSize().width > 900, 'Mobile document scrolling only');
+  await page.goto(`/?${query.replace('qa-motion=reduce', 'qa-motion=full')}`);
+  await expect(page.locator('html')).toHaveAttribute('data-reduce-motion', 'false');
+  await page.evaluate(() => document.fonts.ready);
+
+  for (const name of ['profile', 'practice', 'music']) {
+    await page.locator(`[data-panel="${name}"]`).click();
+    const panel = page.locator(`#${name}-panel`);
+    await expect(panel).toBeVisible();
+    await expect(panel).toBeFocused();
+    await expect.poll(() => panel.evaluate((element) => element.getBoundingClientRect().top))
+      .toBeLessThanOrEqual(24);
+    await expect(panel.locator('h2').first()).toBeInViewport({ ratio: 1 });
+    await page.locator(`[data-close-panel="${name}"]`).click();
+    await expect(panel).toBeHidden();
+  }
+});
+
 test('profile and expertise offer distinct contextual next steps', async ({ page }) => {
   await ready(page, '#profile');
   await page.locator('#profile-panel a[href="#expertise"]').click();

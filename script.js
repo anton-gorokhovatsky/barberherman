@@ -1125,7 +1125,7 @@ function keepSinglePanelOnMobile(preferredName = mostRecentPanelName) {
   });
 }
 
-function revealPanel(name) {
+async function revealPanel(name) {
   const panel = contentPanels[name];
   if (!panel) return;
 
@@ -1137,7 +1137,16 @@ function revealPanel(name) {
   if (moduleStatus) moduleStatus.textContent = `Открыт раздел «${label}»`;
   showMultitoolStatus(`Открыт раздел «${label}»`, { duration: 1100 });
 
+  // A growing flow panel cannot be scrolled into place until the document
+  // has its final height; otherwise the browser clamps the scroll too early.
+  const openingAnimation = panelAnimations.get(panel);
+  if (mobileQuery.matches && openingAnimation?.visible) {
+    await openingAnimation.animation.finished.catch(() => {});
+  }
+
   requestAnimationFrame(() => {
+    if (!panelIsOpen(name)) return;
+    if (mobileQuery.matches && (mostRecentPanelName !== name || panelAnimations.has(panel))) return;
     const isInlinePanel = Boolean(panel.closest('.multitool__drawer'));
     if ((mobileQuery.matches || isInlinePanel) && panel.matches('[tabindex]')) {
       panel.focus({ preventScroll: true });
