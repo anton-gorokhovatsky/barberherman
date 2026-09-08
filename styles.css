@@ -2766,7 +2766,7 @@ html[data-theme="dark"] .theme-toggle__icon--light {
   }
 
   .multitool a:hover,
-  .multitool button:hover,
+  .multitool button:where(:not(.multitool__brand)):hover,
   .catalog-panel a:hover,
   .gallery-stage button:hover,
   .privacy-consent button:hover,
@@ -2796,7 +2796,7 @@ html[data-theme="dark"] .theme-toggle__icon--light {
 }
 
 .multitool a:active,
-.multitool button:active,
+.multitool button:where(:not(.multitool__brand)):active,
 .catalog-panel a:active,
 .text-block button:active,
 .gallery-stage button:active {
