@@ -44,7 +44,7 @@ test('analytics is absent from HTML and remains an explicit JavaScript opt-in', 
 });
 
 test('profile and expertise share the booking component', () => {
-  const bookingHref = 'https://b11133.yclients.com/company/30187/personal/menu?o=';
+  const bookingHref = 'https://b11133.yclients.ru/company/30187/personal/menu?o=';
   const panels = [
     ['profile-panel', 'Профиль', 'Записаться после раздела «Профиль»'],
     ['practice-panel', 'Экспертиза', 'Записаться на стрижку'],

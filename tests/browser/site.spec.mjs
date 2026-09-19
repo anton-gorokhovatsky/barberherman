@@ -839,7 +839,7 @@ test('profile and expertise keep a shared keyboard-reachable booking action', as
 
     await expect(booking).toBeVisible();
     await expect(booking).toHaveAccessibleName(accessibleName);
-    await expect(booking).toHaveAttribute('href', 'https://b11133.yclients.com/company/30187/personal/menu?o=');
+    await expect(booking).toHaveAttribute('href', 'https://b11133.yclients.ru/company/30187/personal/menu?o=');
     await expect(booking).toHaveAttribute('target', '_blank');
     await expect(booking).toHaveAttribute('data-metrika-goal', 'booking_click');
 

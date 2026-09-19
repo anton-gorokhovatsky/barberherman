@@ -77,7 +77,7 @@ test('profile and expertise offer distinct contextual next steps', async ({ page
   const expertise = page.locator('#practice-panel');
   await expect(expertise.getByRole('link', { name: 'Записаться на стрижку', exact: true })).toHaveAttribute('data-metrika-goal', 'booking_click');
   for (const booking of await page.locator('[data-metrika-goal="booking_click"]').all()) {
-    await expect(booking).toHaveAttribute('href', 'https://b11133.yclients.com/company/30187/personal/menu?o=');
+    await expect(booking).toHaveAttribute('href', 'https://b11133.yclients.ru/company/30187/personal/menu?o=');
   }
   for (const label of ['Обучение', 'Съёмки и показы', 'Консалтинг']) {
     const link = expertise.locator(`[data-metrika-label="${label}"]`);
