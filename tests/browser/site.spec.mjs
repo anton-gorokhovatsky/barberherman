@@ -387,7 +387,33 @@ test('full motion keeps video pending until the page is ready for background wor
   }
 });
 
-test('slow connections keep the lightweight poster instead of fetching video', async ({ page }) => {
+for (const scenario of [
+  { name: '2G connections', effectiveType: '2g', saveData: false },
+  { name: 'data-saving preference on 4G', effectiveType: '4g', saveData: true },
+]) {
+  test(`${scenario.name} keep the lightweight poster instead of fetching video`, async ({ page }) => {
+    await page.addInitScript(({ effectiveType, saveData }) => {
+      const connection = {
+        effectiveType,
+        saveData,
+        addEventListener() {},
+        removeEventListener() {},
+      };
+      Object.defineProperty(Navigator.prototype, 'connection', {
+        configurable: true,
+        get: () => connection,
+      });
+    }, scenario);
+    await openReady(page, `/?qa-theme=light&qa-motion=full&qa-analytics=denied&qa-online=1&qa-weather-temperature=20&qa-weather-code=0`);
+
+    await expect(page.locator('html')).toHaveAttribute('data-video-load', 'blocked');
+    for (const video of await page.locator('.stage-video').all()) {
+      await expect(video).not.toHaveAttribute('src', /.+/);
+    }
+  });
+}
+
+test('3G classification allows deferred muted video playback', async ({ page }) => {
   await page.addInitScript(() => {
     const connection = {
       effectiveType: '3g',
@@ -402,11 +428,37 @@ test('slow connections keep the lightweight poster instead of fetching video', a
   });
   await openReady(page, `/?qa-theme=light&qa-motion=full&qa-analytics=denied&qa-online=1&qa-weather-temperature=20&qa-weather-code=0`);
 
-  await expect(page.locator('html')).toHaveAttribute('data-video-load', 'blocked');
-  for (const video of await page.locator('.stage-video').all()) {
-    await expect(video).not.toHaveAttribute('src', /.+/);
-  }
+  const isMobile = (await page.viewportSize()).width <= 900;
+  const activeVideo = page.locator(isMobile ? '.stage-video--mobile' : '.stage-video--desktop');
+  const inactiveVideo = page.locator(isMobile ? '.stage-video--desktop' : '.stage-video--mobile');
+  await expect.poll(() => activeVideo.evaluate((video) => (
+    video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA && !video.paused && video.currentTime > 0
+  )), { timeout: 10_000 }).toBeTruthy();
+  await expect(activeVideo).toHaveAttribute('muted', '');
+  await expect(page.locator('html')).toHaveAttribute('data-video-load', 'ready');
+  await expect(inactiveVideo).not.toHaveAttribute('src', /.+/);
 });
+
+for (const preference of ['system', 'saved']) {
+  test(`${preference} reduced motion still prevents loading video on 3G`, async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: preference === 'system' ? 'reduce' : 'no-preference' });
+    await page.addInitScript((mode) => {
+      if (mode === 'saved') localStorage.setItem('barberherman-reduce-motion', 'true');
+      Object.defineProperty(Navigator.prototype, 'connection', {
+        configurable: true,
+        get: () => ({ effectiveType: '3g', saveData: false }),
+      });
+    }, preference);
+    await openReady(page, `/?qa-theme=light&qa-analytics=denied&qa-online=1&qa-weather-temperature=20&qa-weather-code=0`);
+
+    await expect(page.locator('html')).toHaveAttribute('data-reduce-motion', 'true');
+    await expect(page.locator('html')).toHaveAttribute('data-video-load', 'blocked');
+    for (const video of await page.locator('.stage-video').all()) {
+      await expect(video).not.toHaveAttribute('src', /.+/);
+      await expect(video).toBeHidden();
+    }
+  });
+}
 
 test('full motion selects one inline muted video and autoplay remains available', async ({ page }) => {
   await openReady(page, `/?qa-theme=light&qa-motion=full&qa-video-load=ready&qa-analytics=denied&qa-online=1&qa-weather-temperature=20&qa-weather-code=0`);

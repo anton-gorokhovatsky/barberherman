@@ -1604,7 +1604,7 @@ function lockVideoToVisualPhase(video) {
 function connectionConstrainsStageVideo() {
   const effectiveType = dataConnection?.effectiveType || '';
   return dataConnection?.saveData === true
-    || ['slow-2g', '2g', '3g'].includes(effectiveType);
+    || ['slow-2g', '2g'].includes(effectiveType);
 }
 
 function stageVideoCanLoad() {

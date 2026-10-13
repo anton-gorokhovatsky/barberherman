@@ -232,7 +232,7 @@ test('only the selected video variants remain and stay within their budgets', as
   assert.ok(desktop.size <= 2_100_000, `desktop video is ${desktop.size} bytes`);
   assert.ok(mobile.size <= 1_250_000, `mobile video is ${mobile.size} bytes`);
   assert.match(script, /window\.requestIdleCallback\(activateStageVideoLoad, \{ timeout: 4000 \}\)/);
-  assert.match(script, /\['slow-2g', '2g', '3g'\]\.includes\(effectiveType\)/);
+  assert.match(script, /\['slow-2g', '2g'\]\.includes\(effectiveType\)/);
   assert.match(script, /visualQAVideoLoad === 'manual'/);
 });
 

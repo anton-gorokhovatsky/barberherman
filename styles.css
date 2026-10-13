@@ -283,7 +283,7 @@ button {
   inset: 0;
   z-index: -2;
   overflow: hidden;
-  background: #202124 url("assets/hero.jpg?v=20260716-3") center / cover no-repeat;
+  background: #202124 url("assets/hero.jpg?v=20261013-poster") center / cover no-repeat;
 }
 
 .stage-video,
@@ -2844,7 +2844,7 @@ html[data-theme="dark"] .theme-toggle__icon--light {
   }
 
   .stage {
-    background-image: url("assets/hero-mobile.jpg?v=20260716-2");
+    background-image: url("assets/hero-mobile.jpg?v=20261013-poster");
   }
 
   .stage-video--desktop {
