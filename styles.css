@@ -2539,7 +2539,6 @@ html[data-theme="dark"] .logo-uomo img {
   --ag-signature-size: 56px;
   --credit-block-padding: 2px;
   --credit-arrow-size: 1rem;
-  --credit-text-gap: .75rem;
   --ag-signature-gap: .5rem;
   --ag-signature-ink: var(--tool-ink);
   --ag-signature-muted: color-mix(in srgb, var(--tool-ink), transparent 28%);
@@ -2571,11 +2570,9 @@ html[data-theme="dark"] .logo-uomo img {
 }
 
 .multitool__credit::part(text) {
-  display: flex;
-  flex-wrap: wrap;
+  display: block;
   min-inline-size: 0;
-  align-items: baseline;
-  gap: 0 var(--credit-text-gap);
+  text-wrap: pretty;
 }
 
 .multitool__credit::part(name) {
@@ -2586,7 +2583,10 @@ html[data-theme="dark"] .logo-uomo img {
 
 .multitool__credit::part(name),
 .multitool__credit::part(role) {
+  display: inline-block;
+  max-inline-size: 100%;
   line-height: 1.25;
+  vertical-align: baseline;
 }
 
 .multitool__credit::part(inline-arrow) {

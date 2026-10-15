@@ -11,6 +11,11 @@ function connectFooterSignatures() {
     for (const attribute of ['href', 'target', 'rel']) {
       credit.setAttribute(attribute, fallback.getAttribute(attribute) || '');
     }
+    // Read as one Russian sentence in both the visual and accessible order.
+    const text = shadow.querySelector('.text');
+    const role = shadow.querySelector('.role');
+    const name = shadow.querySelector('.name');
+    if (text && role && name) text.replaceChildren(role, ' ', name);
     for (const [selector, part] of [
       ['.signature', 'layout'], ['.credit', 'link'], ['.text', 'text'],
       ['.name', 'name'], ['.role', 'role'], ['.arrow', 'inline-arrow'],

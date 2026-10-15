@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 
 const moduleUrl = 'https://gorokhovatsky.tech/signature/1.0.2/signature.js';
 const projectUrl = 'https://gorokhovatsky.tech/?point=herman';
+const creditName = 'Сайт сделал Антон Гороховатский';
 const query = 'qa-analytics=denied&qa-online=1&qa-weather-temperature=20&qa-weather-code=0';
 let sharedModule;
 
@@ -25,7 +26,7 @@ async function openSignature(page, theme = 'light', scale = 100) {
   await page.goto(`/?${query}&qa-theme=${theme}&qa-motion=reduce&qa-text=${scale}`);
   await expect(page.locator('ag-signature [part="footer-arrow"]')).toBeVisible();
   await page.evaluate(() => document.fonts.ready);
-  return page.locator('ag-signature').getByRole('link', { name: /Антон Гороховатский/ });
+  return page.locator('ag-signature').getByRole('link', { name: creditName, exact: true });
 }
 
 test('author credit shares a complete cell, native navigation and site states', async ({ page, browserName }) => {
@@ -150,7 +151,7 @@ test('a slow or unavailable signature never blocks the menu or its fallback link
     await route.fulfill({ body: sharedModule, contentType: 'application/javascript', headers: { 'access-control-allow-origin': '*' } });
   });
   await page.goto(`/?${query}&qa-motion=reduce`, { waitUntil: 'domcontentloaded' });
-  const credit = page.locator('ag-signature').getByRole('link', { name: /Антон Гороховатский/ });
+  const credit = page.locator('ag-signature').getByRole('link', { name: creditName, exact: true });
   await expect(credit).toBeVisible();
   await expect(credit).toHaveAttribute('href', projectUrl);
   await page.getByRole('button', { name: 'Профиль', exact: true }).click();
