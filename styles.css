@@ -2535,9 +2535,11 @@ html[data-theme="dark"] .logo-uomo img {
 }
 
 .multitool__credit {
-  --ag-signature-size: 2.75rem;
-  --credit-block-padding: 6px;
+  /* Decorative art keeps the service scale when only text is enlarged. */
+  --ag-signature-size: 56px;
+  --credit-block-padding: 2px;
   --credit-arrow-size: 1rem;
+  --credit-text-gap: .75rem;
   --ag-signature-gap: .5rem;
   --ag-signature-ink: var(--tool-ink);
   --ag-signature-muted: color-mix(in srgb, var(--tool-ink), transparent 28%);
@@ -2569,12 +2571,15 @@ html[data-theme="dark"] .logo-uomo img {
 }
 
 .multitool__credit::part(text) {
+  display: flex;
+  flex-wrap: wrap;
   min-inline-size: 0;
-  gap: 0;
+  align-items: baseline;
+  gap: 0 var(--credit-text-gap);
 }
 
 .multitool__credit::part(name) {
-  font-weight: 500;
+  font-weight: 400;
   letter-spacing: 0;
   text-decoration: none;
 }
@@ -2614,20 +2619,21 @@ html[data-theme="dark"] .logo-uomo img {
   box-shadow: inset 0 1px 0 color-mix(in srgb, currentColor, transparent 78%);
 }
 
-/* Leave a whole surname beside the mark before the enlarged text needs a row. */
+/* Give enlarged text the full measure once the surname needs its own row. */
 @container author-credit (max-width: 12rem) {
   .multitool__credit::part(link) {
     grid-template-columns: minmax(0, 1fr) var(--credit-arrow-size);
+    row-gap: .25rem;
   }
 
   .multitool__credit::part(text) {
-    grid-column: 1;
+    grid-column: 1 / -1;
     grid-row: 2;
   }
 
   .multitool__credit::part(footer-arrow) {
     grid-column: 2;
-    grid-row: 2;
+    grid-row: 1;
   }
 }
 

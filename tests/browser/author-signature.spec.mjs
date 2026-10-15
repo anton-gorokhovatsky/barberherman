@@ -44,12 +44,17 @@ test('author credit shares a complete cell, native navigation and site states', 
     width: el.getBoundingClientRect().width,
     parentWidth: document.querySelector('.multitool__meta').getBoundingClientRect().width,
     height: el.getBoundingClientRect().height,
+    nameTop: el.querySelector('.name').getBoundingClientRect().top,
+    roleTop: el.querySelector('.role').getBoundingClientRect().top,
     arrow: el.querySelector('[part="footer-arrow"] path').getAttribute('d'),
     sharedArrow: document.querySelector('#icon-arrow-path').getAttribute('d'),
   }));
   expect(Math.abs(geometry.width - geometry.parentWidth)).toBeLessThan(1);
   expect(geometry.height).toBeGreaterThanOrEqual(44);
   expect(geometry.height).toBeLessThanOrEqual(46);
+  if (page.viewportSize().width > 900) {
+    expect(Math.abs(geometry.nameTop - geometry.roleTop)).toBeLessThan(1);
+  }
   expect(geometry.arrow).toBe(geometry.sharedArrow);
   await credit.hover();
   const hovered = await credit.evaluate(el => getComputedStyle(el).backgroundColor);
@@ -92,7 +97,9 @@ test('author footer reflows throughout supported widths, themes and text scales'
           const lines = [...family.getClientRects()].filter(r => r.width > 0 && r.height > 0);
           return {
             overflow: document.documentElement.scrollWidth - innerWidth,
-            right: link.right, textRight: text.right, arrowLeft: arrow.left,
+            right: link.right,
+            textArrowOverlap: text.left < arrow.right && text.right > arrow.left
+              && text.top < arrow.bottom && text.bottom > arrow.top,
             footerRight: footer.right, linkBottom: link.bottom, footerBottom: footer.bottom,
             serviceTop: service.top, axes: [Math.abs(main.x - footer.x), Math.abs(main.width - footer.width)],
             splitFamily: lines.length ? Math.max(...lines.map(r => r.top)) - Math.min(...lines.map(r => r.top)) : 0,
@@ -103,7 +110,7 @@ test('author footer reflows throughout supported widths, themes and text scales'
         });
         const label = `${testInfo.project.name} ${theme} ${scale}% ${width}px`;
         expect(result.overflow, label).toBeLessThanOrEqual(0);
-        expect(result.textRight, label).toBeLessThanOrEqual(result.arrowLeft);
+        expect(result.textArrowOverlap, label).toBe(false);
         expect(result.right, label).toBeLessThanOrEqual(result.footerRight);
         expect(result.linkBottom, label).toBeLessThanOrEqual(result.footerBottom);
         if (width <= 900) expect(result.linkBottom, label).toBeLessThanOrEqual(result.serviceTop + 1);
