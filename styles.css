@@ -2569,7 +2569,8 @@ html[data-theme="dark"] .logo-uomo img {
   text-decoration: none;
 }
 
-.multitool__credit::part(text) {
+.multitool__credit::part(text),
+.multitool__credit:not(:defined) > a > span {
   display: block;
   min-inline-size: 0;
   text-wrap: pretty;
@@ -2582,11 +2583,33 @@ html[data-theme="dark"] .logo-uomo img {
 }
 
 .multitool__credit::part(name),
-.multitool__credit::part(role) {
+.multitool__credit::part(role),
+.multitool__credit-role,
+.multitool__credit-name {
   display: inline-block;
   max-inline-size: 100%;
   line-height: 1.25;
   vertical-align: baseline;
+}
+
+.multitool__credit-role,
+.multitool__credit::part(separator) {
+  color: var(--ag-signature-muted);
+}
+
+/* Once the credit is a pair of lines, their alignment supplies the separation. */
+@container author-credit (max-width: 28rem) {
+  .multitool__credit::part(role),
+  .multitool__credit::part(name),
+  .multitool__credit-role,
+  .multitool__credit-name {
+    display: block;
+  }
+
+  .multitool__credit::part(separator),
+  .multitool__credit-separator {
+    display: none;
+  }
 }
 
 .multitool__credit::part(inline-arrow) {

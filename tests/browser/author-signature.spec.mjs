@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 
 const moduleUrl = 'https://gorokhovatsky.tech/signature/1.0.2/signature.js';
 const projectUrl = 'https://gorokhovatsky.tech/?point=herman';
-const creditName = 'Дизайн и разработка — Антон Гороховатский';
+const creditName = /^Дизайн и разработка(?: —)? Антон Гороховатский$/;
 const query = 'qa-analytics=denied&qa-online=1&qa-weather-temperature=20&qa-weather-code=0';
 let sharedModule;
 
@@ -31,7 +31,7 @@ async function openSignature(page, theme = 'light', scale = 100) {
 
 test('author credit shares a complete cell, native navigation and site states', async ({ page, browserName }) => {
   await serveSignature(page);
-  await page.route(projectUrl, route => route.fulfill({ contentType: 'text/html', body: '<title>Author project</title>' }));
+  await page.context().route(projectUrl, route => route.fulfill({ contentType: 'text/html', body: '<title>Author project</title>' }));
   const credit = await openSignature(page);
   await expect(credit).toHaveAttribute('href', projectUrl);
   await expect(credit).toHaveAttribute('target', '_blank');
@@ -89,6 +89,9 @@ test('author footer reflows throughout supported widths, themes and text scales'
           const shadow = host.shadowRoot;
           const link = shadow.querySelector('.credit').getBoundingClientRect();
           const text = shadow.querySelector('.text').getBoundingClientRect();
+          const role = shadow.querySelector('.role').getBoundingClientRect();
+          const name = shadow.querySelector('.name').getBoundingClientRect();
+          const separator = shadow.querySelector('[part="separator"]');
           const arrow = shadow.querySelector('[part="footer-arrow"]').getBoundingClientRect();
           const footer = document.querySelector('.multitool__footer-surface').getBoundingClientRect();
           const main = document.querySelector('.multitool__main').getBoundingClientRect();
@@ -98,6 +101,8 @@ test('author footer reflows throughout supported widths, themes and text scales'
           const lines = [...family.getClientRects()].filter(r => r.width > 0 && r.height > 0);
           return {
             overflow: document.documentElement.scrollWidth - innerWidth,
+            separateLines: Math.abs(name.top - role.top) > 2,
+            separatorVisible: separator.getClientRects().length > 0,
             right: link.right,
             textArrowOverlap: text.left < arrow.right && text.right > arrow.left
               && text.top < arrow.bottom && text.bottom > arrow.top,
@@ -111,6 +116,7 @@ test('author footer reflows throughout supported widths, themes and text scales'
         });
         const label = `${testInfo.project.name} ${theme} ${scale}% ${width}px`;
         expect(result.overflow, label).toBeLessThanOrEqual(0);
+        expect(result.separatorVisible, label).toBe(!result.separateLines);
         expect(result.textArrowOverlap, label).toBe(false);
         expect(result.right, label).toBeLessThanOrEqual(result.footerRight);
         expect(result.linkBottom, label).toBeLessThanOrEqual(result.footerBottom);

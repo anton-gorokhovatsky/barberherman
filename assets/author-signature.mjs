@@ -15,7 +15,14 @@ function connectFooterSignatures() {
     const text = shadow.querySelector('.text');
     const role = shadow.querySelector('.role');
     const name = shadow.querySelector('.name');
-    if (text && role && name) text.replaceChildren(role, ' ', name);
+    if (text && role && name) {
+      // The shared component refreshes the role's contents when motion changes.
+      // Keep this site's responsive punctuation alongside that managed node.
+      const separator = shadow.querySelector('[part="separator"]') || document.createElement('span');
+      separator.setAttribute('part', 'separator');
+      separator.textContent = '\u00a0—';
+      text.replaceChildren(role, separator, ' ', name);
+    }
     for (const [selector, part] of [
       ['.signature', 'layout'], ['.credit', 'link'], ['.text', 'text'],
       ['.name', 'name'], ['.role', 'role'], ['.arrow', 'inline-arrow'],
