@@ -2483,7 +2483,9 @@ html[data-theme="dark"] .logo-uomo img {
 }
 
 .multitool__footer {
-  --service-rail: calc(var(--utility-floor) * 3);
+  --utility-floor: 44px;
+  --service-control-inline: 64px;
+  --service-rail: calc(var(--service-control-inline) * 3);
   display: grid;
   grid-template-columns: minmax(0, 1fr) var(--service-rail);
   border-top: 0;
@@ -2533,32 +2535,33 @@ html[data-theme="dark"] .logo-uomo img {
 }
 
 .multitool__credit {
-  --ag-signature-size: 4rem;
-  --credit-block-padding: 8px;
-  --ag-signature-gap: var(--floor-inline);
+  --ag-signature-size: 2.75rem;
+  --credit-block-padding: 6px;
+  --credit-arrow-size: 1rem;
+  --ag-signature-gap: .5rem;
   --ag-signature-ink: var(--tool-ink);
   --ag-signature-muted: color-mix(in srgb, var(--tool-ink), transparent 28%);
   --ag-signature-accent: var(--tool-ink);
   --ag-signature-node-ink: var(--tool-ink);
   --ag-signature-practice: var(--tool-ink);
   --ag-signature-personal: var(--tool-ink);
-  --ag-signature-name-size: var(--type-ui);
-  --ag-signature-role-size: var(--type-legal);
+  --ag-signature-name-size: var(--type-caption);
+  --ag-signature-role-size: var(--type-caption);
   display: block;
   inline-size: 100%;
   min-width: 0;
   min-height: var(--utility-floor);
   align-content: center;
   padding: 0;
-  font: 600 var(--type-caption)/1.25 var(--font);
+  font: 400 var(--type-caption)/1.25 var(--font);
   text-align: left;
 }
 
 .multitool__credit::part(link) {
   display: grid;
   inline-size: 100%;
-  min-block-size: max(64px, calc(var(--ag-signature-size) * 46 / 64 + 2 * var(--credit-block-padding)));
-  grid-template-columns: var(--ag-signature-size) minmax(0, 1fr) var(--icon-size-compact);
+  min-block-size: max(var(--utility-floor), calc(var(--ag-signature-size) * 46 / 64 + 2 * var(--credit-block-padding)));
+  grid-template-columns: var(--ag-signature-size) minmax(0, 1fr) var(--credit-arrow-size);
   align-items: center;
   gap: var(--ag-signature-gap);
   padding: var(--credit-block-padding) var(--floor-inline);
@@ -2567,12 +2570,18 @@ html[data-theme="dark"] .logo-uomo img {
 
 .multitool__credit::part(text) {
   min-inline-size: 0;
+  gap: 0;
 }
 
 .multitool__credit::part(name) {
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: 0;
   text-decoration: none;
+}
+
+.multitool__credit::part(name),
+.multitool__credit::part(role) {
+  line-height: 1.25;
 }
 
 .multitool__credit::part(inline-arrow) {
@@ -2580,8 +2589,8 @@ html[data-theme="dark"] .logo-uomo img {
 }
 
 .multitool__credit::part(footer-arrow) {
-  inline-size: var(--icon-size-compact);
-  block-size: var(--icon-size-compact);
+  inline-size: var(--credit-arrow-size);
+  block-size: var(--credit-arrow-size);
   fill: none;
   stroke: currentColor;
   stroke-width: var(--icon-stroke-default);
@@ -2606,9 +2615,9 @@ html[data-theme="dark"] .logo-uomo img {
 }
 
 /* Leave a whole surname beside the mark before the enlarged text needs a row. */
-@container author-credit (max-width: 16rem) {
+@container author-credit (max-width: 12rem) {
   .multitool__credit::part(link) {
-    grid-template-columns: minmax(0, 1fr) var(--icon-size-compact);
+    grid-template-columns: minmax(0, 1fr) var(--credit-arrow-size);
   }
 
   .multitool__credit::part(text) {
@@ -2624,9 +2633,9 @@ html[data-theme="dark"] .logo-uomo img {
 
 .multitool__credit:not(:defined) > a {
   display: flex;
-  min-height: 64px;
+  min-height: var(--utility-floor);
   align-items: center;
-  padding: 12px var(--floor-inline);
+  padding: var(--credit-block-padding) var(--floor-inline);
   color: inherit;
   text-decoration: none;
 }
@@ -3104,7 +3113,6 @@ html[data-theme="dark"] .theme-toggle__icon--light {
 
 @media (max-width: 900px) {
   .multitool__footer {
-    --utility-floor: 44px;
     grid-template-columns: var(--split-grid);
   }
 

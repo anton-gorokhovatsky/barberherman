@@ -48,7 +48,8 @@ test('author credit shares a complete cell, native navigation and site states', 
     sharedArrow: document.querySelector('#icon-arrow-path').getAttribute('d'),
   }));
   expect(Math.abs(geometry.width - geometry.parentWidth)).toBeLessThan(1);
-  expect(geometry.height).toBeGreaterThanOrEqual(64);
+  expect(geometry.height).toBeGreaterThanOrEqual(44);
+  expect(geometry.height).toBeLessThanOrEqual(46);
   expect(geometry.arrow).toBe(geometry.sharedArrow);
   await credit.hover();
   const hovered = await credit.evaluate(el => getComputedStyle(el).backgroundColor);
