@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 
 const moduleUrl = 'https://gorokhovatsky.tech/signature/1.0.2/signature.js';
 const projectUrl = 'https://gorokhovatsky.tech/?point=herman';
-const creditName = 'Сайт сделал Антон Гороховатский';
+const creditName = 'Дизайн и разработка — Антон Гороховатский';
 const query = 'qa-analytics=denied&qa-online=1&qa-weather-temperature=20&qa-weather-code=0';
 let sharedModule;
 
