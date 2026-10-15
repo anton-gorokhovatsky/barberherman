@@ -10,6 +10,7 @@ const edits = [
     replacements: [
       [/styles\.css\?v=[^"']+/g, `styles.css?v=${version}`],
       [/script\.js\?v=[^"']+/g, `script.js?v=${version}`],
+      [/assets\/author-signature\.mjs\?v=[^"']+/g, `assets/author-signature.mjs?v=${version}`],
     ],
   },
   {
