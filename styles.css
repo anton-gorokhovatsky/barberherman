@@ -2483,9 +2483,7 @@ html[data-theme="dark"] .logo-uomo img {
 }
 
 .multitool__footer {
-  --utility-floor: 44px;
-  --service-control-inline: 64px;
-  --service-rail: calc(var(--service-control-inline) * 3);
+  --service-rail: calc(var(--utility-floor) * 3);
   display: grid;
   grid-template-columns: minmax(0, 1fr) var(--service-rail);
   border-top: 0;
@@ -2531,142 +2529,45 @@ html[data-theme="dark"] .logo-uomo img {
   grid-template-columns: minmax(0, 1fr);
   border-top: var(--tool-rule);
   container-type: inline-size;
-  container-name: author-credit;
 }
 
 .multitool__credit {
-  /* Decorative art keeps the service scale when only text is enlarged. */
-  --ag-signature-size: 56px;
-  --credit-block-padding: 2px;
-  --credit-arrow-size: 1rem;
-  --ag-signature-gap: .5rem;
-  --ag-signature-ink: var(--tool-ink);
-  --ag-signature-muted: color-mix(in srgb, var(--tool-ink), transparent 28%);
-  --ag-signature-accent: var(--tool-ink);
-  --ag-signature-node-ink: var(--tool-ink);
-  --ag-signature-practice: var(--tool-ink);
-  --ag-signature-personal: var(--tool-ink);
-  --ag-signature-name-size: var(--type-caption);
-  --ag-signature-role-size: var(--type-caption);
-  display: block;
-  inline-size: 100%;
+  display: flex;
   min-width: 0;
   min-height: var(--utility-floor);
-  align-content: center;
-  padding: 0;
-  font: 400 var(--type-caption)/1.25 var(--font);
-  text-align: left;
-}
-
-.multitool__credit::part(link) {
-  display: grid;
-  inline-size: 100%;
-  min-block-size: max(var(--utility-floor), calc(var(--ag-signature-size) * 46 / 64 + 2 * var(--credit-block-padding)));
-  grid-template-columns: var(--ag-signature-size) minmax(0, 1fr) var(--credit-arrow-size);
   align-items: center;
-  gap: var(--ag-signature-gap);
-  padding: var(--credit-block-padding) var(--floor-inline);
+  justify-content: space-between;
+  gap: 7px;
+  padding: 12px var(--floor-inline);
+  border-left: 0;
+  font: 600 max(12px, min(var(--type-caption), 3.25cqi))/1.15 var(--font);
+  text-align: left;
   text-decoration: none;
 }
 
-.multitool__credit::part(text),
-.multitool__credit:not(:defined) > a > span {
-  display: block;
-  min-inline-size: 0;
-  text-wrap: pretty;
+.multitool__credit > span:first-child {
+  padding: 0;
 }
 
-.multitool__credit::part(name) {
-  font-weight: 400;
-  letter-spacing: 0;
-  text-decoration: none;
+.multitool__credit-arrow {
+  display: grid;
+  min-width: 20px;
+  min-height: 20px;
+  place-items: center;
 }
 
-.multitool__credit::part(name),
-.multitool__credit::part(role),
-.multitool__credit-role,
-.multitool__credit-name {
-  display: inline-block;
-  max-inline-size: 100%;
-  line-height: 1.25;
-  vertical-align: baseline;
-}
-
-.multitool__credit-role,
-.multitool__credit::part(separator) {
-  color: var(--ag-signature-muted);
-}
-
-/* Once the credit is a pair of lines, their alignment supplies the separation. */
-@container author-credit (max-width: 28rem) {
-  .multitool__credit::part(role),
-  .multitool__credit::part(name),
-  .multitool__credit-role,
-  .multitool__credit-name {
-    display: block;
-  }
-
-  .multitool__credit::part(separator),
-  .multitool__credit-separator {
-    display: none;
-  }
-}
-
-.multitool__credit::part(inline-arrow) {
-  display: none;
-}
-
-.multitool__credit::part(footer-arrow) {
-  inline-size: var(--credit-arrow-size);
-  block-size: var(--credit-arrow-size);
+.multitool__credit-arrow svg {
+  width: 20px;
+  height: 20px;
   fill: none;
   stroke: currentColor;
-  stroke-width: var(--icon-stroke-default);
   stroke-linecap: square;
-  vector-effect: non-scaling-stroke;
+  stroke-width: 1.65;
+  transition: transform var(--motion-fast) var(--ease-out);
 }
 
-.multitool__credit::part(link):focus-visible {
-  outline: 2px solid var(--focus);
-  outline-offset: -3px;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .multitool__credit::part(link):hover {
-    background: var(--tool-hover);
-  }
-}
-
-.multitool__credit::part(link):active {
-  background: color-mix(in srgb, var(--tool-hover), currentColor 5%);
-  box-shadow: inset 0 1px 0 color-mix(in srgb, currentColor, transparent 78%);
-}
-
-/* Give enlarged text the full measure once the surname needs its own row. */
-@container author-credit (max-width: 12rem) {
-  .multitool__credit::part(link) {
-    grid-template-columns: minmax(0, 1fr) var(--credit-arrow-size);
-    row-gap: .25rem;
-  }
-
-  .multitool__credit::part(text) {
-    grid-column: 1 / -1;
-    grid-row: 2;
-  }
-
-  .multitool__credit::part(footer-arrow) {
-    grid-column: 2;
-    grid-row: 1;
-  }
-}
-
-.multitool__credit:not(:defined) > a {
-  display: flex;
-  min-height: var(--utility-floor);
-  align-items: center;
-  padding: var(--credit-block-padding) var(--floor-inline);
-  color: inherit;
-  text-decoration: none;
+.multitool__credit:is(:hover, :focus-visible) .multitool__credit-arrow svg {
+  transform: translate(2px, -2px);
 }
 
 .multitool__service {
@@ -3142,6 +3043,7 @@ html[data-theme="dark"] .theme-toggle__icon--light {
 
 @media (max-width: 900px) {
   .multitool__footer {
+    --utility-floor: 44px;
     grid-template-columns: var(--split-grid);
   }
 
@@ -3164,7 +3066,12 @@ html[data-theme="dark"] .theme-toggle__icon--light {
     grid-row: 3;
     min-height: 44px;
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: minmax(44px, auto);
+    grid-template-rows: 44px;
+    border-left: 0;
+  }
+
+  .multitool__credit {
+    min-height: 44px;
     border-left: 0;
   }
 
@@ -3357,7 +3264,7 @@ html[data-theme="dark"] .theme-toggle__icon--light {
     grid-column: 1 / -1;
     min-height: 44px;
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: minmax(44px, auto);
+    grid-template-rows: 44px;
   }
 
   .multitool__service {
@@ -3586,6 +3493,32 @@ html[data-theme="dark"] .theme-toggle__icon--light {
 
   .gallery-stage__count {
     font-size: var(--type-caption);
+  }
+
+  .multitool__credit {
+    display: flex;
+    min-height: 44px;
+    gap: 4px;
+    padding: 6px 8px 6px var(--floor-inline);
+    border-left: 0;
+    font-size: max(10px, min(.8125rem, 3.6cqi));
+    line-height: 1.05;
+  }
+
+  .multitool__credit > span:first-child {
+    min-width: 0;
+    padding-inline: 0;
+  }
+
+  .multitool__credit-arrow {
+    min-width: 18px;
+    min-height: 18px;
+    border-left: 0;
+  }
+
+  .multitool__credit-arrow svg {
+    width: 18px;
+    height: 18px;
   }
 
   .multitool__service {
