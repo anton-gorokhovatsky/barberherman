@@ -263,26 +263,33 @@ test('profile keeps enlarged Russian word fragments readable at a narrow measure
   test.skip(page.viewportSize().width > 430, 'Narrow reading measure only');
   await page.setViewportSize({ width: 320, height: 900 });
   await ready(page, '&qa-text=200#profile');
+  const plainText = async (selector) => (await page.locator(selector).textContent())
+    .replace(/\u00ad/g, '').replace(/\s+/g, ' ').trim();
+  expect(await plainText('#profile-title')).toBe('ГерманВинокуров');
+  expect(await plainText('#profile-panel .text-block__lead')).toBe('Мужской стилист, барбер и преподаватель. Стрижки, работа с бородой и индивидуальным образом.');
   const words = await page.locator('#profile-panel').evaluate((panel) => {
     const words = [];
-    for (const block of panel.querySelectorAll('h2, .text-block__lead')) {
+    for (const block of panel.querySelectorAll('h2, p, dd, dt')) {
       const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT);
       let node;
       while ((node = walker.nextNode())) {
-        for (const match of node.textContent.matchAll(/[\p{Script=Cyrillic}]{6,}/gu)) {
+        for (const match of node.textContent.matchAll(/[\p{Script=Cyrillic}\u00ad]{6,}/gu)) {
+          const letters = [...match[0]].map((letter, offset) => ({ letter, offset }))
+            .filter(({ letter }) => letter !== '\u00ad');
+          if (letters.length < 6) continue;
           const lines = [];
-          for (let index = 0; index < match[0].length; index++) {
+          for (const { letter, offset } of letters) {
             const range = document.createRange();
-            range.setStart(node, match.index + index);
-            range.setEnd(node, match.index + index + 1);
+            range.setStart(node, match.index + offset);
+            range.setEnd(node, match.index + offset + 1);
             // A boundary range can include the generated hyphen on the previous
             // line; its final rect belongs to the actual letter.
             const top = [...range.getClientRects()].at(-1).top;
             const line = lines.find((line) => Math.abs(line.top - top) < 1);
-            if (line) line.text += match[0][index];
-            else lines.push({ top, text: match[0][index] });
+            if (line) line.text += letter;
+            else lines.push({ top, text: letter });
           }
-          words.push({ word: match[0], fragments: lines.map((line) => line.text) });
+          words.push({ word: letters.map(({ letter }) => letter).join(''), fragments: lines.map((line) => line.text) });
         }
       }
     }
@@ -292,7 +299,8 @@ test('profile keeps enlarged Russian word fragments readable at a narrow measure
   expect(words.some(({ word }) => word === 'преподаватель')).toBe(true);
   for (const { word, fragments } of words) {
     for (const fragment of fragments) {
-      expect(fragment.length, `${word}: ${fragments.join(' / ')}`).toBeGreaterThanOrEqual(2);
+      const minimum = ['Герман', 'Винокуров', 'преподаватель'].includes(word) ? 3 : 2;
+      expect(fragment.length, `${word}: ${fragments.join(' / ')}`).toBeGreaterThanOrEqual(minimum);
     }
   }
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(320);

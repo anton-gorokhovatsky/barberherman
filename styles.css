@@ -509,12 +509,16 @@ html[data-content-open="true"] .stage-overlay {
   line-height: .86;
 }
 
-/* Enlarged text can leave a very short reading measure. Prefer linguistic
-   hyphens there while preserving the accepted wrapping at ordinary sizes. */
+/* Linux WebKit can lack a Russian hyphenation dictionary. Author-provided
+   language boundaries keep enlarged text readable without shrinking it;
+   ordinary measures retain the accepted unhyphenated wrapping. */
+.text-block--profile :is(h2, p, dd, dt) {
+  hyphens: none;
+}
+
 @container (max-width: 12rem) {
   .text-block--profile :is(h2, p, dd, dt) {
-    hyphens: auto;
-    hyphenate-limit-chars: 6 3 3;
+    hyphens: manual;
   }
 }
 
