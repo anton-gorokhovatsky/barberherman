@@ -259,6 +259,53 @@ test('live information labels and values never collide when text grows', async (
   }
 });
 
+test('profile keeps enlarged Russian word fragments readable at a narrow measure', async ({ page }) => {
+  test.skip(page.viewportSize().width > 430, 'Narrow reading measure only');
+  await page.setViewportSize({ width: 320, height: 900 });
+  await ready(page, '&qa-text=200#profile');
+  const plainText = async (selector) => (await page.locator(selector).textContent())
+    .replace(/\u00ad/g, '').replace(/\s+/g, ' ').trim();
+  expect(await plainText('#profile-title')).toBe('ГерманВинокуров');
+  expect(await plainText('#profile-panel .text-block__lead')).toBe('Мужской стилист, барбер и преподаватель. Стрижки, работа с бородой и индивидуальным образом.');
+  const words = await page.locator('#profile-panel').evaluate((panel) => {
+    const words = [];
+    for (const block of panel.querySelectorAll('h2, p, dd, dt')) {
+      const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT);
+      let node;
+      while ((node = walker.nextNode())) {
+        for (const match of node.textContent.matchAll(/[\p{Script=Cyrillic}\u00ad]{6,}/gu)) {
+          const letters = [...match[0]].map((letter, offset) => ({ letter, offset }))
+            .filter(({ letter }) => letter !== '\u00ad');
+          if (letters.length < 6) continue;
+          const lines = [];
+          for (const { letter, offset } of letters) {
+            const range = document.createRange();
+            range.setStart(node, match.index + offset);
+            range.setEnd(node, match.index + offset + 1);
+            // A boundary range can include the generated hyphen on the previous
+            // line; its final rect belongs to the actual letter.
+            const top = [...range.getClientRects()].at(-1).top;
+            const line = lines.find((line) => Math.abs(line.top - top) < 1);
+            if (line) line.text += letter;
+            else lines.push({ top, text: letter });
+          }
+          words.push({ word: letters.map(({ letter }) => letter).join(''), fragments: lines.map((line) => line.text) });
+        }
+      }
+    }
+    return words;
+  });
+  expect(words.some(({ word }) => word === 'Герман')).toBe(true);
+  expect(words.some(({ word }) => word === 'преподаватель')).toBe(true);
+  for (const { word, fragments } of words) {
+    for (const fragment of fragments) {
+      const minimum = ['Герман', 'Винокуров', 'преподаватель'].includes(word) ? 3 : 2;
+      expect(fragment.length, `${word}: ${fragments.join(' / ')}`).toBeGreaterThanOrEqual(minimum);
+    }
+  }
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(320);
+});
+
 test('real 200% base text grows and matches QA layout without special selectors', async ({ page }) => {
   await ready(page, '#profile');
   const measure = () => page.evaluate(() => {

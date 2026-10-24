@@ -509,6 +509,19 @@ html[data-content-open="true"] .stage-overlay {
   line-height: .86;
 }
 
+/* Linux WebKit can lack a Russian hyphenation dictionary. Author-provided
+   language boundaries keep enlarged text readable without shrinking it;
+   ordinary measures retain the accepted unhyphenated wrapping. */
+.text-block--profile :is(h2, p, dd, dt) {
+  hyphens: none;
+}
+
+@container (max-width: 12rem) {
+  .text-block--profile :is(h2, p, dd, dt) {
+    hyphens: manual;
+  }
+}
+
 .text-block h2 {
   font-size: var(--type-h2);
   line-height: .92;
