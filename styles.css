@@ -509,6 +509,15 @@ html[data-content-open="true"] .stage-overlay {
   line-height: .86;
 }
 
+/* Enlarged text can leave a very short reading measure. Prefer linguistic
+   hyphens there while preserving the accepted wrapping at ordinary sizes. */
+@container (max-width: 12rem) {
+  .text-block--profile :is(h2, p, dd, dt) {
+    hyphens: auto;
+    hyphenate-limit-chars: 6 3 3;
+  }
+}
+
 .text-block h2 {
   font-size: var(--type-h2);
   line-height: .92;
